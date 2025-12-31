@@ -1,23 +1,3 @@
-# Daily Todo Checklist with Smart Templates & Reports
-
-## 🎯 Overview
-
-**Complete productivity tracker** with:
-- ✅ Tasks management with smart suggestions
-- 📚 Task templates (Reusable tasks)
-- 🏷️ Categories (Work/Study/Health/Personal)
-- 📊 Progress charts
-- 📅 Calendar view (30 days)
-- 📈 Daily statistics
-- 🔍 Date range filters
-- ☁️ Cloud sync (Firebase)
-- 🔥 Day streak counter
-
----
-
-## 💻 Complete HTML Code with Templates
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,10 +17,6 @@
             --color-success: #4caf50;
             --color-warning: #ff9800;
             --color-error: #f44336;
-            --color-high: #f44336;
-            --color-medium: #ff9800;
-            --color-low: #4caf50;
-            --color-overdue: #ff6b6b;
         }
 
         * {
@@ -235,12 +211,6 @@
             background: #d32f2f;
         }
 
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
-            margin: 2px;
-        }
-
         .templates-section {
             margin-bottom: 20px;
         }
@@ -273,12 +243,6 @@
 
         .template-btn:hover {
             background: #f0f0f0;
-            border-color: var(--color-primary);
-        }
-
-        .template-btn.active {
-            background: var(--color-primary);
-            color: white;
             border-color: var(--color-primary);
         }
 
@@ -369,16 +333,11 @@
             width: 6px;
         }
 
-        .scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
         .scrollbar::-webkit-scrollbar-thumb {
             background: var(--color-border);
             border-radius: 3px;
         }
 
-        /* Report Styles */
         .report-filters {
             display: grid;
             grid-template-columns: 1fr 1fr auto;
@@ -555,10 +514,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .tabs {
-                gap: 5px;
-            }
-
             .tab-btn {
                 padding: 10px 15px;
                 font-size: 13px;
@@ -570,7 +525,7 @@
     <div class="container">
         <div class="header">
             <h1>📋 Daily Todo Checklist</h1>
-            <div class="sync-status" id="syncStatus">Connecting to cloud...</div>
+            <div class="sync-status" id="syncStatus">Connecting...</div>
         </div>
 
         <div class="tabs">
@@ -691,28 +646,11 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCoCFw0hezldX3t33AYa1ytddYMuQCWliM",
-            authDomain: "daily-todo-1e4ad.firebaseapp.com",
-            projectId: "daily-todo-1e4ad",
-            storageBucket: "daily-todo-1e4ad.firebasestorage.app",
-            messagingSenderId: "629797690976",
-            appId: "1:629797690976:web:fda66df1691eb920e12d05",
-            measurementId: "G-KG0NGWBFCW"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
+    <script>
         let tasks = [];
         let today = new Date().toDateString();
         let progressChart = null;
 
-        // Default templates by category
         const defaultTemplates = {
             work: ['📧 Check emails', '📞 Team meeting', '📝 Write report', '🎯 Project update', '💼 Client call'],
             study: ['📖 Read chapter', '✍️ Do assignment', '🧮 Practice problems', '📝 Take notes', '🎓 Review notes'],
@@ -723,13 +661,10 @@
         function updateSyncStatus(status) {
             const el = document.getElementById('syncStatus');
             if (status === 'synced') {
-                el.textContent = '✓ Synced';
+                el.textContent = '✓ Local Storage';
                 el.className = 'sync-status synced';
-            } else if (status === 'syncing') {
-                el.textContent = 'Syncing...';
-                el.className = 'sync-status';
             } else {
-                el.textContent = 'Error: ' + status;
+                el.textContent = status;
                 el.className = 'sync-status';
             }
         }
@@ -745,68 +680,52 @@
             }
         };
 
-        async function loadTasksFromFirestore() {
-            try {
-                updateSyncStatus('syncing');
-                const snapshot = await getDocs(collection(db, 'tasks'));
-                tasks = [];
-                snapshot.forEach(doc => {
-                    tasks.push({ id: doc.id, ...doc.data() });
-                });
-                tasks.sort((a, b) => {
-                    const aIsToday = a.date === today ? 0 : 1;
-                    const bIsToday = b.date === today ? 0 : 1;
-                    if (aIsToday !== bIsToday) return aIsToday - bIsToday;
-                    return new Date(b.date) - new Date(a.date);
-                });
-                renderTasks();
-                renderTemplates();
-                updateSyncStatus('synced');
-            } catch (error) {
-                console.error('Error loading tasks:', error);
-                updateSyncStatus(error.message);
-            }
+        function loadTasks() {
+            const stored = localStorage.getItem('tasks');
+            tasks = stored ? JSON.parse(stored) : [];
+            renderTasks();
+            renderTemplates();
+            updateSyncStatus('✓ Synced');
+        }
+
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            updateSyncStatus('✓ Synced');
         }
 
         function getStreakCount() {
             return parseInt(localStorage.getItem('streakCount')) || 0;
         }
 
-        async function updateStreakCounter() {
-            try {
-                const lastUsedKey = 'lastUsedDate';
-                const streakKey = 'streakCount';
-                const lastUsed = localStorage.getItem(lastUsedKey);
-                let streak = parseInt(localStorage.getItem(streakKey)) || 1;
+        function updateStreakCounter() {
+            const lastUsedKey = 'lastUsedDate';
+            const streakKey = 'streakCount';
+            const lastUsed = localStorage.getItem(lastUsedKey);
+            let streak = parseInt(localStorage.getItem(streakKey)) || 1;
 
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
 
-                if (lastUsed === yesterday.toDateString()) {
-                    streak++;
-                } else if (lastUsed !== today) {
-                    streak = 1;
-                }
-
-                localStorage.setItem(streakKey, streak.toString());
-                localStorage.setItem(lastUsedKey, today);
-            } catch (error) {
-                console.error('Error updating streak:', error);
+            if (lastUsed === yesterday.toDateString()) {
+                streak++;
+            } else if (lastUsed !== today) {
+                streak = 1;
             }
+
+            localStorage.setItem(streakKey, streak.toString());
+            localStorage.setItem(lastUsedKey, today);
         }
 
         function renderTemplates() {
-            // Render category templates
             Object.keys(defaultTemplates).forEach(category => {
                 const container = document.getElementById(category + 'Templates');
                 container.innerHTML = defaultTemplates[category].map(template => `
-                    <button class="template-btn" onclick="addTaskFromTemplate('${template.replace(/'/g, "\\'")}', 'medium')">
+                    <button class="template-btn" onclick="addTaskFromTemplate('${template.replace(/'/g, "\\'")}')">
                         ${template}
                     </button>
                 `).join('');
             });
 
-            // Render suggested templates from history
             const allTasks = tasks.map(t => t.text);
             const uniqueTasks = [...new Set(allTasks)].slice(0, 8);
             
@@ -814,20 +733,19 @@
                 document.getElementById('suggestedTemplates').style.display = 'block';
                 const suggestedGrid = document.getElementById('suggestedTemplatesGrid');
                 suggestedGrid.innerHTML = uniqueTasks.map(task => `
-                    <button class="template-btn" onclick="addTaskFromTemplate('${task.replace(/'/g, "\\'")}', 'medium')">
+                    <button class="template-btn" onclick="addTaskFromTemplate('${task.replace(/'/g, "\\'")}')">
                         ${task}
                     </button>
                 `).join('');
             }
         }
 
-        window.addTaskFromTemplate = async function(text, priority) {
-            const input = document.getElementById('taskInput');
-            input.value = text;
-            await addTask();
+        window.addTaskFromTemplate = function(text) {
+            document.getElementById('taskInput').value = text;
+            addTask();
         };
 
-        window.addTask = async function() {
+        window.addTask = function() {
             const input = document.getElementById('taskInput');
             const priority = document.getElementById('prioritySelect').value;
             const text = input.value.trim();
@@ -837,85 +755,53 @@
                 return;
             }
 
-            try {
-                updateSyncStatus('syncing');
-                await updateStreakCounter();
-                await addDoc(collection(db, 'tasks'), {
-                    text: text,
-                    completed: false,
-                    priority: priority,
-                    date: today,
-                    createdAt: new Date().toISOString()
-                });
-                input.value = '';
-                await loadTasksFromFirestore();
-                input.focus();
-            } catch (error) {
-                console.error('Error adding task:', error);
-                updateSyncStatus(error.message);
+            updateStreakCounter();
+            tasks.push({
+                id: Date.now(),
+                text: text,
+                completed: false,
+                priority: priority,
+                date: today
+            });
+
+            input.value = '';
+            saveTasks();
+            loadTasks();
+            input.focus();
+        };
+
+        window.toggleTask = function(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveTasks();
+                loadTasks();
             }
         };
 
-        window.toggleTask = async function(id) {
-            try {
-                updateSyncStatus('syncing');
-                const task = tasks.find(t => t.id === id);
-                if (task) {
-                    await updateDoc(doc(db, 'tasks', id), {
-                        completed: !task.completed
-                    });
-                    await loadTasksFromFirestore();
-                }
-            } catch (error) {
-                console.error('Error toggling task:', error);
-                updateSyncStatus(error.message);
-            }
+        window.removeTask = function(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            saveTasks();
+            loadTasks();
         };
 
-        window.removeTask = async function(id) {
-            try {
-                updateSyncStatus('syncing');
-                await deleteDoc(doc(db, 'tasks', id));
-                await loadTasksFromFirestore();
-            } catch (error) {
-                console.error('Error removing task:', error);
-                updateSyncStatus(error.message);
-            }
-        };
-
-        window.resetToday = async function() {
+        window.resetToday = function() {
             if (confirm('Reset all today\'s tasks?')) {
-                try {
-                    updateSyncStatus('syncing');
-                    for (let task of tasks) {
-                        if (task.date === today && task.completed) {
-                            await updateDoc(doc(db, 'tasks', task.id), {
-                                completed: false
-                            });
-                        }
+                tasks.forEach(t => {
+                    if (t.date === today && t.completed) {
+                        t.completed = false;
                     }
-                    await loadTasksFromFirestore();
-                } catch (error) {
-                    console.error('Error resetting tasks:', error);
-                    updateSyncStatus(error.message);
-                }
+                });
+                saveTasks();
+                loadTasks();
             }
         };
 
-        window.clearAllTasks = async function() {
+        window.clearAllTasks = function() {
             if (confirm('Delete all tasks permanently?')) {
-                try {
-                    updateSyncStatus('syncing');
-                    for (let task of tasks) {
-                        await deleteDoc(doc(db, 'tasks', task.id));
-                    }
-                    tasks = [];
-                    renderTasks();
-                    updateSyncStatus('synced');
-                } catch (error) {
-                    console.error('Error clearing tasks:', error);
-                    updateSyncStatus(error.message);
-                }
+                tasks = [];
+                saveTasks();
+                loadTasks();
             }
         };
 
@@ -948,12 +834,12 @@
                         type="checkbox" 
                         class="task-checkbox" 
                         ${task.completed ? 'checked' : ''} 
-                        onchange="window.toggleTask('${task.id}')"
+                        onchange="window.toggleTask(${task.id})"
                     />
                     <div class="task-content">
                         <div class="task-text">${escapeHtml(task.text)}</div>
                     </div>
-                    <button class="task-remove" onclick="window.removeTask('${task.id}')">✕</button>
+                    <button class="task-remove" onclick="window.removeTask(${task.id})">✕</button>
                 </div>
             `).join('');
         }
@@ -1126,130 +1012,17 @@
         document.getElementById('filterFromDate').valueAsDate = thirtyDaysAgo;
         document.getElementById('filterToDate').valueAsDate = new Date();
 
-        loadTasksFromFirestore();
+        loadTasks();
         updateStreakCounter();
 
         setInterval(() => {
             const newToday = new Date().toDateString();
             if (newToday !== today) {
                 today = newToday;
-                loadTasksFromFirestore();
+                loadTasks();
                 updateStreakCounter();
             }
         }, 60000);
     </script>
 </body>
 </html>
-```
-
----
-
-## 🎯 Key Features Added
-
-### 📌 **Tasks Tab**
-- ✅ Daily tasks management
-- 🎯 Priority levels (High/Medium/Low)
-- ☁️ Cloud sync (Firebase)
-- 🔥 Day streak counter
-- 📊 Today's progress percentage
-- 💡 **Smart suggested templates** (from your history)
-
-### 📚 **Templates Tab**
-- 💼 **Work Templates**: Check emails, Team meeting, Write report, etc.
-- 📚 **Study Templates**: Read chapter, Do assignment, Practice problems, etc.
-- 💪 **Health Templates**: Exercise, Meditation, Drink water, etc.
-- 🎯 **Personal Templates**: Shopping, Clean room, Call family, etc.
-- **One-Click Add**: Click any template to add it to today's tasks
-
-### 📊 **Reports Tab**
-- 📈 Bar chart (Completed vs Total)
-- 📅 30-day calendar heatmap
-- 🟢 Green (100% complete)
-- 🟠 Orange (50% complete)
-- 🔴 Red (0% complete)
-- 📋 Daily progress table
-- 🔍 Date range filter
-
----
-
-## 📥 Installation
-
-### Step 1: GitHub में Add करो
-```bash
-git add "Daily Todo Checklist.html"
-git commit -m "Add todo app with templates and reports"
-git push
-```
-
-### Step 2: Use करो
-```
-https://raw.githubusercontent.com/akkmpn/open-access/main/Daily%20Todo%20Checklist.html
-```
-
----
-
-## 💻 Technical Stack
-
-- **Frontend**: HTML5, CSS3, Vanilla JavaScript (ES6+)
-- **Backend**: Firebase Firestore
-- **Charts**: Chart.js 3.9.1
-- **Storage**: Browser localStorage (for streak)
-- **Deployment**: GitHub Pages / Raw
-
----
-
-## 🔑 Features
-
-✨ **Smart Suggestions**
-- Automatically learns from your history
-- Shows most used tasks at the top
-- One-click add from templates
-
-🏷️ **4 Categories**
-- Work (professional tasks)
-- Study (learning tasks)
-- Health (wellness tasks)
-- Personal (daily life tasks)
-
-📊 **Analytics**
-- 30-day calendar view
-- Progress charts
-- Detailed reports
-- Streak counter
-
-🔄 **Sync**
-- Cloud storage (Firebase)
-- Real-time updates
-- Multi-device access
-
----
-
-## ⌨️ Keyboard Shortcuts
-
-- `Enter` - Task add करने के लिए
-- Click template - Template से add करने के लिए
-
----
-
-## 📝 Usage
-
-1. **Go to Tasks Tab** - Daily tasks add करो
-2. **Go to Templates Tab** - Pre-made templates देखो
-3. **Click Template** - One-click में task add हो जाता है
-4. **Check Tasks** - Complete करो और progress देखो
-5. **View Reports** - Analytics और insights देखो
-
----
-
-## 🚀 Ready to Use!
-
-```
-✅ Complete productivity tracker
-📚 Smart task templates
-📊 Beautiful analytics
-⚡ Lightning fast
-☁️ Cloud synced
-🔥 Day streak tracking
-```
-
-**तैयार है! सीधे GitHub पर update करो और use करो! 🎉**
