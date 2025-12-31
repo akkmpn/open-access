@@ -1,3 +1,20 @@
+# Daily Todo Checklist with Reports - Complete Code
+
+## Overview
+यह एक **complete productivity tracker** है जिसमें:
+- ✅ Tasks management
+- 📊 Progress charts
+- 📅 Calendar view (30 days)
+- 📈 Daily statistics
+- 🔍 Date range filters
+- ☁️ Cloud sync (Firebase)
+- 🔥 Day streak counter
+
+---
+
+## Complete HTML Code
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -788,7 +805,7 @@
             const sortedTasks = [...todayTasks].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
             container.innerHTML = sortedTasks.map(task => `
-                <div class="task-item ${task.completed ? 'completed' : ''}">
+                <div class="task-item">
                     <input 
                         type="checkbox" 
                         class="task-checkbox" 
@@ -985,3 +1002,93 @@
     </script>
 </body>
 </html>
+```
+
+---
+
+## Installation Steps
+
+### 1. GitHub में Add करो:
+```bash
+git add "Daily Todo Checklist.html"
+git commit -m "Add complete todo app with reports"
+git push
+```
+
+### 2. Raw Link से Use करो:
+```
+https://raw.githubusercontent.com/akkmpn/open-access/main/Daily%20Todo%20Checklist.html
+```
+
+---
+
+## Features
+
+### 📋 Tasks Tab
+- ✅ Daily tasks add करो
+- 🎯 Priority levels (High/Medium/Low)
+- ☁️ Cloud sync (Firebase)
+- 🔥 Day streak counter
+- 📊 Today's progress percentage
+
+### 📊 Reports Tab
+- 📈 Bar chart (Completed vs Total)
+- 📅 30-day calendar heatmap
+- 🟢 Green (100% complete)
+- 🟠 Orange (50% complete)
+- 🔴 Red (0% complete)
+- 📋 Daily progress table
+- 🔍 Date range filter
+
+---
+
+## Technical Stack
+
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript (ES6+)
+- **Backend**: Firebase Firestore
+- **Charts**: Chart.js 3.9.1
+- **Storage**: Browser localStorage (for streak)
+- **Deployment**: GitHub Pages / Raw
+
+---
+
+## Firebase Config
+
+```javascript
+const firebaseConfig = {
+    apiKey: "AIzaSyCoCFw0hezldX3t33AYa1ytddYMuQCWliM",
+    authDomain: "daily-todo-1e4ad.firebaseapp.com",
+    projectId: "daily-todo-1e4ad",
+    storageBucket: "daily-todo-1e4ad.firebasestorage.app",
+    messagingSenderId: "629797690976",
+    appId: "1:629797690976:web:fda66df1691eb920e12d05",
+    measurementId: "G-KG0NGWBFCW"
+};
+```
+
+---
+
+## Usage Tips
+
+1. **Daily Tasks**: Task input में लिख कर "Add Task" दबाओ
+2. **Priority**: Low/Medium/High चुनो
+3. **Reports**: "Reports" tab पर जाओ
+4. **Date Filter**: Start और end date चुनो, "Generate" दबाओ
+5. **Calendar**: Green = 100%, Orange = Partial, Red = No tasks
+
+---
+
+## Keyboard Shortcuts
+
+- `Enter` - Task add करने के लिए
+
+---
+
+## Notes
+
+- सभी data Firebase cloud में store होता है
+- Streak counter localStorage में save होता है
+- 30 दिन का calendar automatically generate होता है
+- Chart.js से interactive graphs
+
+**तैयार है! 🚀💯**
