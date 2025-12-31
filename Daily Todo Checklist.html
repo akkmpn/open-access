@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enterprise TaskPro Pro - Advanced Productivity Platform</title>
+    <title>TaskPro Pro - Enterprise Edition</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
@@ -29,11 +29,10 @@
             --text-primary: #f1f5f9;
             --text-secondary: #cbd5e1;
             --border: #475569;
-            --shadow: rgba(0, 0, 0, 0.5);
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             min-height: 100vh;
@@ -44,10 +43,8 @@
             display: grid;
             grid-template-columns: 280px 1fr;
             min-height: 100vh;
-            position: relative;
         }
 
-        /* HEADER BAR */
         .header-bar {
             position: fixed;
             top: 0;
@@ -81,19 +78,51 @@
             gap: 8px;
         }
 
-        .search-bar {
-            flex: 1;
-            max-width: 400px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 16px;
-            color: var(--text-primary);
-            font-size: 13px;
+        .sync-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--success);
+            border-radius: 20px;
+            font-size: 11px;
+            color: var(--success);
         }
 
-        .search-bar::placeholder {
-            color: var(--text-secondary);
+        .sync-badge.syncing {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .sync-badge.offline {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .sync-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .sync-indicator.syncing {
+            background: var(--warning);
+            animation: pulse 0.6s infinite;
+        }
+
+        .sync-indicator.offline {
+            background: var(--danger);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         .header-right {
@@ -102,20 +131,6 @@
             gap: 15px;
         }
 
-        .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--success);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* SIDEBAR */
         .sidebar {
             position: fixed;
             left: 0;
@@ -158,7 +173,6 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 6px;
-            position: relative;
         }
 
         .nav-item:hover {
@@ -186,7 +200,6 @@
             margin-top: 20px;
         }
 
-        /* MAIN CONTENT */
         .main-content {
             margin-left: 280px;
             margin-top: 60px;
@@ -211,7 +224,6 @@
             font-size: 14px;
         }
 
-        /* CARDS */
         .card {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
@@ -226,7 +238,6 @@
             box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
         }
 
-        /* STATS GRID */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -261,17 +272,6 @@
             letter-spacing: 0.5px;
         }
 
-        .stat-trend {
-            font-size: 11px;
-            margin-top: 8px;
-            padding: 4px 8px;
-            background: rgba(16, 185, 129, 0.1);
-            border-radius: 4px;
-            color: var(--success);
-            width: fit-content;
-        }
-
-        /* INPUT SECTION */
         .input-grid {
             display: grid;
             grid-template-columns: 1fr 150px 100px 100px;
@@ -323,6 +323,11 @@
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
         }
 
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .btn-secondary {
             background: var(--bg-surface);
             color: var(--text-primary);
@@ -334,7 +339,6 @@
             color: var(--accent);
         }
 
-        /* TABS */
         .tabs {
             display: flex;
             gap: 5px;
@@ -373,7 +377,6 @@
             display: block;
         }
 
-        /* TASK LIST */
         .task-item {
             background: var(--bg-surface);
             padding: 16px;
@@ -426,6 +429,7 @@
             flex-wrap: wrap;
             align-items: center;
             font-size: 12px;
+            margin-bottom: 8px;
         }
 
         .priority-badge {
@@ -448,18 +452,27 @@
             background: var(--success);
         }
 
-        .ai-suggestion {
-            padding: 12px;
-            background: rgba(59, 130, 246, 0.1);
-            border-left: 3px solid var(--accent);
-            border-radius: 6px;
-            font-size: 12px;
-            color: var(--accent-light);
-            margin-top: 8px;
-            font-style: italic;
+        .subtask-container {
+            margin-left: 20px;
+            margin-top: 12px;
+            border-left: 2px solid var(--border);
+            padding-left: 12px;
         }
 
-        /* CHART */
+        .subtask-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            font-size: 13px;
+        }
+
+        .subtask-input {
+            padding: 8px 10px !important;
+            font-size: 12px !important;
+            margin-top: 8px;
+        }
+
         .chart-container {
             position: relative;
             height: 350px;
@@ -470,26 +483,82 @@
             margin-bottom: 20px;
         }
 
-        /* EMPTY STATE */
         .empty-state {
             text-align: center;
             padding: 40px 20px;
             color: var(--text-secondary);
         }
 
-        .empty-icon {
-            font-size: 48px;
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--border);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 700;
             margin-bottom: 15px;
+            color: var(--text-primary);
         }
 
-        /* GRID */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 15px;
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
         }
 
-        /* SCROLLBAR */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--warning);
+        }
+
         .scrollbar {
             scrollbar-width: thin;
             scrollbar-color: var(--border) transparent;
@@ -504,7 +573,6 @@
             border-radius: 3px;
         }
 
-        /* RESPONSIVE */
         @media (max-width: 1024px) {
             .app-container {
                 grid-template-columns: 1fr;
@@ -538,10 +606,6 @@
                 padding: 10px;
             }
 
-            .search-bar {
-                display: none;
-            }
-
             .sidebar {
                 flex-direction: column;
             }
@@ -554,46 +618,6 @@
                 grid-template-columns: 1fr;
             }
         }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--bg-secondary);
-            border-radius: 10px;
-            padding: 25px;
-            max-width: 500px;
-            width: 90%;
-            border: 1px solid var(--border);
-        }
-
-        .modal-header {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: var(--text-primary);
-        }
-
-        .modal-footer {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            justify-content: flex-end;
-        }
     </style>
 </head>
 <body>
@@ -601,10 +625,12 @@
     <div class="header-bar">
         <div class="header-left">
             <div class="logo">⚡ TaskPro Pro</div>
-            <input type="text" class="search-bar" id="globalSearch" placeholder="Search tasks, habits... (Cmd+K)" />
+            <div class="sync-badge" id="syncBadge">
+                <span class="sync-indicator"></span>
+                <span id="syncText">Synced</span>
+            </div>
         </div>
         <div class="header-right">
-            <div class="status-indicator" id="syncStatus" title="Cloud sync status"></div>
             <div style="color: var(--text-secondary); font-size: 12px;" id="userDisplay">Guest</div>
             <button class="btn btn-secondary" style="padding: 8px 12px; font-size: 12px;" onclick="openModal('authModal')">Sign In</button>
         </div>
@@ -618,25 +644,18 @@
             <button class="nav-item" onclick="switchTab('tasks')">📝 Tasks <span class="nav-badge" id="taskBadge">0</span></button>
             <button class="nav-item" onclick="switchTab('habits')">🎯 Habits</button>
             <button class="nav-item" onclick="switchTab('ai-insights')">🤖 AI Insights</button>
-            <button class="nav-item" onclick="switchTab('calendar')">📅 Calendar</button>
         </div>
 
         <div class="sidebar-section">
-            <div class="sidebar-title">Performance</div>
+            <div class="sidebar-title">Analytics</div>
             <button class="nav-item" onclick="switchTab('analytics')">📊 Analytics</button>
-            <button class="nav-item" onclick="switchTab('reports')">📈 Reports</button>
-            <button class="nav-item" onclick="switchTab('focus-sessions')">⏱️ Focus Sessions</button>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="sidebar-title">Team</div>
-            <button class="nav-item" onclick="switchTab('collaboration')">👥 Collaboration</button>
-            <button class="nav-item" onclick="switchTab('activity')">🔔 Activity Feed</button>
+            <button class="nav-item" onclick="switchTab('focus-sessions')">⏱️ Focus</button>
         </div>
 
         <div class="sidebar-footer">
-            <button class="btn btn-primary" style="width: 100%; margin-bottom: 8px;" onclick="syncWithCloud()">☁️ Sync Now</button>
+            <button class="btn btn-primary" style="width: 100%; margin-bottom: 8px;" onclick="syncManually()">🔄 Sync</button>
             <button class="btn btn-secondary" style="width: 100%; font-size: 12px;" onclick="openModal('settingsModal')">⚙️ Settings</button>
+            <button class="btn btn-secondary" style="width: 100%; font-size: 12px; margin-top: 8px;" onclick="logout()">🚪 Logout</button>
         </div>
     </div>
 
@@ -646,29 +665,27 @@
         <div id="dashboard" class="tab-content active">
             <div class="content-header">
                 <h1>Dashboard</h1>
-                <p>Your productivity at a glance</p>
+                <p>Your productivity overview</p>
             </div>
+
+            <div id="alertContainer"></div>
 
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-value" id="dashCompletion">0%</div>
                     <div class="stat-label">Completion Rate</div>
-                    <div class="stat-trend">↑ 12% from last week</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="dashToday">0</div>
                     <div class="stat-label">Tasks Today</div>
-                    <div class="stat-trend">Avg: 8 daily</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="dashStreak">0</div>
-                    <div class="stat-label">Day Streak</div>
-                    <div class="stat-trend">🔥 Keep it up!</div>
+                    <div class="stat-label">Habit Streak</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="dashFocus">0h</div>
                     <div class="stat-label">Focus Time</div>
-                    <div class="stat-trend">Today's total</div>
                 </div>
             </div>
 
@@ -693,7 +710,7 @@
         <div id="tasks" class="tab-content">
             <div class="content-header">
                 <h1>Tasks</h1>
-                <p>Manage your tasks with advanced tracking</p>
+                <p>Manage tasks with subtasks & offline support</p>
             </div>
 
             <div class="input-grid">
@@ -716,8 +733,8 @@
 
             <div id="tasksContainer" class="scrollbar" style="max-height: 600px; overflow-y: auto;">
                 <div class="empty-state">
-                    <div class="empty-icon">📋</div>
-                    <p>No tasks yet. Create one to get started!</p>
+                    <div style="font-size: 48px; margin-bottom: 15px;">📋</div>
+                    <p>No tasks. Create one to get started!</p>
                 </div>
             </div>
         </div>
@@ -726,7 +743,7 @@
         <div id="habits" class="tab-content">
             <div class="content-header">
                 <h1>Habit Tracker</h1>
-                <p>Build lasting habits through consistent tracking</p>
+                <p>Build consistent habits</p>
             </div>
 
             <div class="input-grid" style="grid-template-columns: 1fr 100px;">
@@ -736,34 +753,34 @@
 
             <div id="habitsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">
                 <div class="empty-state" style="grid-column: 1/-1;">
-                    <div class="empty-icon">✨</div>
-                    <p>Start building habits today</p>
+                    <div style="font-size: 48px; margin-bottom: 15px;">✨</div>
+                    <p>Start building habits</p>
                 </div>
             </div>
         </div>
 
-        <!-- AI INSIGHTS TAB -->
+        <!-- AI INSIGHTS -->
         <div id="ai-insights" class="tab-content">
             <div class="content-header">
                 <h1>🤖 AI Insights</h1>
-                <p>Personalized recommendations powered by machine learning</p>
+                <p>Smart recommendations</p>
             </div>
 
             <div class="card">
-                <h3 style="margin-bottom: 15px;">Smart Recommendations</h3>
+                <h3 style="margin-bottom: 15px;">Recommendations</h3>
                 <div id="aiRecommendations">
                     <div class="empty-state">
-                        <p>Add tasks to get AI recommendations</p>
+                        <p>Add tasks to get recommendations</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ANALYTICS TAB -->
+        <!-- ANALYTICS -->
         <div id="analytics" class="tab-content">
             <div class="content-header">
                 <h1>Analytics</h1>
-                <p>Deep insights into your productivity</p>
+                <p>Productivity insights</p>
             </div>
 
             <div class="stats-grid">
@@ -781,7 +798,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="analAvgTime">0h</div>
-                    <div class="stat-label">Avg Completion Time</div>
+                    <div class="stat-label">Avg Time</div>
                 </div>
             </div>
 
@@ -793,73 +810,32 @@
             </div>
         </div>
 
-        <!-- FOCUS SESSIONS TAB -->
+        <!-- FOCUS SESSIONS -->
         <div id="focus-sessions" class="tab-content">
             <div class="content-header">
                 <h1>⏱️ Focus Sessions</h1>
-                <p>Track your deep work with Pomodoro</p>
+                <p>Pomodoro Timer</p>
             </div>
 
             <div class="card" style="text-align: center;">
-                <div style="font-size: 56px; font-family: 'Courier New', monospace; color: var(--accent-light); margin: 20px 0; font-weight: 700;" id="pomodoroDisplay">25:00</div>
-                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <div style="font-size: 64px; font-family: 'Courier New', monospace; color: var(--accent-light); margin: 30px 0; font-weight: 700;" id="pomodoroDisplay">25:00</div>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
                     <button class="btn btn-primary" onclick="startPomodoro()">▶ Start</button>
                     <button class="btn btn-secondary" onclick="pausePomodoro()">⏸ Pause</button>
                     <button class="btn btn-secondary" onclick="resetPomodoro()">↻ Reset</button>
                 </div>
-                <div style="margin-top: 20px; font-size: 14px; color: var(--text-secondary);">Sessions Today: <span id="sessionsCount" style="color: var(--accent-light); font-weight: 700;">0</span></div>
-            </div>
-        </div>
-
-        <!-- CALENDAR TAB -->
-        <div id="calendar" class="tab-content">
-            <div class="content-header">
-                <h1>📅 Calendar View</h1>
-                <p>Visualize your tasks across time</p>
-            </div>
-
-            <div class="card">
-                <div id="calendarContainer" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;">
-                    <!-- Calendar will be rendered here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- COLLABORATION TAB -->
-        <div id="collaboration" class="tab-content">
-            <div class="content-header">
-                <h1>👥 Collaboration</h1>
-                <p>Work together in real-time</p>
-            </div>
-
-            <div class="card">
-                <h3 style="margin-bottom: 15px;">Team Members</h3>
-                <p style="color: var(--text-secondary); font-size: 14px;">Collaboration features available when signed in</p>
-            </div>
-        </div>
-
-        <!-- ACTIVITY TAB -->
-        <div id="activity" class="tab-content">
-            <div class="content-header">
-                <h1>🔔 Activity Feed</h1>
-                <p>Real-time updates from your workspace</p>
-            </div>
-
-            <div id="activityFeed" class="scrollbar" style="max-height: 600px; overflow-y: auto;">
-                <div class="empty-state">
-                    <div class="empty-icon">📡</div>
-                    <p>Activity will appear here</p>
-                </div>
+                <div style="font-size: 14px; color: var(--text-secondary);">Sessions: <span id="sessionsCount" style="color: var(--accent-light); font-weight: 700;">0</span></div>
             </div>
         </div>
     </div>
 
-    <!-- MODALS -->
+    <!-- AUTH MODAL -->
     <div class="modal" id="authModal">
         <div class="modal-content">
-            <div class="modal-header">Sign In</div>
+            <div class="modal-header">Sign In / Register</div>
             <input type="email" placeholder="Email" id="authEmail" style="margin-bottom: 10px; width: 100%;" />
-            <input type="password" placeholder="Password (min 6 chars)" id="authPassword" style="margin-bottom: 10px; width: 100%;" />
+            <input type="password" placeholder="Password (min 6 chars)" id="authPassword" style="margin-bottom: 15px; width: 100%;" />
+            <div id="authAlert"></div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('authModal')">Cancel</button>
                 <button class="btn btn-primary" onclick="authenticateUser()">Sign In</button>
@@ -867,18 +843,19 @@
         </div>
     </div>
 
+    <!-- SETTINGS MODAL -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <div class="modal-header">Settings</div>
-            <label style="display: block; margin-bottom: 10px; font-size: 14px;">
-                <input type="checkbox" id="darkMode" checked /> Dark Mode
+            <label style="display: block; margin-bottom: 15px; font-size: 14px; cursor: pointer;">
+                <input type="checkbox" id="autoSync" checked /> Enable Auto Sync
             </label>
-            <label style="display: block; margin-bottom: 10px; font-size: 14px;">
+            <label style="display: block; margin-bottom: 15px; font-size: 14px; cursor: pointer;">
                 <input type="checkbox" id="notifications" checked /> Enable Notifications
             </label>
-            <label style="display: block; margin-bottom: 10px; font-size: 14px;">
-                <input type="checkbox" id="autoSync" checked /> Auto Sync (offline-first)
-            </label>
+            <div style="background: var(--bg-surface); padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 12px;">
+                <strong>Auto Sync:</strong> Automatically syncs data every 30 seconds when online
+            </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('settingsModal')">Close</button>
                 <button class="btn btn-primary" onclick="saveSettings()">Save</button>
@@ -887,51 +864,95 @@
     </div>
 
     <script>
-        // ==================== ADVANCED DATA LAYER ====================
+        // ==================== FIREBASE CONFIGURATION ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAxT6I5OUp_X1THaHiLWpBgk7KM5-NqQ4w",
+            authDomain: "taskpro-ea29c.firebaseapp.com",
+            databaseURL: "https://taskpro-ea29c-default-rtdb.firebaseio.com",
+            projectId: "taskpro-ea29c",
+            storageBucket: "taskpro-ea29c.firebasestorage.app",
+            messagingSenderId: "917450499382",
+            appId: "1:917450499382:web:55098613f6ae8a2f37ff97"
+        };
+
+        let app, auth, database, userId = null;
+        let isFirebaseInitialized = false;
+
+        try {
+            app = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            database = firebase.database();
+            isFirebaseInitialized = true;
+            console.log("✅ Firebase initialized");
+        } catch (e) {
+            console.error("❌ Firebase error:", e);
+        }
+
+        // ==================== PRODUCTION TASK MANAGER ====================
         class TaskManager {
             constructor() {
                 this.tasks = [];
                 this.habits = [];
                 this.focusSessions = 0;
-                this.activityLog = [];
                 this.userId = null;
-                this.offlineQueue = [];
-                this.firebaseInitialized = false;
-                this.initOfflineStorage();
+                this.autoSyncInterval = null;
+                this.syncQueue = [];
+                this.isOnline = navigator.onLine;
+                this.lastSyncTime = 0;
+                this.isSyncing = false;
+
+                this.initDB();
+                this.setupNetworkListeners();
+                this.startAutoSync();
             }
 
-            initOfflineStorage() {
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('sw.js').catch(e => {
-                        console.log('Service Worker registration failed:', e);
-                    });
-                }
-                this.enableIndexedDB();
-            }
-
-            enableIndexedDB() {
-                const request = indexedDB.open('TaskProDB', 1);
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
+            initDB() {
+                const request = indexedDB.open('TaskProDB', 2);
+                
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    
                     if (!db.objectStoreNames.contains('tasks')) {
                         db.createObjectStore('tasks', { keyPath: 'id' });
                     }
                     if (!db.objectStoreNames.contains('habits')) {
                         db.createObjectStore('habits', { keyPath: 'id' });
                     }
+                    if (!db.objectStoreNames.contains('syncQueue')) {
+                        db.createObjectStore('syncQueue', { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+
+                request.onsuccess = () => {
+                    console.log("✅ IndexedDB ready");
+                };
+
+                request.onerror = () => {
+                    console.error("❌ IndexedDB error:", request.error);
                 };
             }
 
-            async loadFromIndexedDB() {
-                const request = indexedDB.open('TaskProDB', 1);
-                request.onsuccess = (event) => {
-                    const db = event.target.result;
-                    const tasksStore = db.transaction('tasks').objectStore('tasks');
-                    const tasksRequest = tasksStore.getAll();
-                    tasksRequest.onsuccess = () => {
-                        this.tasks = tasksRequest.result;
-                    };
-                };
+            setupNetworkListeners() {
+                window.addEventListener('online', () => {
+                    this.isOnline = true;
+                    updateSyncStatus('syncing');
+                    this.flushSyncQueue();
+                });
+
+                window.addEventListener('offline', () => {
+                    this.isOnline = false;
+                    updateSyncStatus('offline');
+                });
+            }
+
+            startAutoSync() {
+                if (document.getElementById('autoSync').checked) {
+                    this.autoSyncInterval = setInterval(() => {
+                        if (this.isOnline && this.userId && !this.isSyncing) {
+                            this.syncAll();
+                        }
+                    }, 30000);
+                }
             }
 
             addTask(text, priority = 'medium', dueDate = null) {
@@ -941,50 +962,74 @@
                     completed: false,
                     priority,
                     dueDate,
+                    subtasks: [],
                     createdAt: new Date().toISOString(),
                     completedAt: null,
-                    timeSpent: 0,
-                    aiScore: this.calculateAIScore(text, priority),
-                    tags: this.extractTags(text),
-                    description: ''
+                    updatedAt: Date.now(),
+                    synced: false
                 };
 
                 this.tasks.push(task);
-                this.logActivity(`Created task: "${text}"`);
-                this.saveToIndexedDB('tasks', task);
-                this.queueForSync(task);
+                this.saveLocal('tasks', task);
+                this.queueSync('create', 'task', task);
+                
                 return task;
             }
 
-            calculateAIScore(text, priority) {
-                const lengthScore = Math.min(text.length / 100, 1) * 20;
-                const priorityScore = { high: 30, medium: 20, low: 10 }[priority];
-                const urgencyScore = Math.random() * 50;
-                return Math.round(lengthScore + priorityScore + urgencyScore);
+            addSubtask(taskId, text) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (task) {
+                    const subtask = {
+                        id: Date.now(),
+                        text,
+                        completed: false,
+                        createdAt: new Date().toISOString()
+                    };
+                    task.subtasks.push(subtask);
+                    task.updatedAt = Date.now();
+                    this.saveLocal('tasks', task);
+                    this.queueSync('update', 'task', task);
+                }
             }
 
-            extractTags(text) {
-                const tagRegex = /#(\w+)/g;
-                const matches = text.match(tagRegex) || [];
-                return matches.map(tag => tag.substring(1));
-            }
-
-            toggleTask(id) {
-                const task = this.tasks.find(t => t.id === id);
+            toggleTask(taskId) {
+                const task = this.tasks.find(t => t.id === taskId);
                 if (task) {
                     task.completed = !task.completed;
                     task.completedAt = task.completed ? new Date().toISOString() : null;
-                    this.logActivity(`${task.completed ? '✓' : '✗'} ${task.text}`);
-                    this.queueForSync(task);
+                    task.updatedAt = Date.now();
+                    this.saveLocal('tasks', task);
+                    this.queueSync('update', 'task', task);
                 }
             }
 
-            removeTask(id) {
-                const task = this.tasks.find(t => t.id === id);
+            toggleSubtask(taskId, subtaskId) {
+                const task = this.tasks.find(t => t.id === taskId);
                 if (task) {
-                    this.logActivity(`Deleted task: "${task.text}"`);
+                    const subtask = task.subtasks.find(s => s.id === subtaskId);
+                    if (subtask) {
+                        subtask.completed = !subtask.completed;
+                        task.updatedAt = Date.now();
+                        this.saveLocal('tasks', task);
+                        this.queueSync('update', 'task', task);
+                    }
                 }
-                this.tasks = this.tasks.filter(t => t.id !== id);
+            }
+
+            removeTask(taskId) {
+                this.tasks = this.tasks.filter(t => t.id !== taskId);
+                this.queueSync('delete', 'task', { id: taskId });
+                this.clearLocal('tasks', taskId);
+            }
+
+            removeSubtask(taskId, subtaskId) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (task) {
+                    task.subtasks = task.subtasks.filter(s => s.id !== subtaskId);
+                    task.updatedAt = Date.now();
+                    this.saveLocal('tasks', task);
+                    this.queueSync('update', 'task', task);
+                }
             }
 
             addHabit(text) {
@@ -995,74 +1040,163 @@
                     completedDates: [],
                     lastCompleted: null,
                     emoji: ['🏃', '🧘', '📚', '💧', '😴', '🎨', '💪', '🎯'][Math.floor(Math.random() * 8)],
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    updatedAt: Date.now(),
+                    synced: false
                 };
 
                 this.habits.push(habit);
-                this.logActivity(`Added habit: "${text}"`);
-                this.queueForSync(habit);
+                this.saveLocal('habits', habit);
+                this.queueSync('create', 'habit', habit);
+                
                 return habit;
             }
 
-            toggleHabit(id) {
-                const habit = this.habits.find(h => h.id === id);
+            toggleHabit(habitId) {
+                const habit = this.habits.find(h => h.id === habitId);
                 if (habit) {
                     const today = new Date().toDateString();
                     if (!habit.completedDates.includes(today)) {
                         habit.completedDates.push(today);
                         habit.lastCompleted = today;
-                        habit.streak = (habit.streak || 0) + 1;
-                        this.logActivity(`🔥 Completed habit: "${habit.text}" (${habit.streak} day streak)`);
-                        this.queueForSync(habit);
+                        habit.streak++;
+                        habit.updatedAt = Date.now();
+                        this.saveLocal('habits', habit);
+                        this.queueSync('update', 'habit', habit);
                     }
                 }
             }
 
-            getAIRecommendations() {
-                const overdueTasks = this.tasks.filter(t => {
-                    if (!t.dueDate || t.completed) return false;
-                    return new Date(t.dueDate) < new Date();
-                });
-
-                const highPriorityTasks = this.tasks.filter(t => t.priority === 'high' && !t.completed);
-
-                const recommendations = [
-                    ...(overdueTasks.length > 0 ? [`⚠️ ${overdueTasks.length} overdue task(s) - prioritize these now`] : []),
-                    ...(highPriorityTasks.length > 0 ? [`📌 Focus on ${highPriorityTasks[0].text} first`] : []),
-                    `💡 You're most productive between 9-11 AM based on patterns`,
-                    `🎯 Complete ${3 - (this.focusSessions % 3)} more focus sessions for your daily goal`
-                ];
-
-                return recommendations;
+            saveLocal(store, data) {
+                const request = indexedDB.open('TaskProDB');
+                request.onsuccess = (e) => {
+                    const db = e.target.result;
+                    const transaction = db.transaction(store, 'readwrite');
+                    const objectStore = transaction.objectStore(store);
+                    objectStore.put(data);
+                };
             }
 
-            logActivity(message) {
-                this.activityLog.push({
-                    timestamp: new Date().toISOString(),
-                    message
+            clearLocal(store, id) {
+                const request = indexedDB.open('TaskProDB');
+                request.onsuccess = (e) => {
+                    const db = e.target.result;
+                    const transaction = db.transaction(store, 'readwrite');
+                    const objectStore = transaction.objectStore(store);
+                    objectStore.delete(id);
+                };
+            }
+
+            queueSync(operation, type, data) {
+                this.syncQueue.push({
+                    operation,
+                    type,
+                    data,
+                    timestamp: Date.now(),
+                    retries: 0
                 });
 
-                if (this.activityLog.length > 50) {
-                    this.activityLog.shift();
+                if (this.isOnline && this.userId) {
+                    this.flushSyncQueue();
                 }
             }
 
-            queueForSync(item) {
-                this.offlineQueue.push({
-                    operation: 'write',
-                    data: item,
-                    timestamp: Date.now()
-                });
+            async flushSyncQueue() {
+                if (this.isSyncing || !this.userId) return;
+                
+                this.isSyncing = true;
+                updateSyncStatus('syncing');
+
+                try {
+                    for (const item of this.syncQueue) {
+                        try {
+                            await this.syncItem(item);
+                            this.syncQueue = this.syncQueue.filter(i => i !== item);
+                        } catch (error) {
+                            item.retries++;
+                            if (item.retries > 3) {
+                                console.error('Sync failed after retries:', item);
+                                this.syncQueue = this.syncQueue.filter(i => i !== item);
+                            }
+                        }
+                    }
+
+                    this.lastSyncTime = Date.now();
+                    updateSyncStatus('synced');
+                } catch (error) {
+                    console.error('Sync error:', error);
+                    updateSyncStatus('offline');
+                } finally {
+                    this.isSyncing = false;
+                }
             }
 
-            saveToIndexedDB(storeName, data) {
-                const request = indexedDB.open('TaskProDB', 1);
-                request.onsuccess = (event) => {
-                    const db = event.target.result;
-                    const transaction = db.transaction(storeName, 'readwrite');
-                    const store = transaction.objectStore(storeName);
-                    store.put(data);
-                };
+            async syncItem(item) {
+                const path = `users/${this.userId}/${item.type === 'task' ? 'tasks' : 'habits'}/${item.data.id}`;
+                
+                if (item.operation === 'delete') {
+                    await database.ref(path).remove();
+                } else {
+                    await database.ref(path).set({
+                        ...item.data,
+                        synced: true,
+                        syncedAt: new Date().toISOString()
+                    });
+                }
+            }
+
+            async syncAll() {
+                if (!this.userId) return;
+
+                try {
+                    const updates = {};
+
+                    this.tasks.forEach(task => {
+                        updates[`users/${this.userId}/tasks/${task.id}`] = {
+                            ...task,
+                            synced: true,
+                            syncedAt: new Date().toISOString()
+                        };
+                    });
+
+                    this.habits.forEach(habit => {
+                        updates[`users/${this.userId}/habits/${habit.id}`] = {
+                            ...habit,
+                            synced: true,
+                            syncedAt: new Date().toISOString()
+                        };
+                    });
+
+                    await database.ref().update(updates);
+                    this.lastSyncTime = Date.now();
+                    updateSyncStatus('synced');
+                } catch (error) {
+                    console.error('Full sync error:', error);
+                    updateSyncStatus('offline');
+                }
+            }
+
+            async loadFromFirebase() {
+                if (!this.userId) return;
+
+                try {
+                    const tasksSnapshot = await database.ref(`users/${this.userId}/tasks`).once('value');
+                    const habitsSnapshot = await database.ref(`users/${this.userId}/habits`).once('value');
+
+                    if (tasksSnapshot.val()) {
+                        this.tasks = Object.values(tasksSnapshot.val());
+                        this.tasks.forEach(task => this.saveLocal('tasks', task));
+                    }
+
+                    if (habitsSnapshot.val()) {
+                        this.habits = Object.values(habitsSnapshot.val());
+                        this.habits.forEach(habit => this.saveLocal('habits', habit));
+                    }
+
+                    console.log('✅ Firebase data loaded');
+                } catch (error) {
+                    console.error('Load error:', error);
+                }
             }
 
             getStats() {
@@ -1070,7 +1204,7 @@
                 const completed = this.tasks.filter(t => t.completed).length;
                 const today = new Date().toDateString();
                 const todayTasks = this.tasks.filter(t => t.createdAt.startsWith(today));
-                const overdueTasks = this.tasks.filter(t => {
+                const overdue = this.tasks.filter(t => {
                     if (!t.dueDate || t.completed) return false;
                     return new Date(t.dueDate) < new Date();
                 });
@@ -1081,35 +1215,59 @@
                     pending: total - completed,
                     completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
                     todayCount: todayTasks.length,
-                    overdueCount: overdueTasks.length,
-                    avgCompletionTime: this.calculateAvgTime()
+                    overdueCount: overdue.length
                 };
             }
 
-            calculateAvgTime() {
-                const completedWithTime = this.tasks.filter(t => t.completedAt && t.createdAt);
-                if (completedWithTime.length === 0) return 0;
+            getRecommendations() {
+                const overdue = this.tasks.filter(t => {
+                    if (!t.dueDate || t.completed) return false;
+                    return new Date(t.dueDate) < new Date();
+                });
 
-                const totalTime = completedWithTime.reduce((sum, task) => {
-                    const createdTime = new Date(task.createdAt).getTime();
-                    const completedTime = new Date(task.completedAt).getTime();
-                    return sum + (completedTime - createdTime);
-                }, 0);
+                const highPriority = this.tasks.filter(t => t.priority === 'high' && !t.completed);
 
-                return Math.round((totalTime / completedWithTime.length) / (1000 * 60 * 60));
+                return [
+                    ...(overdue.length > 0 ? [`⚠️ You have ${overdue.length} overdue task(s)`] : []),
+                    ...(highPriority.length > 0 ? [`📌 Focus on high priority tasks first`] : []),
+                    `💡 Consistent effort leads to success`,
+                    `🎯 You're making progress!`
+                ];
             }
         }
 
-        // ==================== INIT ====================
+        // ==================== GLOBAL STATE ====================
         const manager = new TaskManager();
         let pomodoroTime = 25 * 60;
         let pomodoroRunning = false;
         let pomodoroInterval = null;
         let currentFilter = 'all';
-        let trendChart = null;
-        let priorityChart = null;
-        let analyticsChart = null;
+        let expandedTaskId = null;
+        let trendChart = null, priorityChart = null, analyticsChart = null;
 
+        // ==================== SYNC STATUS ====================
+        function updateSyncStatus(status) {
+            const badge = document.getElementById('syncBadge');
+            const indicator = badge.querySelector('.sync-indicator');
+            const text = document.getElementById('syncText');
+
+            badge.classList.remove('syncing', 'offline');
+            
+            if (status === 'syncing') {
+                badge.classList.add('syncing');
+                indicator.classList.add('syncing');
+                text.textContent = 'Syncing...';
+            } else if (status === 'offline') {
+                badge.classList.add('offline');
+                indicator.classList.add('offline');
+                text.textContent = 'Offline';
+            } else {
+                indicator.classList.remove('syncing', 'offline');
+                text.textContent = 'Synced';
+            }
+        }
+
+        // ==================== UI FUNCTIONS ====================
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             const tab = document.getElementById(tabName);
@@ -1118,13 +1276,25 @@
                 if (tabName === 'analytics') renderAnalytics();
                 if (tabName === 'dashboard') renderDashboard();
                 if (tabName === 'ai-insights') renderAIInsights();
-                if (tabName === 'calendar') renderCalendar();
             }
 
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             event?.target?.classList.add('active');
         }
 
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alertContainer');
+            if (!container) return;
+
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `<span>${message}</span>`;
+            container.appendChild(alert);
+
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        // ==================== TASK FUNCTIONS ====================
         function addTask() {
             const input = document.getElementById('taskInput');
             const text = input.value.trim();
@@ -1139,6 +1309,7 @@
 
             renderTasks();
             updateTaskBadge();
+            showAlert('✓ Task created', 'success');
         }
 
         function renderTasks() {
@@ -1158,44 +1329,96 @@
             }
 
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>No tasks here</p></div>';
+                container.innerHTML = '<div class="empty-state"><div style="font-size: 48px;">📋</div><p>No tasks</p></div>';
                 return;
             }
 
             container.innerHTML = filtered
-                .sort((a, b) => {
-                    const priorityOrder = { high: 0, medium: 1, low: 2 };
-                    return priorityOrder[a.priority] - priorityOrder[b.priority];
-                })
-                .map(task => `
+                .sort((a, b) => ({ high: 0, medium: 1, low: 2 }[a.priority] - { high: 0, medium: 1, low: 2 }[b.priority]))
+                .map(task => {
+                    const subtasksCompleted = task.subtasks.filter(s => s.completed).length;
+                    const subtasksTotal = task.subtasks.length;
+                    const isExpanded = expandedTaskId === task.id;
+
+                    return `
                     <div class="task-item ${task.completed ? 'completed' : ''}">
                         <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} 
-                               onchange="window.toggleTaskUI(${task.id})" />
+                               onchange="toggleTaskUI(${task.id})" />
                         <div class="task-content">
                             <div class="task-text">${escapeHtml(task.text)}</div>
                             <div class="task-meta">
                                 <span class="priority-badge priority-${task.priority}">${task.priority.toUpperCase()}</span>
                                 ${task.dueDate ? `<span>📅 ${new Date(task.dueDate).toLocaleDateString()}</span>` : ''}
-                                <span style="color: var(--text-secondary); font-size: 11px;">AI Score: ${task.aiScore}</span>
+                                ${subtasksTotal > 0 ? `<span>✓ ${subtasksCompleted}/${subtasksTotal}</span>` : ''}
                             </div>
-                            ${!task.completed && Math.random() > 0.6 ? `<div class="ai-suggestion">💡 Tip: Break this into smaller subtasks for better progress tracking</div>` : ''}
+                            ${isExpanded ? `
+                                <div class="subtask-container">
+                                    ${task.subtasks && task.subtasks.length > 0 ? task.subtasks.map(s => `
+                                        <div class="subtask-item">
+                                            <input type="checkbox" style="width: 14px; height: 14px;" 
+                                                   ${s.completed ? 'checked' : ''} 
+                                                   onchange="toggleSubtaskUI(${task.id}, ${s.id})" />
+                                            <span style="flex: 1; ${s.completed ? 'opacity: 0.6; text-decoration: line-through;' : ''}">${escapeHtml(s.text)}</span>
+                                            <button class="btn btn-secondary" style="padding: 2px 6px; font-size: 11px;" 
+                                                    onclick="removeSubtaskUI(${task.id}, ${s.id})">✕</button>
+                                        </div>
+                                    `).join('') : '<div style="font-size: 12px; color: var(--text-secondary);">No subtasks</div>'}
+                                    <input type="text" class="subtask-input" id="subtask-input-${task.id}" placeholder="Add subtask..." 
+                                           onkeypress="if(event.key==='Enter') addSubtaskUI(${task.id})" />
+                                    <button class="btn btn-primary" style="padding: 6px 10px; font-size: 12px; margin-top: 6px;" 
+                                            onclick="addSubtaskUI(${task.id})">+ Add</button>
+                                </div>
+                            ` : ''}
                         </div>
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="window.removeTaskUI(${task.id})">✕</button>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="btn btn-secondary" style="padding: 6px 10px; font-size: 12px;" 
+                                    onclick="toggleExpand(${task.id})">
+                                ${isExpanded ? '▼' : '▶'} ${subtasksTotal}
+                            </button>
+                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" 
+                                    onclick="removeTaskUI(${task.id})">✕</button>
+                        </div>
                     </div>
-                `)
+                    `;
+                })
                 .join('');
         }
 
-        window.toggleTaskUI = function(id) {
+        function toggleTaskUI(id) {
             manager.toggleTask(id);
             renderTasks();
-        };
+        }
 
-        window.removeTaskUI = function(id) {
+        function removeTaskUI(id) {
             manager.removeTask(id);
             renderTasks();
             updateTaskBadge();
-        };
+        }
+
+        function toggleExpand(id) {
+            expandedTaskId = expandedTaskId === id ? null : id;
+            renderTasks();
+        }
+
+        function addSubtaskUI(taskId) {
+            const input = document.getElementById(`subtask-input-${taskId}`);
+            const text = input.value.trim();
+            if (!text) return;
+            
+            manager.addSubtask(taskId, text);
+            input.value = '';
+            renderTasks();
+        }
+
+        function toggleSubtaskUI(taskId, subtaskId) {
+            manager.toggleSubtask(taskId, subtaskId);
+            renderTasks();
+        }
+
+        function removeSubtaskUI(taskId, subtaskId) {
+            manager.removeSubtask(taskId, subtaskId);
+            renderTasks();
+        }
 
         function filterTasks(filter) {
             currentFilter = filter;
@@ -1204,6 +1427,12 @@
             renderTasks();
         }
 
+        function updateTaskBadge() {
+            const pending = manager.tasks.filter(t => !t.completed).length;
+            document.getElementById('taskBadge').textContent = pending;
+        }
+
+        // ==================== HABIT FUNCTIONS ====================
         function addHabit() {
             const input = document.getElementById('habitInput');
             const text = input.value.trim();
@@ -1212,22 +1441,22 @@
             manager.addHabit(text);
             input.value = '';
             renderHabits();
+            showAlert('✓ Habit added', 'success');
         }
 
         function renderHabits() {
             const container = document.getElementById('habitsContainer');
             if (manager.habits.length === 0) {
-                container.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><div class="empty-icon">✨</div><p>Start building habits today</p></div>';
+                container.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><div style="font-size: 48px;">✨</div><p>No habits</p></div>';
                 return;
             }
 
+            const today = new Date().toDateString();
             container.innerHTML = manager.habits.map(habit => {
-                const today = new Date().toDateString();
-                const isCompletedToday = habit.completedDates.includes(today);
-
+                const completed = habit.completedDates.includes(today);
                 return `
-                    <div class="card" style="padding: 12px; text-align: center; cursor: pointer; background: ${isCompletedToday ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'var(--bg-surface)'};" 
-                         onclick="window.toggleHabitUI(${habit.id})">
+                    <div class="card" style="padding: 12px; text-align: center; cursor: pointer; background: ${completed ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'var(--bg-surface)'};" 
+                         onclick="toggleHabitUI(${habit.id})">
                         <div style="font-size: 32px; margin-bottom: 8px;">${habit.emoji}</div>
                         <div style="font-size: 12px; font-weight: 600; color: var(--text-primary);">${habit.text}</div>
                         <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;">🔥 ${habit.streak}</div>
@@ -1236,11 +1465,12 @@
             }).join('');
         }
 
-        window.toggleHabitUI = function(id) {
+        function toggleHabitUI(id) {
             manager.toggleHabit(id);
             renderHabits();
-        };
+        }
 
+        // ==================== DASHBOARD ====================
         function renderDashboard() {
             const stats = manager.getStats();
             document.getElementById('dashCompletion').textContent = stats.completionRate + '%';
@@ -1288,9 +1518,9 @@
 
         function renderPriorityChart() {
             const ctx = document.getElementById('priorityChart');
-            const highCount = manager.tasks.filter(t => t.priority === 'high').length;
-            const mediumCount = manager.tasks.filter(t => t.priority === 'medium').length;
-            const lowCount = manager.tasks.filter(t => t.priority === 'low').length;
+            const high = manager.tasks.filter(t => t.priority === 'high').length;
+            const medium = manager.tasks.filter(t => t.priority === 'medium').length;
+            const low = manager.tasks.filter(t => t.priority === 'low').length;
 
             if (priorityChart) priorityChart.destroy();
             priorityChart = new Chart(ctx, {
@@ -1298,7 +1528,7 @@
                 data: {
                     labels: ['High', 'Medium', 'Low'],
                     datasets: [{
-                        data: [highCount, mediumCount, lowCount],
+                        data: [high, medium, low],
                         backgroundColor: ['#ef4444', '#f59e0b', '#10b981']
                     }]
                 },
@@ -1310,33 +1540,23 @@
             });
         }
 
-        function renderAIInsights() {
-            const container = document.getElementById('aiRecommendations');
-            const recommendations = manager.getAIRecommendations();
-            container.innerHTML = recommendations.map(rec => `
-                <div style="padding: 12px; background: rgba(59, 130, 246, 0.1); border-left: 3px solid #3b82f6; border-radius: 6px; margin-bottom: 10px; font-size: 14px;">
-                    ${rec}
-                </div>
-            `).join('');
-        }
-
+        // ==================== ANALYTICS ====================
         function renderAnalytics() {
             const stats = manager.getStats();
             document.getElementById('analTotal').textContent = stats.total;
             document.getElementById('analCompleted').textContent = stats.completed;
             document.getElementById('analPending').textContent = stats.pending;
-            document.getElementById('analAvgTime').textContent = stats.avgCompletionTime + 'h';
 
             const ctx = document.getElementById('analyticsChart');
             const data = [];
             const labels = [];
+            
             for (let i = 29; i >= 0; i--) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
                 const dateStr = d.toDateString();
-                const dayTasks = manager.tasks.filter(t => t.createdAt.startsWith(dateStr)).length;
-                data.push(dayTasks);
+                data.push(manager.tasks.filter(t => t.createdAt.startsWith(dateStr)).length);
             }
 
             if (analyticsChart) analyticsChart.destroy();
@@ -1345,57 +1565,33 @@
                 data: {
                     labels,
                     datasets: [{
-                        label: 'Tasks Created',
+                        label: 'Tasks',
                         data,
-                        backgroundColor: '#3b82f6',
-                        borderColor: '#1e40af',
-                        borderWidth: 1
+                        backgroundColor: '#3b82f6'
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: true } },
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
                 }
             });
         }
 
-        function renderCalendar() {
-            const container = document.getElementById('calendarContainer');
-            const html = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-                .map(day => `<div style="text-align: center; font-weight: 700; color: var(--accent); padding: 10px; font-size: 12px;">${day}</div>`)
-                .join('');
-
-            let startDate = new Date();
-            startDate.setDate(1);
-            let endDate = new Date(startDate);
-            endDate.setMonth(endDate.getMonth() + 1);
-
-            for (let i = 0; i < startDate.getDay(); i++) {
-                html += '<div></div>';
-            }
-
-            let currentDate = new Date(startDate);
-            while (currentDate < endDate) {
-                const dateStr = currentDate.toDateString();
-                const taskCount = manager.tasks.filter(t => t.createdAt.startsWith(dateStr)).length;
-                const completedCount = manager.tasks.filter(t => t.createdAt.startsWith(dateStr) && t.completed).length;
-                const percentage = taskCount > 0 ? Math.round((completedCount / taskCount) * 100) : 0;
-
-                html += `<div style="padding: 10px; text-align: center; background: ${taskCount > 0 ? 'rgba(59, 130, 246, 0.2)' : 'transparent'}; border-radius: 6px; font-size: 12px; border: 1px solid var(--border);">
-                    <div style="font-weight: 700;">${currentDate.getDate()}</div>
-                    <div style="font-size: 10px; color: var(--text-secondary);">${percentage}%</div>
-                </div>`;
-
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
-
-            container.innerHTML = html;
+        // ==================== AI INSIGHTS ====================
+        function renderAIInsights() {
+            const container = document.getElementById('aiRecommendations');
+            const recommendations = manager.getRecommendations();
+            container.innerHTML = recommendations.map(rec => `
+                <div style="padding: 12px; background: rgba(59, 130, 246, 0.1); border-left: 3px solid #3b82f6; border-radius: 6px; margin-bottom: 10px; font-size: 14px;">
+                    ${rec}
+                </div>
+            `).join('');
         }
 
-        // POMODORO
-        window.startPomodoro = function() {
+        // ==================== POMODORO ====================
+        function startPomodoro() {
             if (pomodoroRunning) return;
             pomodoroRunning = true;
             pomodoroInterval = setInterval(() => {
@@ -1405,26 +1601,25 @@
                     clearInterval(pomodoroInterval);
                     pomodoroRunning = false;
                     manager.focusSessions++;
-                    manager.logActivity('✅ Pomodoro session completed');
                     pomodoroTime = 25 * 60;
                     alert('🎉 Focus session complete!');
                     document.getElementById('pomodoroDisplay').textContent = formatTime(pomodoroTime);
                     document.getElementById('sessionsCount').textContent = manager.focusSessions;
                 }
             }, 1000);
-        };
+        }
 
-        window.pausePomodoro = function() {
+        function pausePomodoro() {
             clearInterval(pomodoroInterval);
             pomodoroRunning = false;
-        };
+        }
 
-        window.resetPomodoro = function() {
+        function resetPomodoro() {
             clearInterval(pomodoroInterval);
             pomodoroRunning = false;
             pomodoroTime = 25 * 60;
             document.getElementById('pomodoroDisplay').textContent = formatTime(pomodoroTime);
-        };
+        }
 
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
@@ -1432,7 +1627,84 @@
             return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // MODALS
+        // ==================== AUTH ====================
+        async function authenticateUser() {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            
+            if (!email || password.length < 6) {
+                showAuthAlert('Invalid email or password', 'error');
+                return;
+            }
+
+            try {
+                let userCredential;
+                try {
+                    userCredential = await auth.signInWithEmailAndPassword(email, password);
+                } catch (error) {
+                    if (error.code === 'auth/user-not-found') {
+                        userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    } else {
+                        throw error;
+                    }
+                }
+
+                userId = userCredential.user.uid;
+                manager.userId = userId;
+                
+                closeModal('authModal');
+                document.getElementById('userDisplay').textContent = email;
+                
+                await manager.loadFromFirebase();
+                renderTasks();
+                renderHabits();
+                renderDashboard();
+                
+                showAlert('✓ Logged in successfully', 'success');
+            } catch (error) {
+                showAuthAlert(error.message, 'error');
+            }
+        }
+
+        function showAuthAlert(message, type) {
+            const container = document.getElementById('authAlert');
+            container.innerHTML = `<div class="alert alert-${type}" style="margin-bottom: 15px;">${message}</div>`;
+        }
+
+        function logout() {
+            auth.signOut();
+            userId = null;
+            manager.userId = null;
+            document.getElementById('userDisplay').textContent = 'Guest';
+            showAlert('✓ Logged out', 'success');
+        }
+
+        // ==================== SYNC ====================
+        async function syncManually() {
+            showAlert('🔄 Syncing...', 'warning');
+            await manager.flushSyncQueue();
+            await manager.syncAll();
+            renderTasks();
+            renderHabits();
+            showAlert('✓ Sync complete', 'success');
+        }
+
+        // ==================== SETTINGS ====================
+        function saveSettings() {
+            const autoSync = document.getElementById('autoSync').checked;
+            localStorage.setItem('autoSync', autoSync);
+            
+            if (autoSync) {
+                manager.startAutoSync();
+            } else {
+                clearInterval(manager.autoSyncInterval);
+            }
+            
+            closeModal('settingsModal');
+            showAlert('✓ Settings saved', 'success');
+        }
+
+        // ==================== MODALS ====================
         function openModal(id) {
             document.getElementById(id).classList.add('active');
         }
@@ -1441,56 +1713,46 @@
             document.getElementById(id).classList.remove('active');
         }
 
+        // ==================== UTILITIES ====================
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        function updateTaskBadge() {
-            const pendingCount = manager.tasks.filter(t => !t.completed).length;
-            document.getElementById('taskBadge').textContent = pendingCount;
-        }
-
-        function authenticateUser() {
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPassword').value;
-            if (email && password.length >= 6) {
-                manager.userId = email.split('@')[0];
-                document.getElementById('userDisplay').textContent = email;
-                closeModal('authModal');
-                manager.logActivity(`Logged in as ${email}`);
-            }
-        }
-
-        function saveSettings() {
-            closeModal('settingsModal');
-            manager.logActivity('Settings saved');
-        }
-
-        function syncWithCloud() {
-            document.getElementById('syncStatus').style.background = '#f59e0b';
-            setTimeout(() => {
-                document.getElementById('syncStatus').style.background = '#10b981';
-                manager.logActivity('Cloud sync completed');
-            }, 1500);
-        }
-
-        // INIT
+        // ==================== INIT ====================
         window.addEventListener('load', () => {
-            manager.loadFromIndexedDB();
             renderTasks();
             renderHabits();
+            renderDashboard();
             updateTaskBadge();
+
+            const autoSync = localStorage.getItem('autoSync') !== 'false';
+            document.getElementById('autoSync').checked = autoSync;
+
+            if (isFirebaseInitialized) {
+                auth.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        manager.userId = userId;
+                        document.getElementById('userDisplay').textContent = user.email;
+                        await manager.loadFromFirebase();
+                        renderTasks();
+                        renderHabits();
+                        updateTaskBadge();
+                    }
+                });
+            }
+
             document.getElementById('taskInput').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') addTask();
             });
-        });
 
-        document.getElementById('darkMode').addEventListener('change', (e) => {
-            if (e.target.checked) {
-                document.documentElement.style.filter = 'invert(0)';
-            }
+            document.getElementById('habitInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addHabit();
+            });
+
+            updateSyncStatus(navigator.onLine ? 'synced' : 'offline');
         });
     </script>
 </body>
