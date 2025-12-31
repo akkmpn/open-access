@@ -531,11 +531,22 @@
             font-size: 13px;
         }
 
+        .subtask-item.completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+            color: var(--color-text-secondary);
+        }
+
+        .subtask-item.completed .subtask-text {
+            text-decoration: line-through;
+        }
+
         .subtask-checkbox {
             width: 16px;
             height: 16px;
             margin-right: 8px;
             cursor: pointer;
+            accent-color: var(--color-primary);
         }
 
         .subtask-text {
@@ -767,15 +778,36 @@
 
         function loadTasks() {
             const stored = localStorage.getItem('tasks');
-            tasks = stored ? JSON.parse(stored) : [];
+            try {
+                tasks = stored ? JSON.parse(stored) : [];
+                tasks = tasks.map(task => ({
+                    ...task,
+                    dueDate: task.dueDate || null,
+                    subTasks: task.subTasks || [],
+                    expanded: task.expanded || false
+                }));
+            } catch (e) {
+                console.error('Error loading tasks:', e);
+                tasks = [];
+            }
             renderTasks();
             renderTemplates();
             updateSyncStatus('✓ Synced');
         }
 
         function saveTasks() {
-            localStorage.setItem('tasks', JSON.stringify(tasks));
-            updateSyncStatus('✓ Synced');
+            try {
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                updateSyncStatus('✓ Synced');
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    alert('Storage limit exceeded! Please clear old tasks.');
+                    updateSyncStatus('⚠️ Storage Full');
+                } else {
+                    console.error('Error saving tasks:', e);
+                    updateSyncStatus('⚠️ Save Failed');
+                }
+            }
         }
 
         function getStreakCount() {
@@ -861,14 +893,19 @@
         };
 
         window.addSubtask = function(taskId) {
-            const subtaskText = prompt('Add subtask:');
+            const subtaskText = prompt('Add subtask (max 100 chars):');
             if (subtaskText && subtaskText.trim()) {
                 const task = tasks.find(t => t.id === taskId);
                 if (task) {
                     if (!task.subTasks) task.subTasks = [];
+                    if (task.subTasks.length >= 20) {
+                        alert('Maximum 20 subtasks per task!');
+                        return;
+                    }
+                    const trimmedText = subtaskText.trim().substring(0, 100);
                     task.subTasks.push({
                         id: Date.now(),
-                        text: subtaskText.trim(),
+                        text: trimmedText,
                         completed: false
                     });
                     saveTasks();
@@ -884,6 +921,17 @@
                 if (subtask) {
                     subtask.completed = !subtask.completed;
                     checkTaskCompletion(taskId);
+                    saveTasks();
+                    loadTasks();
+                }
+            }
+        };
+
+        window.removeAllSubtasks = function(taskId) {
+            if (confirm('Delete all subtasks for this task?')) {
+                const task = tasks.find(t => t.id === taskId);
+                if (task) {
+                    task.subTasks = [];
                     saveTasks();
                     loadTasks();
                 }
@@ -912,8 +960,11 @@
             const task = tasks.find(t => t.id === taskId);
             if (task && task.subTasks && task.subTasks.length > 0) {
                 const allCompleted = task.subTasks.every(st => st.completed);
+                const anyIncomplete = task.subTasks.some(st => !st.completed);
                 if (allCompleted) {
                     task.completed = true;
+                } else if (anyIncomplete && task.completed) {
+                    task.completed = false;
                 }
             }
         }
@@ -1017,6 +1068,7 @@
                                     </div>
                                 `).join('')}
                                 <button class="add-subtask-btn" onclick="window.addSubtask(${task.id})">+ Add Subtask</button>
+                                ${task.subTasks.length > 0 ? `<button class="add-subtask-btn" style="border-color: var(--color-error); color: var(--color-error);" onclick="window.removeAllSubtasks(${task.id})">🗑️ Clear All</button>` : ''}
                             </div>
                         ` : ''}
                     </div>
