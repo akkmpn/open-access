@@ -502,9 +502,9 @@
             background: rgba(244, 67, 54, 0.08);
         }
 
-        .task-item.overdue .task-text::before {
-            content: "⚠️ ";
+        .task-item.overdue .task-text {
             color: var(--color-error);
+            font-weight: 600;
         }
 
         .subtask-toggle {
@@ -893,24 +893,33 @@
         };
 
         window.addSubtask = function(taskId) {
-            const subtaskText = prompt('Add subtask (max 100 chars):');
-            if (subtaskText && subtaskText.trim()) {
-                const task = tasks.find(t => t.id === taskId);
-                if (task) {
-                    if (!task.subTasks) task.subTasks = [];
-                    if (task.subTasks.length >= 20) {
-                        alert('Maximum 20 subtasks per task!');
-                        return;
-                    }
-                    const trimmedText = subtaskText.trim().substring(0, 100);
-                    task.subTasks.push({
-                        id: Date.now(),
-                        text: trimmedText,
-                        completed: false
-                    });
-                    saveTasks();
-                    loadTasks();
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            if (!task.subTasks) task.subTasks = [];
+            if (task.subTasks.length >= 20) {
+                alert('Maximum 20 subtasks per task!');
+                return;
+            }
+
+            const input = prompt('Add subtask (max 100 chars):', '');
+            if (input !== null) {
+                const trimmedText = input.trim();
+                if (trimmedText.length === 0) {
+                    alert('Subtask cannot be empty!');
+                    return;
                 }
+                if (trimmedText.length > 100) {
+                    alert('Subtask must be 100 characters or less!');
+                    return;
+                }
+                task.subTasks.push({
+                    id: Date.now(),
+                    text: trimmedText,
+                    completed: false
+                });
+                saveTasks();
+                loadTasks();
             }
         };
 
