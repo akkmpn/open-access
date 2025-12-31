@@ -1,8 +1,11 @@
-# Daily Todo Checklist with Reports - Complete Code
+# Daily Todo Checklist with Smart Templates & Reports
 
-## Overview
-यह एक **complete productivity tracker** है जिसमें:
-- ✅ Tasks management
+## 🎯 Overview
+
+**Complete productivity tracker** with:
+- ✅ Tasks management with smart suggestions
+- 📚 Task templates (Reusable tasks)
+- 🏷️ Categories (Work/Study/Health/Personal)
 - 📊 Progress charts
 - 📅 Calendar view (30 days)
 - 📈 Daily statistics
@@ -12,7 +15,7 @@
 
 ---
 
-## Complete HTML Code
+## 💻 Complete HTML Code with Templates
 
 ```html
 <!DOCTYPE html>
@@ -20,7 +23,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Todo Checklist</title>
+    <title>Daily Todo Checklist with Templates</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         :root {
@@ -92,6 +95,7 @@
             gap: 10px;
             margin-bottom: 20px;
             border-bottom: 2px solid var(--color-border);
+            overflow-x: auto;
         }
 
         .tab-btn {
@@ -105,6 +109,7 @@
             border-bottom: 3px solid transparent;
             transition: all 0.3s;
             margin-bottom: -2px;
+            white-space: nowrap;
         }
 
         .tab-btn.active {
@@ -151,7 +156,7 @@
             display: grid;
             grid-template-columns: 1fr 120px 80px;
             gap: 10px;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
         }
 
         input[type="text"],
@@ -230,18 +235,66 @@
             background: #d32f2f;
         }
 
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            margin: 2px;
+        }
+
+        .templates-section {
+            margin-bottom: 20px;
+        }
+
+        .template-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .template-btn {
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .template-btn:hover {
+            background: #f0f0f0;
+            border-color: var(--color-primary);
+        }
+
+        .template-btn.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
         .tasks-container {
-            max-height: 500px;
+            max-height: 400px;
             overflow-y: auto;
+            margin-bottom: 15px;
         }
 
         .task-item {
             display: flex;
             align-items: center;
-            padding: 15px;
+            padding: 12px;
             background: var(--color-bg);
             border-radius: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             border-left: 4px solid var(--color-border);
         }
 
@@ -257,7 +310,7 @@
         .task-checkbox {
             width: 20px;
             height: 20px;
-            margin-right: 15px;
+            margin-right: 12px;
             cursor: pointer;
             accent-color: var(--color-primary);
         }
@@ -269,7 +322,6 @@
         .task-text {
             font-size: 14px;
             color: var(--color-text);
-            margin-bottom: 5px;
             font-weight: 500;
         }
 
@@ -289,7 +341,7 @@
 
         .empty-state {
             text-align: center;
-            padding: 40px 20px;
+            padding: 30px 20px;
             color: var(--color-text-secondary);
         }
 
@@ -301,7 +353,7 @@
         .action-buttons {
             display: flex;
             gap: 10px;
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         .action-buttons button {
@@ -445,6 +497,8 @@
             padding: 15px;
             border-radius: 8px;
             border: 1px solid var(--color-border);
+            max-height: 400px;
+            overflow-y: auto;
         }
 
         .progress-row {
@@ -500,6 +554,15 @@
             .report-filters {
                 grid-template-columns: 1fr;
             }
+
+            .tabs {
+                gap: 5px;
+            }
+
+            .tab-btn {
+                padding: 10px 15px;
+                font-size: 13px;
+            }
         }
     </style>
 </head>
@@ -512,6 +575,7 @@
 
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('todos')">Tasks</button>
+            <button class="tab-btn" onclick="switchTab('templates')">Templates</button>
             <button class="tab-btn" onclick="switchTab('reports')">Reports</button>
         </div>
 
@@ -542,6 +606,11 @@
                 <button class="btn btn-primary" onclick="addTask()">Add Task</button>
             </div>
 
+            <div class="templates-section" id="suggestedTemplates" style="display: none;">
+                <div class="template-title">📌 Suggested from History</div>
+                <div id="suggestedTemplatesGrid" class="templates-grid"></div>
+            </div>
+
             <div class="tasks-container scrollbar" id="tasksContainer">
                 <div class="empty-state">
                     <div class="empty-state-icon">🎯</div>
@@ -552,6 +621,34 @@
             <div class="action-buttons">
                 <button class="btn btn-secondary" onclick="resetToday()">Reset Today</button>
                 <button class="btn btn-danger" onclick="clearAllTasks()">Clear All</button>
+            </div>
+        </div>
+
+        <!-- TEMPLATES TAB -->
+        <div id="templates" class="tab-content">
+            <div class="templates-section">
+                <div class="template-title">💼 Work</div>
+                <div id="workTemplates" class="templates-grid"></div>
+            </div>
+
+            <div class="templates-section">
+                <div class="template-title">📚 Study</div>
+                <div id="studyTemplates" class="templates-grid"></div>
+            </div>
+
+            <div class="templates-section">
+                <div class="template-title">💪 Health</div>
+                <div id="healthTemplates" class="templates-grid"></div>
+            </div>
+
+            <div class="templates-section">
+                <div class="template-title">🎯 Personal</div>
+                <div id="personalTemplates" class="templates-grid"></div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px; padding: 20px; background: var(--color-bg); border-radius: 8px;">
+                <p style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 10px;">Click any template to add it to today's tasks</p>
+                <button class="btn btn-secondary" onclick="switchTab('todos')">Go to Tasks</button>
             </div>
         </div>
 
@@ -615,6 +712,14 @@
         let today = new Date().toDateString();
         let progressChart = null;
 
+        // Default templates by category
+        const defaultTemplates = {
+            work: ['📧 Check emails', '📞 Team meeting', '📝 Write report', '🎯 Project update', '💼 Client call'],
+            study: ['📖 Read chapter', '✍️ Do assignment', '🧮 Practice problems', '📝 Take notes', '🎓 Review notes'],
+            health: ['🏃 Exercise', '🧘 Meditation', '💧 Drink water', '🥗 Eat healthy', '😴 Sleep 8hrs'],
+            personal: ['🛒 Shopping', '🏠 Clean room', '📞 Call family', '🎮 Gaming', '📺 Watch movie']
+        };
+
         function updateSyncStatus(status) {
             const el = document.getElementById('syncStatus');
             if (status === 'synced') {
@@ -655,6 +760,7 @@
                     return new Date(b.date) - new Date(a.date);
                 });
                 renderTasks();
+                renderTemplates();
                 updateSyncStatus('synced');
             } catch (error) {
                 console.error('Error loading tasks:', error);
@@ -688,6 +794,38 @@
                 console.error('Error updating streak:', error);
             }
         }
+
+        function renderTemplates() {
+            // Render category templates
+            Object.keys(defaultTemplates).forEach(category => {
+                const container = document.getElementById(category + 'Templates');
+                container.innerHTML = defaultTemplates[category].map(template => `
+                    <button class="template-btn" onclick="addTaskFromTemplate('${template.replace(/'/g, "\\'")}', 'medium')">
+                        ${template}
+                    </button>
+                `).join('');
+            });
+
+            // Render suggested templates from history
+            const allTasks = tasks.map(t => t.text);
+            const uniqueTasks = [...new Set(allTasks)].slice(0, 8);
+            
+            if (uniqueTasks.length > 0) {
+                document.getElementById('suggestedTemplates').style.display = 'block';
+                const suggestedGrid = document.getElementById('suggestedTemplatesGrid');
+                suggestedGrid.innerHTML = uniqueTasks.map(task => `
+                    <button class="template-btn" onclick="addTaskFromTemplate('${task.replace(/'/g, "\\'")}', 'medium')">
+                        ${task}
+                    </button>
+                `).join('');
+            }
+        }
+
+        window.addTaskFromTemplate = async function(text, priority) {
+            const input = document.getElementById('taskInput');
+            input.value = text;
+            await addTask();
+        };
 
         window.addTask = async function() {
             const input = document.getElementById('taskInput');
@@ -805,7 +943,7 @@
             const sortedTasks = [...todayTasks].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
             container.innerHTML = sortedTasks.map(task => `
-                <div class="task-item">
+                <div class="task-item ${task.completed ? 'completed' : ''}">
                     <input 
                         type="checkbox" 
                         class="task-checkbox" 
@@ -1006,32 +1144,24 @@
 
 ---
 
-## Installation Steps
+## 🎯 Key Features Added
 
-### 1. GitHub में Add करो:
-```bash
-git add "Daily Todo Checklist.html"
-git commit -m "Add complete todo app with reports"
-git push
-```
-
-### 2. Raw Link से Use करो:
-```
-https://raw.githubusercontent.com/akkmpn/open-access/main/Daily%20Todo%20Checklist.html
-```
-
----
-
-## Features
-
-### 📋 Tasks Tab
-- ✅ Daily tasks add करो
+### 📌 **Tasks Tab**
+- ✅ Daily tasks management
 - 🎯 Priority levels (High/Medium/Low)
 - ☁️ Cloud sync (Firebase)
 - 🔥 Day streak counter
 - 📊 Today's progress percentage
+- 💡 **Smart suggested templates** (from your history)
 
-### 📊 Reports Tab
+### 📚 **Templates Tab**
+- 💼 **Work Templates**: Check emails, Team meeting, Write report, etc.
+- 📚 **Study Templates**: Read chapter, Do assignment, Practice problems, etc.
+- 💪 **Health Templates**: Exercise, Meditation, Drink water, etc.
+- 🎯 **Personal Templates**: Shopping, Clean room, Call family, etc.
+- **One-Click Add**: Click any template to add it to today's tasks
+
+### 📊 **Reports Tab**
 - 📈 Bar chart (Completed vs Total)
 - 📅 30-day calendar heatmap
 - 🟢 Green (100% complete)
@@ -1042,7 +1172,23 @@ https://raw.githubusercontent.com/akkmpn/open-access/main/Daily%20Todo%20Checkli
 
 ---
 
-## Technical Stack
+## 📥 Installation
+
+### Step 1: GitHub में Add करो
+```bash
+git add "Daily Todo Checklist.html"
+git commit -m "Add todo app with templates and reports"
+git push
+```
+
+### Step 2: Use करो
+```
+https://raw.githubusercontent.com/akkmpn/open-access/main/Daily%20Todo%20Checklist.html
+```
+
+---
+
+## 💻 Technical Stack
 
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript (ES6+)
 - **Backend**: Firebase Firestore
@@ -1052,43 +1198,58 @@ https://raw.githubusercontent.com/akkmpn/open-access/main/Daily%20Todo%20Checkli
 
 ---
 
-## Firebase Config
+## 🔑 Features
 
-```javascript
-const firebaseConfig = {
-    apiKey: "AIzaSyCoCFw0hezldX3t33AYa1ytddYMuQCWliM",
-    authDomain: "daily-todo-1e4ad.firebaseapp.com",
-    projectId: "daily-todo-1e4ad",
-    storageBucket: "daily-todo-1e4ad.firebasestorage.app",
-    messagingSenderId: "629797690976",
-    appId: "1:629797690976:web:fda66df1691eb920e12d05",
-    measurementId: "G-KG0NGWBFCW"
-};
-```
+✨ **Smart Suggestions**
+- Automatically learns from your history
+- Shows most used tasks at the top
+- One-click add from templates
+
+🏷️ **4 Categories**
+- Work (professional tasks)
+- Study (learning tasks)
+- Health (wellness tasks)
+- Personal (daily life tasks)
+
+📊 **Analytics**
+- 30-day calendar view
+- Progress charts
+- Detailed reports
+- Streak counter
+
+🔄 **Sync**
+- Cloud storage (Firebase)
+- Real-time updates
+- Multi-device access
 
 ---
 
-## Usage Tips
-
-1. **Daily Tasks**: Task input में लिख कर "Add Task" दबाओ
-2. **Priority**: Low/Medium/High चुनो
-3. **Reports**: "Reports" tab पर जाओ
-4. **Date Filter**: Start और end date चुनो, "Generate" दबाओ
-5. **Calendar**: Green = 100%, Orange = Partial, Red = No tasks
-
----
-
-## Keyboard Shortcuts
+## ⌨️ Keyboard Shortcuts
 
 - `Enter` - Task add करने के लिए
+- Click template - Template से add करने के लिए
 
 ---
 
-## Notes
+## 📝 Usage
 
-- सभी data Firebase cloud में store होता है
-- Streak counter localStorage में save होता है
-- 30 दिन का calendar automatically generate होता है
-- Chart.js से interactive graphs
+1. **Go to Tasks Tab** - Daily tasks add करो
+2. **Go to Templates Tab** - Pre-made templates देखो
+3. **Click Template** - One-click में task add हो जाता है
+4. **Check Tasks** - Complete करो और progress देखो
+5. **View Reports** - Analytics और insights देखो
 
-**तैयार है! 🚀💯**
+---
+
+## 🚀 Ready to Use!
+
+```
+✅ Complete productivity tracker
+📚 Smart task templates
+📊 Beautiful analytics
+⚡ Lightning fast
+☁️ Cloud synced
+🔥 Day streak tracking
+```
+
+**तैयार है! सीधे GitHub पर update करो और use करो! 🎉**
