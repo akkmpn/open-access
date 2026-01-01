@@ -832,8 +832,8 @@
             </div>
 
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('tasks')">📝 Tasks</button>
-                <button class="tab-btn" onclick="switchTab('reports')">📊 Reports</button>
+                <button class="tab-btn active" onclick="switchTab('tasks', this)">📝 Tasks</button>
+                <button class="tab-btn" onclick="switchTab('reports', this)">📊 Reports</button>
             </div>
 
             <!-- TASKS TAB -->
@@ -1121,13 +1121,14 @@ onAuthStateChanged(auth, (user) => {
             }
         }
 
-        window.switchTab = function(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
-            if (tabName === 'reports') setTimeout(generateReport, 100);
-        };
+window.switchTab = function(tabName, el) {
+    document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+    document.getElementById(tabName).classList.add('active');
+    if (el) el.classList.add('active');
+    if (tabName === 'reports') setTimeout(generateReport, 100);
+};
+
 
         // ===== STORAGE FUNCTIONS =====
 function loadTasks(fromFirebase = false) {
