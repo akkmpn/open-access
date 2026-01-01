@@ -594,12 +594,23 @@
             `).join('');
         }
 
-        function filterTasks(filter) {
-            currentFilter = filter;
-            document.querySelectorAll('.modal-footer').forEach(el => el.classList.remove('active'));
-            document.getElementById('filter' + filter.charAt(0).toUpperCase() + filter.slice(1)).classList.add('active');
-            renderTasks();
-        }
+function filterTasks(filter) {
+    currentFilter = filter;
+
+    // remove active from all filter buttons
+    document
+        .querySelectorAll('#filterAll, #filterToday, #filterPending, #filterCompleted')
+        .forEach(el => el.classList.remove('active'));
+
+    // add active to the current one
+    const btn = document.getElementById(
+        'filter' + filter.charAt(0).toUpperCase() + filter.slice(1)
+    );
+    if (btn) btn.classList.add('active');
+
+    renderTasks();
+}
+
 
         async function toggleTask(taskId) {
             const task = await window.getTask(taskId);
