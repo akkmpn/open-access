@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root {
             --primary: #3b82f6;
@@ -506,6 +507,7 @@
             <div class="header-right">
                 <span style="color: var(--text-secondary); font-size: 12px;" id="userDisplay">Guest</span>
                 <button class="btn btn-secondary" onclick="toggleSection('auth')" id="authToggle">Sign In</button>
+                <div id="buttonDiv"></div>
             </div>
         </div>
 
@@ -535,6 +537,8 @@
             <div id="authSection" class="dashboard-content">
                 <div class="card" style="max-width: 400px; margin: 40px auto;">
                     <h2 style="margin-bottom: 20px;">Sign In to TaskPro</h2>
+                    <div id="googleButtonContainer" style="text-align: center; margin-bottom: 20px;"></div>
+                    <div style="text-align: center; margin: 20px 0; color: var(--text-secondary);">OR</div>
                     <div class="form-group">
                         <label>Email</label>
                         <input type="email" id="email" placeholder="your@email.com" />
@@ -545,7 +549,7 @@
                     </div>
                     <button class="btn btn-primary btn-full" onclick="authenticateWithFirebase()">Sign In / Sign Up</button>
                     <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px; text-align: center;">
-                        Supports sign in or auto sign up
+                        Supports Google Sign In or email/password
                     </p>
                 </div>
             </div>
@@ -843,6 +847,10 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
+        // Google Sign-In Configuration
+        const GOOGLE_CLIENT_ID = "917450499382-abcd1234.apps.googleusercontent.com"; // Replace with your Google Client ID
+        let googleInitialized = false;
+
         // Global State
         let userId = null;
         let allTasks = [];
@@ -987,6 +995,64 @@
                 renderTasks();
             } catch (e) {
                 alert('Auth error: ' + e.message);
+            }
+        }
+
+        // Google Sign-In Handler
+        function handleGoogleSignIn(response) {
+            try {
+                const credential = response.credential;
+                const credentialDecoded = JSON.parse(atob(credential.split('.')[1]));
+                
+                const email = credentialDecoded.email;
+                const name = credentialDecoded.name;
+
+                // Sign in with Google credential
+                firebase.auth().signInWithCredential(firebase.auth.GoogleAuthProvider.credential(null, credential))
+                    .then((result) => {
+                        userId = result.user.uid;
+                        localStorage.setItem('userId', userId);
+                        localStorage.setItem('userEmail', email);
+                        localStorage.setItem('userName', name);
+                        updateUI();
+                        loadFromFirebase();
+                        renderTasks();
+                    })
+                    .catch((e) => {
+                        // Fallback: Create custom user session
+                        userId = btoa(email); // Use encoded email as ID
+                        localStorage.setItem('userId', userId);
+                        localStorage.setItem('userEmail', email);
+                        localStorage.setItem('userName', name);
+                        updateUI();
+                        loadFromFirebase();
+                        renderTasks();
+                    });
+            } catch (e) {
+                console.error('Google Sign-In error:', e);
+                alert('Google Sign-In failed: ' + e.message);
+            }
+        }
+
+        // Initialize Google Sign-In Button
+        function initializeGoogleSignIn() {
+            try {
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleGoogleSignIn
+                });
+
+                google.accounts.id.renderButton(
+                    document.getElementById('googleButtonContainer'),
+                    {
+                        theme: 'dark',
+                        size: 'large',
+                        width: '100%'
+                    }
+                );
+                googleInitialized = true;
+            } catch (e) {
+                console.error('Google Sign-In init error:', e);
             }
         }
 
@@ -1488,6 +1554,12 @@
             }
             updateUI();
             updateDashboard();
+            // Initialize Google Sign-In after Firebase loads
+            setTimeout(() => {
+                if (typeof google !== 'undefined') {
+                    initializeGoogleSignIn();
+                }
+            }, 500);
         });
 
         // Listen for auth changes
