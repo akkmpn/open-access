@@ -1450,6 +1450,11 @@
         }
 
         // ==================== UTILITIES ====================
+        function getTodayISO() {
+            const today = new Date();
+            return today.toISOString().split('T')[0];
+        }
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
