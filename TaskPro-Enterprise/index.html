@@ -3,180 +3,478 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskPro Enterprise - Main</title>
-    
+    <title>TaskPro Enterprise - Dashboard</title>
     <link rel="stylesheet" href="./shared/styles.css">
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
-    <script src="./shared/firebase-config.js"></script>
-    <script src="./shared/shared.js"></script>
 </head>
 <body>
     <div class="app-container">
-        <!-- HEADER -->
-        <div class="header-bar">
-            <div class="header-left">
-                <div class="logo">⚡ TaskPro Pro</div>
-                <input type="text" class="search-bar" id="globalSearch" placeholder="Search tasks..." />
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>📋 TaskPro</h1>
             </div>
-            <div class="header-right">
-                <div class="status-indicator" id="syncStatus" title="Cloud sync status"></div>
-                <div style="color: var(--text-secondary); font-size: 12px;" id="userDisplay">Guest</div>
-                <button class="btn btn-secondary" style="padding: 8px 12px; font-size: 12px;" id="authBtn">Sign In</button>
-            </div>
-        </div>
-
-        <!-- SIDEBAR -->
-        <div class="sidebar scrollbar">
-            <div class="sidebar-section">
-                <div class="sidebar-title">Workspace</div>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item active">📊 Dashboard</a>
                 <a href="pages/lists.html" class="nav-item">📝 Tasks</a>
-                <a href="pages/subtasks.html" class="nav-item">📋 Subtasks</a>
+                <a href="pages/subtasks.html" class="nav-item">✓ Subtasks</a>
                 <a href="pages/calendar.html" class="nav-item">📅 Calendar</a>
-            </div>
+                <a href="pages/analytics.html" class="nav-item">📈 Analytics</a>
+                <a href="pages/reports.html" class="nav-item">📊 Reports</a>
+                <a href="pages/settings.html" class="nav-item">⚙️ Settings</a>
+            </nav>
+        </aside>
 
-            <div class="sidebar-section">
-                <div class="sidebar-title">Performance</div>
-                <a href="pages/analytics.html" class="nav-item">📊 Analytics</a>
-                <a href="pages/reports.html" class="nav-item">📈 Reports</a>
-            </div>
-
-            <div class="sidebar-footer">
-                <button class="btn btn-primary" style="width: 100%; margin-bottom: 8px;" onclick="window.location.href='pages/settings.html'">⚙️ Settings</button>
-                <button class="btn btn-secondary" style="width: 100%; font-size: 12px;" id="logoutBtn" onclick="logout()">🚪 Logout</button>
-            </div>
-        </div>
-
-        <!-- MAIN CONTENT -->
-        <div class="main-content scrollbar">
-            <div class="content-header">
-                <h1>Welcome to TaskPro Pro</h1>
-                <p>Your intelligent task management system</p>
-            </div>
-
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="totalTasks">0</div>
-                    <div class="stat-label">Total Tasks</div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <h2>TaskPro Enterprise Dashboard</h2>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="completedTasks">0</div>
-                    <div class="stat-label">Completed</div>
+                <div class="header-right">
+                    <div class="sync-status" id="syncStatus">
+                        <span class="sync-dot green"></span>
+                        <span class="sync-text">Synced</span>
+                    </div>
+                    <button class="btn btn-primary" id="signInBtn">Sign In</button>
+                    <div class="user-info" id="userInfo" style="display: none;">
+                        <span id="userEmail"></span>
+                        <button class="btn btn-secondary btn-sm" id="logoutBtn">Logout</button>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="pendingTasks">0</div>
-                    <div class="stat-label">Pending</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="completionRate">0%</div>
-                    <div class="stat-label">Completion Rate</div>
-                </div>
-            </div>
+            </header>
 
-            <div class="card">
-                <h3>Quick Actions</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 15px;">
-                    <a href="pages/lists.html" class="btn btn-primary" style="text-align: center; text-decoration: none;">Create Task</a>
-                    <a href="pages/calendar.html" class="btn btn-primary" style="text-align: center; text-decoration: none;">View Calendar</a>
-                    <a href="pages/analytics.html" class="btn btn-primary" style="text-align: center; text-decoration: none;">View Analytics</a>
-                    <a href="pages/reports.html" class="btn btn-primary" style="text-align: center; text-decoration: none;">Generate Report</a>
+            <!-- Auth Modal -->
+            <div id="authModal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Sign In / Register</h3>
+                        <button class="modal-close" id="closeModal">&times;</button>
+                    </div>
+                    <form id="authForm">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password (min 6 chars)</label>
+                            <input type="password" id="password" minlength="6" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+                    </form>
                 </div>
             </div>
 
-            <div class="card">
-                <h3>📱 Getting Started</h3>
-                <ul style="line-height: 1.8; color: var(--text-secondary);">
-                    <li>Click "Sign In" to create an account or login</li>
-                    <li>Go to <strong>Tasks</strong> to create your first task</li>
-                    <li>Add <strong>Subtasks</strong> for detailed breakdowns</li>
-                    <li>View <strong>Calendar</strong> for deadline management</li>
-                    <li>Check <strong>Analytics</strong> for performance insights</li>
-                    <li>All data syncs automatically to the cloud</li>
-                </ul>
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <div id="welcomeSection" style="display: none;">
+                    <h3>Welcome back! 👋</h3>
+                    <p>Here's your task management dashboard</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <h4>Total Tasks</h4>
+                            <p class="stat-number" id="totalTasks">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-content">
+                            <h4>Completed</h4>
+                            <p class="stat-number" id="completedTasks">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-content">
+                            <h4>Pending</h4>
+                            <p class="stat-number" id="pendingTasks">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-content">
+                            <h4>Completion Rate</h4>
+                            <p class="stat-number" id="completionRate">0%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h3>Quick Actions</h3>
+                    <div class="action-buttons">
+                        <a href="pages/lists.html" class="btn btn-primary">➕ Create Task</a>
+                        <a href="pages/analytics.html" class="btn btn-secondary">📈 View Analytics</a>
+                        <a href="pages/reports.html" class="btn btn-secondary">📊 Generate Report</a>
+                        <a href="pages/settings.html" class="btn btn-secondary">⚙️ Settings</a>
+                    </div>
+                </div>
+
+                <!-- Getting Started -->
+                <div class="getting-started">
+                    <h3>Getting Started</h3>
+                    <ol>
+                        <li><strong>Create Tasks:</strong> Go to Tasks page to add your first task</li>
+                        <li><strong>Break Down:</strong> Use Subtasks to break complex tasks into steps</li>
+                        <li><strong>Track Progress:</strong> Mark tasks complete as you work</li>
+                        <li><strong>Analyze:</strong> Check Analytics for 31-day performance</li>
+                        <li><strong>Export:</strong> Generate reports and export data</li>
+                    </ol>
+                </div>
+
+                <!-- Features List -->
+                <div class="features-list">
+                    <h3>✨ Features</h3>
+                    <ul>
+                        <li>✅ Offline-first - Works without internet</li>
+                        <li>🔄 Auto-sync - Every 30 seconds when online</li>
+                        <li>📱 Mobile responsive - Works on all devices</li>
+                        <li>☁️ Cloud backup - Syncs to Firebase</li>
+                        <li>📊 31-day analytics - Track your performance</li>
+                        <li>📥 Export data - CSV, JSON, Print options</li>
+                    </ul>
+                </div>
             </div>
-        </div>
+        </main>
     </div>
 
-    <!-- AUTH MODAL -->
-    <div class="modal" id="authModal">
-        <div class="modal-content">
-            <div class="modal-header">Sign In / Register</div>
-            <input type="email" placeholder="Email" id="authEmail" style="margin-bottom: 10px; width: 100%;" />
-            <input type="password" placeholder="Password (min 6 chars)" id="authPassword" style="margin-bottom: 10px; width: 100%;" />
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeAuthModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="authenticateUser()">Sign In</button>
-            </div>
-        </div>
-    </div>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
 
-    <script src="shared/firebase-config.js"></script>
-    <script src="shared/shared.js"></script>
+    <!-- All Logic Inline -->
     <script>
-        // Initialize on page load
-        window.addEventListener('load', async () => {
+        // ==================== FIREBASE CONFIGURATION ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAxT6I5OUp_X1THaHiLWpBgk7KM5-NqQ4w",
+            authDomain: "taskpro-ea29c.firebaseapp.com",
+            databaseURL: "https://taskpro-ea29c-default-rtdb.firebaseio.com",
+            projectId: "taskpro-ea29c",
+            storageBucket: "taskpro-ea29c.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef1234567890"
+        };
+
+        let app, auth, database;
+        let isFirebaseReady = false;
+
+        try {
+            app = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            database = firebase.database();
+            isFirebaseReady = true;
+            console.log("✅ Firebase initialized");
+        } catch (e) {
+            console.error("Firebase error:", e);
+        }
+
+        window.firebase_auth = auth;
+        window.firebase_database = database;
+
+        // ==================== INDEXEDDB SETUP ====================
+        let userId = null;
+        let syncInterval = null;
+        const DB_NAME = 'TaskProDB';
+
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('tasks')) {
+                        db.createObjectStore('tasks', { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains('syncQueue')) {
+                        db.createObjectStore('syncQueue', { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // ==================== AUTHENTICATION ====================
+        async function authenticateWithFirebase(email, password) {
+            try {
+                let userCredential;
+                try {
+                    userCredential = await auth.signInWithEmailAndPassword(email, password);
+                } catch (error) {
+                    if (error.code === 'auth/user-not-found') {
+                        userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    } else {
+                        throw error;
+                    }
+                }
+                
+                userId = userCredential.user.uid;
+                localStorage.setItem('userId', userId);
+                localStorage.setItem('userEmail', email);
+                
+                console.log("✅ Authenticated:", email);
+                enableAutoSync();
+                await loadDataFromFirebase();
+                
+                return { success: true, userId: userId };
+            } catch (error) {
+                console.error("Auth error:", error);
+                alert('Error: ' + error.message);
+                return { success: false, error: error.message };
+            }
+        }
+
+        function logoutUser() {
+            auth.signOut();
+            userId = null;
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userEmail');
+            if (syncInterval) clearInterval(syncInterval);
+            console.log("✅ Logged out");
+        }
+
+        // ==================== DATA OPERATIONS ====================
+        async function saveTask(task) {
+            const db = await initIndexedDB();
+            const transaction = db.transaction(['tasks'], 'readwrite');
+            const store = transaction.objectStore('tasks');
+            
+            task.updatedAt = Date.now();
+            task.userId = userId;
+            
+            return new Promise((resolve, reject) => {
+                const request = store.put(task);
+                request.onsuccess = () => {
+                    queueForSync('tasks', task);
+                    resolve(task);
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function getAllTasks() {
+            const db = await initIndexedDB();
+            const transaction = db.transaction(['tasks'], 'readonly');
+            const store = transaction.objectStore('tasks');
+            
+            return new Promise((resolve, reject) => {
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result || []);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function deleteTask(taskId) {
+            const db = await initIndexedDB();
+            const transaction = db.transaction(['tasks'], 'readwrite');
+            const store = transaction.objectStore('tasks');
+            
+            return new Promise((resolve, reject) => {
+                const request = store.delete(taskId);
+                request.onsuccess = () => {
+                    queueForSync('deleteTask', { id: taskId });
+                    resolve();
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // ==================== SYNC ====================
+        async function queueForSync(operation, data) {
+            const db = await initIndexedDB();
+            const transaction = db.transaction(['syncQueue'], 'readwrite');
+            const store = transaction.objectStore('syncQueue');
+            
+            const item = {
+                operation,
+                data,
+                timestamp: Date.now(),
+                retries: 0
+            };
+            
+            return new Promise((resolve, reject) => {
+                const request = store.add(item);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function getSyncQueue() {
+            const db = await initIndexedDB();
+            const transaction = db.transaction(['syncQueue'], 'readonly');
+            const store = transaction.objectStore('syncQueue');
+            
+            return new Promise((resolve, reject) => {
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result || []);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function clearSyncQueueItem(id) {
+            const db = await initIndexedDB();
+            const transaction = db.transaction(['syncQueue'], 'readwrite');
+            const store = transaction.objectStore('syncQueue');
+            
+            return new Promise((resolve, reject) => {
+                const request = store.delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function syncWithFirebase() {
+            if (!userId || !database) return;
+            
+            const queue = await getSyncQueue();
+            for (const item of queue) {
+                try {
+                    if (item.operation === 'tasks') {
+                        await database.ref(`users/${userId}/tasks/${item.data.id}`).set(item.data);
+                        await clearSyncQueueItem(item.id);
+                    } else if (item.operation === 'deleteTask') {
+                        await database.ref(`users/${userId}/tasks/${item.data.id}`).remove();
+                        await clearSyncQueueItem(item.id);
+                    }
+                } catch (error) {
+                    console.error("Sync error:", error);
+                }
+            }
+            updateSyncStatus('synced');
+        }
+
+        async function loadDataFromFirebase() {
+            if (!userId || !database) return;
+            try {
+                const snapshot = await database.ref(`users/${userId}/tasks`).once('value');
+                const remoteTasks = snapshot.val() || {};
+                
+                const db = await initIndexedDB();
+                const transaction = db.transaction(['tasks'], 'readwrite');
+                const store = transaction.objectStore('tasks');
+                
+                for (const [key, task] of Object.entries(remoteTasks)) {
+                    store.put(task);
+                }
+                console.log("✅ Data loaded from Firebase");
+            } catch (error) {
+                console.error("Load error:", error);
+            }
+        }
+
+        function enableAutoSync() {
+            if (syncInterval) clearInterval(syncInterval);
+            syncInterval = setInterval(() => {
+                syncWithFirebase();
+            }, 30000);
+        }
+
+        function updateSyncStatus(status) {
+            const indicator = document.getElementById('syncStatus');
+            if (!indicator) return;
+            const dot = indicator.querySelector('.sync-dot');
+            const text = indicator.querySelector('.sync-text');
+            
+            if (status === 'syncing') {
+                dot.className = 'sync-dot yellow';
+                text.textContent = 'Syncing...';
+            } else if (status === 'synced') {
+                dot.className = 'sync-dot green';
+                text.textContent = 'Synced';
+            } else if (status === 'offline') {
+                dot.className = 'sync-dot red';
+                text.textContent = 'Offline';
+            }
+        }
+
+        async function initApp() {
+            try {
+                await initIndexedDB();
+            } catch (error) {
+                console.error("IndexedDB error:", error);
+            }
+            
+            const savedUserId = localStorage.getItem('userId');
+            if (savedUserId) {
+                userId = savedUserId;
+                enableAutoSync();
+                await loadDataFromFirebase();
+            }
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        document.addEventListener('DOMContentLoaded', async () => {
             await initApp();
-            updateDashboard();
-            document.getElementById('authBtn').addEventListener('click', () => {
-                if (window.userId) {
-                    logout();
-                } else {
-                    openAuthModal();
+            
+            document.getElementById('signInBtn').addEventListener('click', () => {
+                document.getElementById('authModal').classList.remove('hidden');
+            });
+            
+            document.getElementById('closeModal').addEventListener('click', () => {
+                document.getElementById('authModal').classList.add('hidden');
+            });
+            
+            document.getElementById('authForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                const result = await authenticateWithFirebase(email, password);
+                if (result.success) {
+                    document.getElementById('authModal').classList.add('hidden');
+                    updateUI();
+                    updateDashboard();
                 }
             });
+            
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                logoutUser();
+                updateUI();
+            });
+            
+            updateUI();
+            updateDashboard();
+            setInterval(updateDashboard, 30000);
         });
 
+        function updateUI() {
+            const signInBtn = document.getElementById('signInBtn');
+            const userInfo = document.getElementById('userInfo');
+            
+            if (localStorage.getItem('userId')) {
+                signInBtn.style.display = 'none';
+                userInfo.style.display = 'flex';
+                document.getElementById('userEmail').textContent = localStorage.getItem('userEmail');
+                document.getElementById('welcomeSection').style.display = 'block';
+            } else {
+                signInBtn.style.display = 'block';
+                userInfo.style.display = 'none';
+                document.getElementById('welcomeSection').style.display = 'none';
+            }
+        }
+
         async function updateDashboard() {
-            const tasks = await window.getAllTasks();
-            const completed = tasks.filter(t => t.completed).length;
-            const total = tasks.length;
-            const pending = total - completed;
-            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-            document.getElementById('totalTasks').textContent = total;
-            document.getElementById('completedTasks').textContent = completed;
-            document.getElementById('pendingTasks').textContent = pending;
-            document.getElementById('completionRate').textContent = rate + '%';
-        }
-
-        function openAuthModal() {
-            document.getElementById('authModal').classList.add('active');
-        }
-
-        function closeAuthModal() {
-            document.getElementById('authModal').classList.remove('active');
-        }
-
-        async function authenticateUser() {
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPassword').value;
-
-            if (!email || password.length < 6) {
-                alert('Invalid email or password (min 6 chars)');
-                return;
-            }
-
             try {
-                const result = await window.authenticateWithFirebase(email, password);
-                if (result.success) {
-                    closeAuthModal();
-                    document.getElementById('userDisplay').textContent = email;
-                    document.getElementById('authBtn').textContent = 'Logout';
-                    updateDashboard();
-                } else {
-                    alert('Auth failed: ' + result.error);
-                }
+                const tasks = await getAllTasks();
+                const total = tasks.length;
+                const completed = tasks.filter(t => t.completed).length;
+                const pending = total - completed;
+                const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+                
+                document.getElementById('totalTasks').textContent = total;
+                document.getElementById('completedTasks').textContent = completed;
+                document.getElementById('pendingTasks').textContent = pending;
+                document.getElementById('completionRate').textContent = rate + '%';
             } catch (error) {
-                alert('Error: ' + error.message);
+                console.error('Error updating dashboard:', error);
             }
-        }
-
-        function logout() {
-            window.logoutUser();
-            document.getElementById('userDisplay').textContent = 'Guest';
-            document.getElementById('authBtn').textContent = 'Sign In';
-            updateDashboard();
         }
     </script>
 </body>
