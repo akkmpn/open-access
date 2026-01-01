@@ -1552,6 +1552,8 @@
         document.getElementById('filterFromDate').valueAsDate = thirtyDaysAgo;
         document.getElementById('filterToDate').valueAsDate = new Date();
 
+        // Always start by showing login/guest form
+        showAuthSection();
         loadTasks(false);
         updateStreakCounter();
 
