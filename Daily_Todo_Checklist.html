@@ -1013,23 +1013,24 @@ function getCurrentTasksKey() {
 
 window.firebaseLogout = async function() {
     if (!confirm('Logout?')) return;
-    await signOut(auth);
-    currentUser = null;
-    isGuest = false;
-    tasks = [];
-    if (syncListener) syncListener();
-    document.getElementById('userEmail').textContent = 'Guest';
-    document.getElementById('logoutBtn').style.display = 'none';
-    updateSyncStatus('Logged out');
-    showAuthSection();
-    renderTasks();  // show empty
-};
+    try {
+        await signOut(auth);
+        currentUser = null;
+        isGuest = false;
+        tasks = [];
+        if (syncListener) syncListener();
+        document.getElementById('userEmail').textContent = 'Guest';
+        document.getElementById('logoutBtn').style.display = 'none';
+        updateSyncStatus('Logged out');
+        showAuthSection();
+        renderTasks();  // show empty
     } catch (error) {
         console.error('Logout error:', error);
         alert(error.message);
         updateSyncStatus('Error');
     }
 };
+
 
 
 window.loginAsGuest = function() {
