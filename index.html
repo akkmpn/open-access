@@ -289,20 +289,8 @@
         </div>
 
         <!-- GOOGLE SIGN-IN -->
-<div id="emailSection">
-                <input type="email" id="email" placeholder="Email" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 2px solid #e0e0e0;" />
-                <input type="password" id="password" placeholder="Password" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 2px solid #e0e0e0;" />
-                <button onclick="signUpWithEmail()" style="width: 100%; padding: 10px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 8px; font-weight: 600;">Sign Up</button>
-                <button onclick="signInWithEmail()" style="width: 100%; padding: 10px; background: #5568d3; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Sign In</button>
-            </div>
-            <button class="google-signin-btn" onclick="signInWithGoogle()" style="margin-top: 10px;">
-                380
-                410
-                (beta)
-            </button>
-            <p style="font-size: 11px; color: #999; text-align: center; margin-top: 10px;">Google sign-in may take a few minutes to activate</p>
-                </button>
-        </div>
+            <button class="google-signin-btn" onclick="signInWithGoogle()">Sign in with Google</button>
+
 
         <!-- USER INFO -->
         <div class="user-info" id="userInfo">
@@ -543,41 +531,7 @@
             });
         });
 
-                    // ==================== EMAIL AUTHENTICATION ====================
-        function signUpWithEmail() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            if (!email || !password) { alert('Please enter email and password'); return; }
-            auth.createUserWithEmailAndPassword(email, password)
-                .then(result => {
-                    userId = result.user.uid;
-                    localStorage.setItem('userId', userId);
-                    localStorage.setItem('userEmail', email);
-                    updateUI();
-                    loadTasks();
-                    document.getElementById('email').value = '';
-                    document.getElementById('password').value = '';
-                })
-                .catch(error => alert('Sign up error: ' + error.message));
-        }
-
-        function signInWithEmail() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            if (!email || !password) { alert('Please enter email and password'); return; }
-            auth.signInWithEmailAndPassword(email, password)
-                .then(result => {
-                    userId = result.user.uid;
-                    localStorage.setItem('userId', userId);
-                    localStorage.setItem('userEmail', email);
-                    updateUI();
-                    loadTasks();
-                    document.getElementById('email').value = '';
-                    document.getElementById('password').value = '';
-                })
-                .catch(error => alert('Sign in error: ' + error.message));
-        }
-    </script>
+                    
 </body>
 </html>
 385
