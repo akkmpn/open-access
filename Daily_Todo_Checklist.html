@@ -1025,7 +1025,8 @@
         };
 
         // ===== SYNC WITH FIREBASE =====
-        function syncWithFirebase() {
+        1552
+            () {
             if (!currentUser || isGuest) return;
 
             try {
@@ -1059,12 +1060,14 @@
                 document.getElementById('userEmail').textContent = '✅ ' + user.email;
                 document.getElementById('logoutBtn').style.display = 'block';
                 showTodoSection();
-                loadTasks();
+                loadTasks(true);
                 syncWithFirebase();
-            } else if (isGuest) {
+            1552
+            {
                 document.getElementById('userEmail').textContent = '👤 Guest (Local)';
                 document.getElementById('logoutBtn').style.display = 'none';
                 showTodoSection();
+                        loadTasks(false);     // guest local only
             } else {
                 showAuthSection();
             }
@@ -1549,14 +1552,14 @@
         document.getElementById('filterFromDate').valueAsDate = thirtyDaysAgo;
         document.getElementById('filterToDate').valueAsDate = new Date();
 
-        loadTasks();
+        loadTasks(false);
         updateStreakCounter();
 
         setInterval(() => {
             const newToday = new Date().toDateString();
             if (newToday !== today) {
                 today = newToday;
-                loadTasks();
+                loadTasks(false);
                 updateStreakCounter();
             }
         }, 60000);
