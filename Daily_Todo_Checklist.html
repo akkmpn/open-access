@@ -211,6 +211,11 @@
             background: #d32f2f;
         }
 
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
         .add-task-section {
             display: grid;
             grid-template-columns: 1fr 100px 120px 80px;
@@ -218,8 +223,31 @@
             margin-bottom: 15px;
         }
 
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-top: 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title.completed {
+            color: var(--color-success);
+        }
+
+        .section-title.overdue {
+            color: var(--color-error);
+        }
+
+        .section-title.pending {
+            color: var(--color-primary);
+        }
+
         .tasks-container {
-            max-height: 400px;
+            max-height: 700px;
             overflow-y: auto;
             margin-bottom: 15px;
         }
@@ -254,6 +282,18 @@
             font-weight: 600;
         }
 
+        .task-item.priority-high {
+            border-left: 4px solid #ff5252;
+        }
+
+        .task-item.priority-medium {
+            border-left: 4px solid #ff9800;
+        }
+
+        .task-item.priority-low {
+            border-left: 4px solid #4caf50;
+        }
+
         .task-header {
             display: flex;
             align-items: center;
@@ -273,6 +313,14 @@
             flex: 1;
         }
 
+        .task-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+
         .task-text {
             font-size: 14px;
             color: var(--color-text);
@@ -282,7 +330,30 @@
         .task-duedate {
             font-size: 11px;
             color: var(--color-text-secondary);
-            margin-top: 4px;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .priority-badge.high {
+            background: #ff5252;
+            color: white;
+        }
+
+        .priority-badge.medium {
+            background: #ff9800;
+            color: white;
+        }
+
+        .priority-badge.low {
+            background: #4caf50;
+            color: white;
         }
 
         .task-remove {
@@ -297,6 +368,89 @@
 
         .task-remove:hover {
             background: rgba(244, 67, 54, 0.1);
+        }
+
+        .subtasks-list {
+            margin-top: 12px;
+            margin-left: 0;
+            width: 100%;
+            background: rgba(32, 128, 132, 0.04);
+            border-radius: 6px;
+            padding: 10px;
+            border: 1px solid rgba(32, 128, 132, 0.1);
+        }
+
+        .subtask-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: transparent;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 13px;
+            gap: 8px;
+        }
+
+        .subtask-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .subtask-item.completed {
+            opacity: 0.6;
+        }
+
+        .subtask-item.completed .subtask-text {
+            text-decoration: line-through;
+            color: var(--color-text-secondary);
+        }
+
+        .subtask-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--color-primary);
+            flex-shrink: 0;
+        }
+
+        .subtask-text {
+            flex: 1;
+            color: var(--color-text);
+        }
+
+        .subtask-remove {
+            background: none;
+            border: none;
+            color: var(--color-error);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0 5px;
+        }
+
+        .add-subtask-btn {
+            background: rgba(32, 128, 132, 0.1);
+            border: 1px dashed var(--color-primary);
+            color: var(--color-primary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 6px;
+            width: 100%;
+        }
+
+        .add-subtask-btn:hover {
+            background: rgba(32, 128, 132, 0.15);
+        }
+
+        .toggle-subtasks {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--color-primary);
+            font-size: 12px;
+            padding: 0;
+            width: 16px;
+            text-align: center;
         }
 
         .empty-state {
@@ -642,7 +796,9 @@
                 tasks = stored ? JSON.parse(stored) : [];
                 tasks = tasks.map(task => ({
                     ...task,
-                    dueDate: task.dueDate || null
+                    dueDate: task.dueDate || null,
+                    subTasks: task.subTasks || [],
+                    expanded: task.expanded !== undefined ? task.expanded : true
                 }));
             } catch (e) {
                 console.error('Error loading tasks:', e);
@@ -708,7 +864,9 @@
                 completed: false,
                 priority: priority,
                 date: today,
-                dueDate: dueDate || null
+                dueDate: dueDate || null,
+                subTasks: [],
+                expanded: true
             });
 
             input.value = '';
@@ -717,6 +875,81 @@
             loadTasks();
             input.focus();
         };
+
+        window.addSubtask = function(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            if (!task.subTasks) task.subTasks = [];
+            if (task.subTasks.length >= 20) {
+                alert('Maximum 20 subtasks per task!');
+                return;
+            }
+
+            const input = prompt('Add subtask (max 100 chars):', '');
+            if (input !== null) {
+                const trimmedText = input.trim();
+                if (trimmedText.length === 0) {
+                    alert('Subtask cannot be empty!');
+                    return;
+                }
+                if (trimmedText.length > 100) {
+                    alert('Subtask must be 100 characters or less!');
+                    return;
+                }
+                task.subTasks.push({
+                    id: Date.now(),
+                    text: trimmedText,
+                    completed: false
+                });
+                saveTasks();
+                loadTasks();
+            }
+        };
+
+        window.toggleSubtask = function(taskId, subtaskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task && task.subTasks) {
+                const subtask = task.subTasks.find(st => st.id === subtaskId);
+                if (subtask) {
+                    subtask.completed = !subtask.completed;
+                    checkTaskCompletion(taskId);
+                    saveTasks();
+                    loadTasks();
+                }
+            }
+        };
+
+        window.removeSubtask = function(taskId, subtaskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task && task.subTasks) {
+                task.subTasks = task.subTasks.filter(st => st.id !== subtaskId);
+                saveTasks();
+                loadTasks();
+            }
+        };
+
+        window.toggleExpanded = function(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.expanded = !task.expanded;
+                saveTasks();
+                loadTasks();
+            }
+        };
+
+        function checkTaskCompletion(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task && task.subTasks && task.subTasks.length > 0) {
+                const allCompleted = task.subTasks.every(st => st.completed);
+                const anyIncomplete = task.subTasks.some(st => !st.completed);
+                if (allCompleted) {
+                    task.completed = true;
+                } else if (anyIncomplete && task.completed) {
+                    task.completed = false;
+                }
+            }
+        }
 
         function isOverdue(task) {
             if (!task.dueDate || task.completed) return false;
@@ -782,29 +1015,77 @@
                 return;
             }
 
+            // Separate tasks into categories
             const priorityOrder = { high: 0, medium: 1, low: 2 };
-            const sortedTasks = [...todayTasks].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+            const overdueTasks = todayTasks.filter(t => isOverdue(t));
+            const completedTasks = todayTasks.filter(t => t.completed);
+            const pendingTasks = todayTasks.filter(t => !t.completed && !isOverdue(t));
 
-            container.innerHTML = sortedTasks.map(task => {
-                const overdue = isOverdue(task);
-                return `
-                    <div class="task-item ${task.completed ? 'completed' : ''} ${overdue ? 'overdue' : ''}">
-                        <div class="task-header">
-                            <input 
-                                type="checkbox" 
-                                class="task-checkbox" 
-                                ${task.completed ? 'checked' : ''} 
-                                onchange="window.toggleTask(${task.id})"
-                            />
-                            <div class="task-content" style="flex: 1;">
-                                <div class="task-text">${escapeHtml(task.text)}</div>
-                                ${task.dueDate ? `<div class="task-duedate">📅 ${new Date(task.dueDate).toLocaleDateString('en-IN')}</div>` : ''}
+            // Sort each category by priority
+            const sortTasks = (tasks) => [...tasks].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
+            let html = '';
+
+            // Overdue Section
+            if (overdueTasks.length > 0) {
+                html += `<div class="section-title overdue">⚠️ Overdue (${overdueTasks.length})</div>`;
+                html += sortTasks(overdueTasks).map(task => renderTaskItem(task)).join('');
+            }
+
+            // Pending Section
+            if (pendingTasks.length > 0) {
+                html += `<div class="section-title pending">⏳ Pending (${pendingTasks.length})</div>`;
+                html += sortTasks(pendingTasks).map(task => renderTaskItem(task)).join('');
+            }
+
+            // Completed Section
+            if (completedTasks.length > 0) {
+                html += `<div class="section-title completed">✓ Completed (${completedTasks.length})</div>`;
+                html += sortTasks(completedTasks).map(task => renderTaskItem(task)).join('');
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderTaskItem(task) {
+            const overdue = isOverdue(task);
+            const hasSubTasks = task.subTasks && task.subTasks.length > 0;
+            const completedSubTasks = hasSubTasks ? task.subTasks.filter(st => st.completed).length : 0;
+            const subTaskProgress = hasSubTasks ? `(${completedSubTasks}/${task.subTasks.length})` : '';
+
+            return `
+                <div class="task-item ${task.completed ? 'completed' : ''} ${overdue ? 'overdue' : ''} priority-${task.priority}">
+                    <div class="task-header">
+                        <input 
+                            type="checkbox" 
+                            class="task-checkbox" 
+                            ${task.completed ? 'checked' : ''} 
+                            onchange="window.toggleTask(${task.id})"
+                        />
+                        <div class="task-content" style="flex: 1;">
+                            <div class="task-text">${escapeHtml(task.text)} ${subTaskProgress}</div>
+                            <div class="task-meta">
+                                ${task.dueDate ? `<span class="task-duedate">📅 ${new Date(task.dueDate).toLocaleDateString('en-IN')}</span>` : ''}
+                                <span class="priority-badge ${task.priority}">${task.priority}</span>
                             </div>
-                            <button class="task-remove" onclick="window.removeTask(${task.id})">✕</button>
                         </div>
+                        <button class="task-remove" onclick="window.removeTask(${task.id})">✕</button>
                     </div>
-                `;
-            }).join('');
+                    ${hasSubTasks ? `
+                        <div class="subtasks-list">
+                            ${task.expanded ? task.subTasks.map(st => `
+                                <div class="subtask-item ${st.completed ? 'completed' : ''}">
+                                    <input type="checkbox" class="subtask-checkbox" ${st.completed ? 'checked' : ''} onchange="window.toggleSubtask(${task.id}, ${st.id})" />
+                                    <div class="subtask-text">${escapeHtml(st.text)}</div>
+                                    <button class="subtask-remove" onclick="window.removeSubtask(${task.id}, ${st.id})">✕</button>
+                                </div>
+                            `).join('') : '<div style="color: var(--color-text-secondary); font-size: 12px;">Subtasks hidden...</div>'}
+                            <button class="add-subtask-btn" onclick="window.addSubtask(${task.id})">+ Add Subtask</button>
+                            ${task.expanded ? `<button class="add-subtask-btn" style="border-color: var(--color-primary); background: transparent;" onclick="window.toggleExpanded(${task.id})">− Collapse</button>` : `<button class="add-subtask-btn" style="border-color: var(--color-primary); background: transparent;" onclick="window.toggleExpanded(${task.id})">+ Expand</button>`}
+                        </div>
+                    ` : `<button class="add-subtask-btn" onclick="window.addSubtask(${task.id})">+ Add Subtask</button>`}
+                </div>
+            `;
         }
 
         window.generateReport = function() {
