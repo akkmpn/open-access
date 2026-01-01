@@ -470,6 +470,12 @@
             background: var(--text-tertiary);
         }
 
+        .google-signin-btn {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
         @media (max-width: 768px) {
             .header-bar {
                 flex-direction: column;
@@ -507,7 +513,6 @@
             <div class="header-right">
                 <span style="color: var(--text-secondary); font-size: 12px;" id="userDisplay">Guest</span>
                 <button class="btn btn-secondary" onclick="toggleSection('auth')" id="authToggle">Sign In</button>
-                <div id="buttonDiv"></div>
             </div>
         </div>
 
@@ -535,10 +540,20 @@
         <div class="main-content scrollbar">
             <!-- AUTH SECTION -->
             <div id="authSection" class="dashboard-content">
-                <div class="card" style="max-width: 400px; margin: 40px auto;">
+                <div class="card" style="max-width: 450px; margin: 40px auto;">
                     <h2 style="margin-bottom: 20px;">Sign In to TaskPro</h2>
-                    <div id="googleButtonContainer" style="text-align: center; margin-bottom: 20px;"></div>
+                    
+                    <!-- Google Sign-In Button -->
+                    <div class="google-signin-btn">
+                        <div id="g_id_onload"
+                             data-client_id="1069568952458-m2thp51uuuurp51o18iboprnsq0bjq8p.apps.googleusercontent.com"
+                             data-callback="handleGoogleSignIn">
+                        </div>
+                        <div class="g_id_signin" data-type="standard"></div>
+                    </div>
+
                     <div style="text-align: center; margin: 20px 0; color: var(--text-secondary);">OR</div>
+
                     <div class="form-group">
                         <label>Email</label>
                         <input type="email" id="email" placeholder="your@email.com" />
@@ -549,7 +564,7 @@
                     </div>
                     <button class="btn btn-primary btn-full" onclick="authenticateWithFirebase()">Sign In / Sign Up</button>
                     <p style="font-size: 12px; color: var(--text-secondary); margin-top: 10px; text-align: center;">
-                        Supports Google Sign In or email/password
+                        Use Google or email/password
                     </p>
                 </div>
             </div>
@@ -831,7 +846,7 @@
     </div>
 
     <script>
-        // Firebase Configuration
+        // Firebase Configuration MUST BE BEFORE INITIALIZATION
         const firebaseConfig = {
             apiKey: "AIzaSyAxT6I5OUp_X1THaHiLWpBgk7KM5-NqQ4w",
             authDomain: "taskpro-ea29c.firebaseapp.com",
@@ -842,14 +857,12 @@
             appId: "1:917450499382:web:55098613f6ae8a2f37ff97"
         };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+        // Initialize Firebase FIRST
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const db = firebase.database();
-
-        // Google Sign-In Configuration
-        const GOOGLE_CLIENT_ID = "1069568952458-m2thp51uuuurp51o18iboprnsq0bjq8p.apps.googleusercontent.com"; // Replace with your Google Client ID
-        let googleInitialized = false;
 
         // Global State
         let userId = null;
@@ -859,6 +872,31 @@
         let currentReportData = null;
         let chart = null;
         const DB_NAME = 'TaskProDB';
+
+        // ==================== GOOGLE SIGN-IN ====================
+        function handleGoogleSignIn(response) {
+            const token = response.credential;
+            try {
+                const decoded = JSON.parse(atob(token.split('.')[1]));
+                const email = decoded.email;
+
+                const credential = firebase.auth.GoogleAuthProvider.credential(token);
+                auth.signInWithCredential(credential)
+                    .then(result => {
+                        userId = result.user.uid;
+                        localStorage.setItem('userId', userId);
+                        localStorage.setItem('userEmail', email);
+                        updateUI();
+                        loadFromFirebase();
+                        renderTasks();
+                    })
+                    .catch(error => {
+                        alert('Google Sign-In error: ' + error.message);
+                    });
+            } catch (e) {
+                alert('Token error: ' + e.message);
+            }
+        }
 
         // ==================== INDEXEDDB ====================
         function initIndexedDB() {
@@ -995,64 +1033,6 @@
                 renderTasks();
             } catch (e) {
                 alert('Auth error: ' + e.message);
-            }
-        }
-
-        // Google Sign-In Handler
-        function handleGoogleSignIn(response) {
-            try {
-                const credential = response.credential;
-                const credentialDecoded = JSON.parse(atob(credential.split('.')[1]));
-                
-                const email = credentialDecoded.email;
-                const name = credentialDecoded.name;
-
-                // Sign in with Google credential
-                firebase.auth().signInWithCredential(firebase.auth.GoogleAuthProvider.credential(null, credential))
-                    .then((result) => {
-                        userId = result.user.uid;
-                        localStorage.setItem('userId', userId);
-                        localStorage.setItem('userEmail', email);
-                        localStorage.setItem('userName', name);
-                        updateUI();
-                        loadFromFirebase();
-                        renderTasks();
-                    })
-                    .catch((e) => {
-                        // Fallback: Create custom user session
-                        userId = btoa(email); // Use encoded email as ID
-                        localStorage.setItem('userId', userId);
-                        localStorage.setItem('userEmail', email);
-                        localStorage.setItem('userName', name);
-                        updateUI();
-                        loadFromFirebase();
-                        renderTasks();
-                    });
-            } catch (e) {
-                console.error('Google Sign-In error:', e);
-                alert('Google Sign-In failed: ' + e.message);
-            }
-        }
-
-        // Initialize Google Sign-In Button
-        function initializeGoogleSignIn() {
-            try {
-                google.accounts.id.initialize({
-                    client_id: GOOGLE_CLIENT_ID,
-                    callback: handleGoogleSignIn
-                });
-
-                google.accounts.id.renderButton(
-                    document.getElementById('googleButtonContainer'),
-                    {
-                        theme: 'dark',
-                        size: 'large',
-                        width: '100%'
-                    }
-                );
-                googleInitialized = true;
-            } catch (e) {
-                console.error('Google Sign-In init error:', e);
             }
         }
 
@@ -1516,11 +1496,6 @@
         }
 
         // ==================== UTILITIES ====================
-        function getTodayISO() {
-            const today = new Date();
-            return today.toISOString().split('T')[0];
-        }
-
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
@@ -1554,12 +1529,6 @@
             }
             updateUI();
             updateDashboard();
-            // Initialize Google Sign-In after Firebase loads
-            setTimeout(() => {
-                if (typeof google !== 'undefined') {
-                    initializeGoogleSignIn();
-                }
-            }, 500);
         });
 
         // Listen for auth changes
