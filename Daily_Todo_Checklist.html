@@ -1013,20 +1013,17 @@ function getCurrentTasksKey() {
 
 window.firebaseLogout = async function() {
     if (!confirm('Logout?')) return;
-    try {
-        await signOut(auth);
-        currentUser = null;
-        isGuest = false;
-
-        // Reset in-memory tasks only; keep per-user storage and Firebase
-        tasks = [];
-        if (syncListener) syncListener();
-
-        document.getElementById('userEmail').textContent = 'Guest';
-        document.getElementById('logoutBtn').style.display = 'none';
-        updateSyncStatus('Logged out');
-        showAuthSection();
-        renderTasks(); // show empty
+    await signOut(auth);
+    currentUser = null;
+    isGuest = false;
+    tasks = [];
+    if (syncListener) syncListener();
+    document.getElementById('userEmail').textContent = 'Guest';
+    document.getElementById('logoutBtn').style.display = 'none';
+    updateSyncStatus('Logged out');
+    showAuthSection();
+    renderTasks();  // show empty
+};
     } catch (error) {
         console.error('Logout error:', error);
         alert(error.message);
@@ -1038,13 +1035,12 @@ window.firebaseLogout = async function() {
 window.loginAsGuest = function() {
     isGuest = true;
     currentUser = null;
-    document.getElementById('userEmail').textContent = 'Guest (Local)';
+    document.getElementById('userEmail').textContent = '👤 Guest (Local)';
     document.getElementById('logoutBtn').style.display = 'none';
     updateSyncStatus('Guest Mode');
     showTodoSection();
-    loadTasks(false); // load only guest tasks
+    loadTasks(false);  // only guest local tasks
 };
-
 
 
         // ===== SYNC WITH FIREBASE =====
@@ -1056,14 +1052,19 @@ window.loginAsGuest = function() {
                 
                 if (syncListener) syncListener();
 
-                syncListener = onValue(tasksRef, (snapshot) => {
-                    const data = snapshot.val();
-                    tasks = data ? Object.values(data) : [];
-                    console.log('☁️ Synced from Firebase:', tasks.length, 'tasks');
-                    saveTasks();
-                    renderTasks();
-                    updateSyncStatus('Synced');
-                }, (error) => {
+syncListener = onValue(tasksRef, 
+    (snapshot) => {
+        const data = snapshot.val();
+        tasks = data ? data : []; // keep as array
+        console.log('☁️ Synced from Firebase:', tasks.length, 'tasks');
+
+        // cache only to this user’s key, do NOT call saveTasks() again
+        const key = getCurrentTasksKey();
+        localStorage.setItem(key, JSON.stringify(tasks));
+
+        renderTasks();
+        updateSyncStatus('Synced');
+    }, (error) => {
                     console.error('Sync error:', error);
                     updateSyncStatus('Sync Error');
                 });
@@ -1133,12 +1134,12 @@ function loadTasks(fromFirebase = false) {
     const key = getCurrentTasksKey();
 
     if (currentUser && !isGuest && fromFirebase) {
-        // Load from Firebase for this user
+        // ONLY logged-in user, ONLY when explicitly asked
         const tasksRef = ref(db, 'users/' + currentUser.uid + '/tasks');
         get(tasksRef).then(snapshot => {
             const data = snapshot.val();
             tasks = data ? data : [];
-            localStorage.setItem(key, JSON.stringify(tasks)); // cache per user
+            localStorage.setItem(key, JSON.stringify(tasks));
             renderTasks();
         }).catch(e => {
             console.error('Firebase load error', e);
@@ -1147,18 +1148,12 @@ function loadTasks(fromFirebase = false) {
             renderTasks();
         });
     } else {
-        // Guest or cached logged-in
+        // guest or cached
         const stored = localStorage.getItem(key);
-        try {
-            tasks = stored ? JSON.parse(stored) : [];
-        } catch (e) {
-            console.error('Error loading tasks', e);
-            tasks = [];
-        }
+        tasks = stored ? JSON.parse(stored) : [];
         renderTasks();
     }
 }
-
 
 async function saveTasks() {
     const key = getCurrentTasksKey();
