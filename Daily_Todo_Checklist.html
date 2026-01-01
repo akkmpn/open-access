@@ -964,58 +964,6 @@
             }
         };
 
-        // ---------- Subtask helpers ----------
-
-window.addSubtask = function(taskId) {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-
-    const text = prompt('Enter sub-task:');
-    if (!text || !text.trim()) return;
-
-    if (!task.subTasks) task.subTasks = [];
-
-    const newId = Date.now() + Math.floor(Math.random() * 1000);
-
-    task.subTasks.push({
-        id: newId,
-        text: text.trim(),
-        completed: false
-    });
-
-    task.completed = false;
-
-    saveTasks();
-    loadTasks();
-};
-
-window.toggleSubtask = function(taskId, subtaskId) {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task || !task.subTasks) return;
-
-    const subtask = task.subTasks.find(st => st.id === subtaskId);
-    if (!subtask) return;
-
-    subtask.completed = !subtask.completed;
-
-    const allDone = task.subTasks.length > 0 && task.subTasks.every(st => st.completed);
-    task.completed = allDone;
-
-    saveTasks();
-    loadTasks();
-};
-
-window.removeSubtask = function(taskId, subtaskId) {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task || !task.subTasks) return;
-
-    task.subTasks = task.subTasks.filter(st => st.id !== subtaskId);
-
-    saveTasks();
-    loadTasks();
-};
-
-
         window.toggleExpanded = function(taskId) {
             const task = tasks.find(t => t.id === taskId);
             if (task) {
