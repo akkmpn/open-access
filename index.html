@@ -1,1 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskPro Enterprise - Main</title>
+    <link rel="stylesheet" href="shared/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <div class="header-bar">
+            <div class="header-left">
+                <div class="logo">⚡ TaskPro Pro</div>
+                <input type="text" class="search-bar" id="globalSearch" placeholder="Search tasks..." />
+            </div>
+            <div class="header-right">
+                <div class="status-indicator" id="syncStatus" title="Cloud sync status"></div>
+                <div style="color: var(--text-secondary); font-size: 12px;" id="userDisplay">Guest</div>
+                <button class="btn btn-secondary" style="padding: 8px 12px; font-size: 12px;" id="authBtn">Sign In</button>
+            </div>
+        </div>
 
+        <!-- SIDEBAR -->
+        <div class="sidebar scrollbar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Workspace</div>
+                <a href="pages/lists.html" class="nav-item">📝 Tasks</a>
+                <a href="pages/subtasks.html" class="nav-item">📋 Subtasks</a>
+                <a href="pages/calendar.html" class="nav-item">📅 Calendar</a>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Performance</div>
+                <a href="pages/analytics.html" class="nav-item">📊 Analytics</a>
+                <a href="pages/reports.html" class="nav-item">📈 Reports</a>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="btn btn-primary" style="width: 100%; margin-bottom: 8px;" onclick="window.location.href='pages/settings.html'">⚙️ Settings</button>
+                <button class="btn btn-secondary" style="width: 100%; font-size: 12px;" id="logoutBtn" onclick="logout()">🚪 Logout</button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content scrollbar">
+            <div class="content-header">
+                <h1>Welcome to TaskPro Pro</h1>
+                <p>Your intelligent task management system</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalTasks">0</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completedTasks">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pendingTasks">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completionRate">0%</div>
+                    <div class="stat-label">Completion Rate</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Quick Actions</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 15px;">
+                    <a href="pages/lists.html" class="btn btn-primary" style="text-align: center; text-decoration: none;">Create Task</a>
+                    <a href="pages/calendar.html" class="btn btn-primary" style="text-align: center; text-decoration: none;">View Calendar</a>
+                    <a href="pages/analytics.html" class="btn btn-primary" style="text-align: center; text-decoration: none;">View Analytics</a>
+                    <a href="pages/reports.html" class="btn btn-primary" style="text-align: center; text-decoration: none;">Generate Report</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📱 Getting Started</h3>
+                <ul style="line-height: 1.8; color: var(--text-secondary);">
+                    <li>Click "Sign In" to create an account or login</li>
+                    <li>Go to <strong>Tasks</strong> to create your first task</li>
+                    <li>Add <strong>Subtasks</strong> for detailed breakdowns</li>
+                    <li>View <strong>Calendar</strong> for deadline management</li>
+                    <li>Check <strong>Analytics</strong> for performance insights</li>
+                    <li>All data syncs automatically to the cloud</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTH MODAL -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <div class="modal-header">Sign In / Register</div>
+            <input type="email" placeholder="Email" id="authEmail" style="margin-bottom: 10px; width: 100%;" />
+            <input type="password" placeholder="Password (min 6 chars)" id="authPassword" style="margin-bottom: 10px; width: 100%;" />
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAuthModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="authenticateUser()">Sign In</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="shared/firebase-config.js"></script>
+    <script src="shared/shared.js"></script>
+    <script>
+        // Initialize on page load
+        window.addEventListener('load', async () => {
+            await initApp();
+            updateDashboard();
+            document.getElementById('authBtn').addEventListener('click', () => {
+                if (window.userId) {
+                    logout();
+                } else {
+                    openAuthModal();
+                }
+            });
+        });
+
+        async function updateDashboard() {
+            const tasks = await window.getAllTasks();
+            const completed = tasks.filter(t => t.completed).length;
+            const total = tasks.length;
+            const pending = total - completed;
+            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('completedTasks').textContent = completed;
+            document.getElementById('pendingTasks').textContent = pending;
+            document.getElementById('completionRate').textContent = rate + '%';
+        }
+
+        function openAuthModal() {
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+        }
+
+        async function authenticateUser() {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+
+            if (!email || password.length < 6) {
+                alert('Invalid email or password (min 6 chars)');
+                return;
+            }
+
+            try {
+                const result = await window.authenticateWithFirebase(email, password);
+                if (result.success) {
+                    closeAuthModal();
+                    document.getElementById('userDisplay').textContent = email;
+                    document.getElementById('authBtn').textContent = 'Logout';
+                    updateDashboard();
+                } else {
+                    alert('Auth failed: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        function logout() {
+            window.logoutUser();
+            document.getElementById('userDisplay').textContent = 'Guest';
+            document.getElementById('authBtn').textContent = 'Sign In';
+            updateDashboard();
+        }
+    </script>
+</body>
+</html>
