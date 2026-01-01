@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -212,11 +212,54 @@
         }
 
         .add-task-section {
-            display: grid;
-            grid-template-columns: 1fr 100px 120px 80px;
-            gap: 10px;
-            margin-bottom: 15px;
+          display: grid;
+          grid-template-columns: 1fr 140px 80px;
+          gap: 10px;
+          margin-bottom: 15px;
         }
+
+        .priority-buttons {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          justify-content: flex-end;
+        }
+
+        .priority-btn {
+          padding: 8px 14px;
+          border: 2px solid var(--color-border);
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          background: var(--color-bg);
+          color: var(--color-text);
+        }
+
+        .priority-btn:hover {
+          border-color: var(--color-primary);
+          transform: translateY(-2px);
+        }
+
+        .priority-btn.active-low {
+          background: rgba(76, 175, 80, 0.2);
+          border-color: #4caf50;
+          color: #2e7d32;
+        }
+
+        .priority-btn.active-medium {
+          background: rgba(255, 152, 0, 0.2);
+          border-color: #ff9800;
+          color: #e65100;
+        }
+
+        .priority-btn.active-high {
+          background: rgba(244, 67, 54, 0.2);
+          border-color: #f44336;
+          color: #c62828;
+        }
+
 
         .templates-section {
             margin-bottom: 20px;
@@ -654,16 +697,17 @@
                 </div>
             </div>
 
-            <div class="add-task-section">
-                <input type="text" id="taskInput" placeholder="What do you want to accomplish today?" />
-                <input type="date" id="dueDateInput" />
-                <select id="prioritySelect">
-                    <option value="low">Low</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="high">High</option>
-                </select>
-                <button class="btn btn-primary" onclick="addTask()">Add Task</button>
-            </div>
+<div class="add-task-section">
+  <input type="text" id="taskInput" placeholder="What do you want to accomplish today?" />
+  <input type="date" id="dueDateInput" />
+  <div class="priority-buttons">
+    <button class="priority-btn active-medium" id="priorityLow" onclick="setPriority('low')">Low</button>
+    <button class="priority-btn active-medium" id="priorityMedium" onclick="setPriority('medium')">Medium</button>
+    <button class="priority-btn active-medium" id="priorityHigh" onclick="setPriority('high')">High</button>
+  </div>
+  <button class="btn btn-primary" onclick="addTask()">Add Task</button>
+</div>
+<input type="hidden" id="prioritySelect" value="medium" />
 
             <div class="templates-section" id="suggestedTemplates" style="display: none;">
                 <div class="template-title">📌 Suggested from History</div>
@@ -870,6 +914,7 @@
             addTask();
         };
 
+         window.setPriority = function(priority) { document.getElementById('prioritySelect').value = priority; document.getElementById('priorityLow').classList.remove('active-low'); document.getElementById('priorityMedium').classList.remove('active-medium'); document.getElementById('priorityHigh').classList.remove('active-high'); if (priority === 'low') { document.getElementById('priorityLow').classList.add('active-low'); } else if (priority === 'medium') { document.getElementById('priorityMedium').classList.add('active-medium'); } else if (priority === 'high') { document.getElementById('priorityHigh').classList.add('active-high'); } };
         window.addTask = function() {
             const input = document.getElementById('taskInput');
             const priority = document.getElementById('prioritySelect').value;
@@ -1268,6 +1313,7 @@
 
         loadTasks();
         updateStreakCounter();
+         setPriority('medium');
 
         setInterval(() => {
             const newToday = new Date().toDateString();
