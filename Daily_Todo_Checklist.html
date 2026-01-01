@@ -179,7 +179,7 @@
     <div id="appScreen" style="display:none;">
         <div class="user-bar">
             <span id="userEmailDisplay" class="user-email">Guest User</span>
-            <button class="btn-logout" onclick="window.handleLogout()">Logout</button>
+            <button class="btn-logout" id="logoutBtn" onclick="window.handleLogout()">Logout</button>
         </div>
 
         <div class="tabs">
@@ -266,11 +266,15 @@
             currentUser = user;
             isGuest = false;
             showApp();
+            
+            // FIX: Set correct email and button text for logged-in user
             document.getElementById('userEmailDisplay').textContent = user.email;
+            document.getElementById('logoutBtn').textContent = "Logout";
+            
             syncFirestore();
         } else {
             currentUser = null;
-            // Don't auto-show auth if we were just in guest mode
+            // Only go back to login screen if we are NOT in guest mode
             if(!isGuest) {
                 document.getElementById('authScreen').style.display = 'block';
                 document.getElementById('appScreen').style.display = 'none';
@@ -301,16 +305,29 @@
     window.handleLogout = async function() {
         if(unsubscribe) unsubscribe();
         tasks = [];
-        renderTasks();
-        await signOut(auth);
-        isGuest = false;
-        document.getElementById('authScreen').style.display = 'block';
-        document.getElementById('appScreen').style.display = 'none';
-        updateStatus('Logged out');
+        
+        if (isGuest) {
+            // Guest Logout logic
+            isGuest = false;
+            updateStatus('Exited Guest Mode');
+            document.getElementById('authScreen').style.display = 'block';
+            document.getElementById('appScreen').style.display = 'none';
+        } else {
+            // Firebase Logout logic
+            await signOut(auth);
+            isGuest = false;
+            updateStatus('Logged out');
+            // onAuthStateChanged will handle hiding appScreen
+        }
     };
 
     window.continueGuest = function() {
         isGuest = true;
+        
+        // FIX: Explicitly overwrite the old email text from previous sessions
+        document.getElementById('userEmailDisplay').textContent = "Guest (Offline)";
+        document.getElementById('logoutBtn').textContent = "Exit Guest";
+
         showApp();
         loadLocalTasks();
     };
@@ -472,7 +489,7 @@
         const container = document.getElementById('tasksContainer');
         const today = new Date().toISOString().split('T')[0];
         
-        // Filter: Show all incomplete tasks (even old ones) + today's completed tasks
+        // Filter: Show all incomplete tasks + today's completed tasks
         const visibleTasks = tasks.filter(t => !t.completed || t.dueDate === today || t.createdAt.startsWith(today));
 
         // Sort: Overdue -> Priority -> Created
