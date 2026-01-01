@@ -57,6 +57,17 @@
             margin-bottom: 15px;
         }
 
+        .sync-status {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .sync-status.synced {
+            color: #4caf50;
+        }
+
         .stats {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -89,11 +100,6 @@
             grid-template-columns: 1fr 120px 80px;
             gap: 10px;
             margin-bottom: 25px;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
         }
 
         input[type="text"] {
@@ -326,6 +332,7 @@
     <div class="container">
         <div class="header">
             <h1>📋 Daily Todo Checklist</h1>
+            <div class="sync-status" id="syncStatus">Connecting to cloud...</div>
         </div>
 
         <div class="stats">
@@ -366,71 +373,58 @@
         </div>
     </div>
 
-    <script>
-        const STORAGE_KEY = 'dailyTodoTasks';
-        const LAST_RESET_KEY = 'lastResetDate';
-        const STREAK_KEY = 'streakCount';
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCoCFw0hezldX3t33AYa1ytddYMuQCWliM",
+            authDomain: "daily-todo-1e4ad.firebaseapp.com",
+            projectId: "daily-todo-1e4ad",
+            storageBucket: "daily-todo-1e4ad.firebasestorage.app",
+            messagingSenderId: "629797690976",
+            appId: "1:629797690976:web:fda66df1691eb920e12d05",
+            measurementId: "G-KG0NGWBFCW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
         let tasks = [];
+        let today = new Date().toDateString();
 
-        // Initialize app
-        function init() {
-            loadTasks();
-            checkAndResetDaily();
-            renderTasks();
-            attachEventListeners();
-        }
-
-        // Load tasks from localStorage
-        function loadTasks() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            tasks = saved ? JSON.parse(saved) : [];
-        }
-
-        // Save tasks to localStorage
-        function saveTasks() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-        }
-
-        // Check if it's a new day and reset tasks
-        function checkAndResetDaily() {
-            const lastReset = localStorage.getItem(LAST_RESET_KEY);
-            const today = new Date().toDateString();
-
-            if (lastReset !== today) {
-                // It's a new day, reset all checkboxes
-                tasks.forEach(task => task.completed = false);
-                saveTasks();
-                localStorage.setItem(LAST_RESET_KEY, today);
-                updateStreak();
-            }
-        }
-
-        // Update streak
-        function updateStreak() {
-            const lastReset = localStorage.getItem(LAST_RESET_KEY);
-            let streak = parseInt(localStorage.getItem(STREAK_KEY)) || 0;
-
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-
-            if (lastReset === yesterday.toDateString() || lastReset === today.toDateString()) {
-                streak++;
+        function updateSyncStatus(status) {
+            const el = document.getElementById('syncStatus');
+            if (status === 'synced') {
+                el.textContent = '✓ Synced';
+                el.className = 'sync-status synced';
+            } else if (status === 'syncing') {
+                el.textContent = 'Syncing...';
+                el.className = 'sync-status';
             } else {
-                streak = 1;
+                el.textContent = 'Error: ' + status;
+                el.className = 'sync-status';
             }
-
-            localStorage.setItem(STREAK_KEY, streak.toString());
         }
 
-        // Get current streak
-        function getStreak() {
-            return parseInt(localStorage.getItem(STREAK_KEY)) || 0;
+        async function loadTasksFromFirestore() {
+            try {
+                updateSyncStatus('syncing');
+                const q = query(collection(db, 'tasks'), where('date', '==', today));
+                const snapshot = await getDocs(q);
+                tasks = [];
+                snapshot.forEach(doc => {
+                    tasks.push({ id: doc.id, ...doc.data() });
+                });
+                renderTasks();
+                updateSyncStatus('synced');
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+                updateSyncStatus(error.message);
+            }
         }
 
-        // Add new task
-        function addTask() {
+        window.addTask = async function() {
             const input = document.getElementById('taskInput');
             const priority = document.getElementById('prioritySelect').value;
             const text = input.value.trim();
@@ -440,66 +434,95 @@
                 return;
             }
 
-            const task = {
-                id: Date.now(),
-                text: text,
-                completed: false,
-                priority: priority,
-                createdAt: new Date().toISOString()
-            };
-
-            tasks.push(task);
-            saveTasks();
-            input.value = '';
-            renderTasks();
-            input.focus();
-        }
-
-        // Toggle task completion
-        function toggleTask(id) {
-            const task = tasks.find(t => t.id === id);
-            if (task) {
-                task.completed = !task.completed;
-                saveTasks();
-                renderTasks();
+            try {
+                updateSyncStatus('syncing');
+                await addDoc(collection(db, 'tasks'), {
+                    text: text,
+                    completed: false,
+                    priority: priority,
+                    date: today,
+                    createdAt: new Date().toISOString()
+                });
+                input.value = '';
+                await loadTasksFromFirestore();
+                input.focus();
+            } catch (error) {
+                console.error('Error adding task:', error);
+                updateSyncStatus(error.message);
             }
-        }
+        };
 
-        // Remove task
-        function removeTask(id) {
-            tasks = tasks.filter(t => t.id !== id);
-            saveTasks();
-            renderTasks();
-        }
+        window.toggleTask = async function(id) {
+            try {
+                updateSyncStatus('syncing');
+                const task = tasks.find(t => t.id === id);
+                if (task) {
+                    await updateDoc(doc(db, 'tasks', id), {
+                        completed: !task.completed
+                    });
+                    await loadTasksFromFirestore();
+                }
+            } catch (error) {
+                console.error('Error toggling task:', error);
+                updateSyncStatus(error.message);
+            }
+        };
 
-        // Reset all tasks for today
-        function resetToday() {
+        window.removeTask = async function(id) {
+            try {
+                updateSyncStatus('syncing');
+                await deleteDoc(doc(db, 'tasks', id));
+                await loadTasksFromFirestore();
+            } catch (error) {
+                console.error('Error removing task:', error);
+                updateSyncStatus(error.message);
+            }
+        };
+
+        window.resetToday = async function() {
             if (confirm('Reset all tasks for today?')) {
-                tasks.forEach(task => task.completed = false);
-                saveTasks();
-                renderTasks();
+                try {
+                    updateSyncStatus('syncing');
+                    for (let task of tasks) {
+                        if (task.completed) {
+                            await updateDoc(doc(db, 'tasks', task.id), {
+                                completed: false
+                            });
+                        }
+                    }
+                    await loadTasksFromFirestore();
+                } catch (error) {
+                    console.error('Error resetting tasks:', error);
+                    updateSyncStatus(error.message);
+                }
             }
-        }
+        };
 
-        // Clear all tasks
-        function clearAllTasks() {
+        window.clearAllTasks = async function() {
             if (confirm('Delete all tasks permanently?')) {
-                tasks = [];
-                saveTasks();
-                renderTasks();
+                try {
+                    updateSyncStatus('syncing');
+                    for (let task of tasks) {
+                        await deleteDoc(doc(db, 'tasks', task.id));
+                    }
+                    tasks = [];
+                    renderTasks();
+                    updateSyncStatus('synced');
+                } catch (error) {
+                    console.error('Error clearing tasks:', error);
+                    updateSyncStatus(error.message);
+                }
             }
-        }
+        };
 
-        // Render tasks
         function renderTasks() {
             const container = document.getElementById('tasksContainer');
             const completedCount = tasks.filter(t => t.completed).length;
             const completionPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
-            // Update stats
             document.getElementById('completionPercent').textContent = completionPercent + '%';
             document.getElementById('completedCount').textContent = completedCount + '/' + tasks.length;
-            document.getElementById('streakCount').textContent = getStreak();
+            document.getElementById('streakCount').textContent = tasks.length > 0 ? completedCount : '0';
 
             if (tasks.length === 0) {
                 container.innerHTML = `
@@ -511,7 +534,6 @@
                 return;
             }
 
-            // Sort tasks: High priority first, then Medium, then Low
             const priorityOrder = { high: 0, medium: 1, low: 2 };
             const sortedTasks = [...tasks].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
@@ -521,35 +543,40 @@
                         type="checkbox" 
                         class="task-checkbox" 
                         ${task.completed ? 'checked' : ''} 
-                        onchange="toggleTask(${task.id})"
+                        onchange="window.toggleTask('${task.id}')"
                     />
                     <div class="task-content">
                         <div class="task-text">${escapeHtml(task.text)}</div>
                         <span class="task-priority ${task.priority}">${task.priority.toUpperCase()}</span>
                     </div>
-                    <button class="task-remove" onclick="removeTask(${task.id})">✕</button>
+                    <button class="task-remove" onclick="window.removeTask('${task.id}')">✕</button>
                 </div>
             `).join('');
         }
 
-        // Escape HTML to prevent XSS
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // Attach event listeners
-        function attachEventListeners() {
-            document.getElementById('taskInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    addTask();
-                }
-            });
-        }
+        // Initialize
+        document.getElementById('taskInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
 
-        // Initialize on page load
-        window.addEventListener('load', init);
+        loadTasksFromFirestore();
+
+        // Auto-update if date changes
+        setInterval(() => {
+            const newToday = new Date().toDateString();
+            if (newToday !== today) {
+                today = newToday;
+                loadTasksFromFirestore();
+            }
+        }, 60000);
     </script>
 </body>
 </html>
