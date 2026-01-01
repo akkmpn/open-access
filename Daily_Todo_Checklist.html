@@ -1591,17 +1591,18 @@ async function saveTasks() {
         document.getElementById('filterFromDate').valueAsDate = thirtyDaysAgo;
         document.getElementById('filterToDate').valueAsDate = new Date();
 
-        loadTasks();
-        updateStreakCounter();
+loadTasks(false);   // initial: use cache/guest correctly
+updateStreakCounter();
 
-        setInterval(() => {
-            const newToday = new Date().toDateString();
-            if (newToday !== today) {
-                today = newToday;
-                loadTasks();
-                updateStreakCounter();
-            }
-        }, 60000);
+setInterval(() => {
+    const newToday = new Date().toDateString();
+    if (newToday !== today) {
+        today = newToday;
+        loadTasks(false);   // do NOT hit Firebase here
+        updateStreakCounter();
+    }
+}, 60000);
+
     </script>
 </body>
 </html>
