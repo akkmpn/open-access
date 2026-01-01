@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Todo Checklist Pro</title>
+    <title>Daily Todo Checklist - Pro Sync</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    
     <style>
         :root {
             --color-primary: #208084;
@@ -48,6 +47,17 @@
         .sync-status.synced { color: var(--color-success); }
         .sync-status.error { color: var(--color-error); }
 
+        /* AUTH SECTION */
+        .auth-section { display: none; background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid var(--color-border); }
+        .auth-section.show { display: block; animation: fadeIn 0.3s; }
+        
+        .auth-form { display: flex; flex-direction: column; gap: 10px; }
+        .auth-header { text-align: center; margin-bottom: 10px; color: var(--color-primary); font-weight: bold; }
+        
+        .user-bar { display: flex; justify-content: space-between; align-items: center; background: rgba(32, 128, 132, 0.1); padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; }
+        .user-email { font-size: 13px; font-weight: 600; color: var(--color-primary); }
+        .btn-logout { background: none; border: 1px solid var(--color-primary); color: var(--color-primary); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+
         /* TABS */
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--color-border); }
         .tab-btn {
@@ -76,7 +86,7 @@
         }
         @media (max-width: 600px) { .add-task-section { grid-template-columns: 1fr; } }
 
-        input[type="text"], input[type="date"], select {
+        input[type="text"], input[type="date"], input[type="email"], input[type="password"], select {
             padding: 12px; border: 2px solid var(--color-border); border-radius: 8px;
             font-size: 14px; font-family: inherit; width: 100%;
         }
@@ -90,6 +100,7 @@
         .btn-primary:hover { background: var(--color-primary-hover); }
         .btn-danger { background: var(--color-error); }
         .btn-secondary { background: var(--color-border); color: var(--color-text); }
+        .btn-full { width: 100%; margin-top: 5px; }
 
         /* TASKS LIST */
         .tasks-container { max-height: 600px; overflow-y: auto; margin-bottom: 15px; padding-right: 5px; }
@@ -152,60 +163,78 @@
         <div id="syncStatus" class="sync-status">Initializing...</div>
     </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('tasks')">My Tasks</button>
-        <button class="tab-btn" onclick="switchTab('reports')">Reports</button>
-    </div>
-
-    <div id="tasks" class="tab-content active">
-        <div class="stats">
-            <div class="stat-box">
-                <span class="value" id="completionPercent">0%</span>
-                <span class="label">Completed Today</span>
+    <div id="authScreen" class="auth-section">
+        <div class="auth-header">Login to Sync Across Devices</div>
+        <div class="auth-form">
+            <input type="email" id="authEmail" placeholder="Email">
+            <input type="password" id="authPassword" placeholder="Password (min 6 chars)">
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-primary btn-full" onclick="window.handleLogin()">Login</button>
+                <button class="btn btn-secondary btn-full" onclick="window.handleSignup()">Sign Up</button>
             </div>
-            <div class="stat-box">
-                <span class="value" id="completedCount">0</span>
-                <span class="label">Tasks Done</span>
-            </div>
-            <div class="stat-box">
-                <span class="value" id="pendingCount">0</span>
-                <span class="label">Pending</span>
-            </div>
-        </div>
-
-        <div class="add-task-section">
-            <input type="text" id="taskInput" placeholder="What needs to be done?" />
-            <input type="date" id="dateInput" />
-            <select id="prioritySelect">
-                <option value="low">Low</option>
-                <option value="medium" selected>Medium</option>
-                <option value="high">High</option>
-            </select>
-            <button class="btn btn-primary" onclick="window.handleAddTask()">Add</button>
-        </div>
-
-        <div class="tasks-container scrollbar" id="tasksContainer">
-            </div>
-
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button class="btn btn-secondary" style="flex:1" onclick="window.cleanupCompleted()">Cleanup Completed</button>
+            <button class="btn btn-secondary btn-full" style="background:#ddd; color:#333" onclick="window.continueGuest()">Continue as Guest (Offline)</button>
         </div>
     </div>
 
-    <div id="reports" class="tab-content">
-        <h3 style="margin-bottom: 15px;">Weekly Performance</h3>
-        <div class="chart-container">
-            <canvas id="reportChart"></canvas>
+    <div id="appScreen" style="display:none;">
+        <div class="user-bar">
+            <span id="userEmailDisplay" class="user-email">Guest User</span>
+            <button class="btn-logout" onclick="window.handleLogout()">Logout</button>
         </div>
-        <div style="margin-top: 20px; text-align: center;">
-            <p style="color: #666; font-size: 13px;">Charts update automatically based on your task history.</p>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('tasks')">My Tasks</button>
+            <button class="tab-btn" onclick="switchTab('reports')">Reports</button>
+        </div>
+
+        <div id="tasks" class="tab-content active">
+            <div class="stats">
+                <div class="stat-box">
+                    <span class="value" id="completionPercent">0%</span>
+                    <span class="label">Completed</span>
+                </div>
+                <div class="stat-box">
+                    <span class="value" id="completedCount">0</span>
+                    <span class="label">Tasks Done</span>
+                </div>
+                <div class="stat-box">
+                    <span class="value" id="pendingCount">0</span>
+                    <span class="label">Pending</span>
+                </div>
+            </div>
+
+            <div class="add-task-section">
+                <input type="text" id="taskInput" placeholder="What needs to be done?" />
+                <input type="date" id="dateInput" />
+                <select id="prioritySelect">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+                <button class="btn btn-primary" onclick="window.handleAddTask()">Add</button>
+            </div>
+
+            <div class="tasks-container scrollbar" id="tasksContainer">
+                </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-secondary" style="flex:1" onclick="window.cleanupCompleted()">Clear Completed</button>
+            </div>
+        </div>
+
+        <div id="reports" class="tab-content">
+            <h3 style="margin-bottom: 15px;">Task Overview</h3>
+            <div class="chart-container">
+                <canvas id="reportChart"></canvas>
+            </div>
         </div>
     </div>
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, orderBy, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // --- CONFIGURATION ---
     const firebaseConfig = {
@@ -219,44 +248,116 @@
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
+
+    // STATE
     let tasks = [];
+    let currentUser = null;
+    let isGuest = false;
+    let unsubscribe = null; // Firestore listener
     let myChart = null;
 
-    // --- UI HELPERS ---
-    const syncStatus = document.getElementById('syncStatus');
-    const dateInput = document.getElementById('dateInput');
-    
-    // Set default date to today
-    dateInput.valueAsDate = new Date();
+    // --- INITIALIZATION ---
+    document.getElementById('dateInput').valueAsDate = new Date();
 
-    function updateStatus(status, type = 'normal') {
-        syncStatus.textContent = status;
-        syncStatus.className = type === 'success' ? 'sync-status synced' : (type === 'error' ? 'sync-status error' : 'sync-status');
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            isGuest = false;
+            showApp();
+            document.getElementById('userEmailDisplay').textContent = user.email;
+            syncFirestore();
+        } else {
+            currentUser = null;
+            // Don't auto-show auth if we were just in guest mode
+            if(!isGuest) {
+                document.getElementById('authScreen').style.display = 'block';
+                document.getElementById('appScreen').style.display = 'none';
+                updateStatus('Please Login');
+            }
+        }
+    });
+
+    // --- AUTH FUNCTIONS ---
+    window.handleLogin = async function() {
+        const email = document.getElementById('authEmail').value;
+        const pass = document.getElementById('authPassword').value;
+        try {
+            updateStatus('Logging in...');
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (e) { alert(e.message); updateStatus('Login Failed', 'error'); }
+    };
+
+    window.handleSignup = async function() {
+        const email = document.getElementById('authEmail').value;
+        const pass = document.getElementById('authPassword').value;
+        try {
+            updateStatus('Creating Account...');
+            await createUserWithEmailAndPassword(auth, email, pass);
+        } catch (e) { alert(e.message); updateStatus('Signup Failed', 'error'); }
+    };
+
+    window.handleLogout = async function() {
+        if(unsubscribe) unsubscribe();
+        tasks = [];
+        renderTasks();
+        await signOut(auth);
+        isGuest = false;
+        document.getElementById('authScreen').style.display = 'block';
+        document.getElementById('appScreen').style.display = 'none';
+        updateStatus('Logged out');
+    };
+
+    window.continueGuest = function() {
+        isGuest = true;
+        showApp();
+        loadLocalTasks();
+    };
+
+    function showApp() {
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('appScreen').style.display = 'block';
     }
 
-    // --- FIREBASE REALTIME LISTENER ---
-    // This is the magic part that syncs phone and computer instantly
-    const q = query(collection(db, "tasks"), orderBy("createdAt", "desc"));
-    
-    updateStatus("Connecting to cloud...");
-    
-    onSnapshot(q, (snapshot) => {
-        tasks = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+    // --- SYNC LOGIC ---
+
+    function syncFirestore() {
+        updateStatus('Syncing...');
+        const q = query(collection(db, "tasks"), where("uid", "==", currentUser.uid));
         
+        unsubscribe = onSnapshot(q, (snapshot) => {
+            tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderTasks();
+            updateStats();
+            updateStatus('✓ Synced', 'success');
+        }, (err) => {
+            console.error(err);
+            updateStatus('Sync Error', 'error');
+        });
+    }
+
+    function loadLocalTasks() {
+        const stored = localStorage.getItem('guest_tasks');
+        tasks = stored ? JSON.parse(stored) : [];
         renderTasks();
         updateStats();
-        if(document.getElementById('reports').style.display === 'block') {
-            renderChart();
+        updateStatus('Guest Mode (Offline)', 'normal');
+    }
+
+    function saveLocal() {
+        if(isGuest) {
+            localStorage.setItem('guest_tasks', JSON.stringify(tasks));
+            renderTasks();
+            updateStats();
         }
-        updateStatus("✓ Synced with Cloud", "success");
-    }, (error) => {
-        console.error("Sync error:", error);
-        updateStatus("Sync Error: " + error.message, "error");
-    });
+    }
+
+    function updateStatus(msg, type) {
+        const el = document.getElementById('syncStatus');
+        el.textContent = msg;
+        el.className = 'sync-status ' + (type === 'success' ? 'synced' : type === 'error' ? 'error' : '');
+    }
 
     // --- CRUD OPERATIONS ---
 
@@ -265,107 +366,137 @@
         const dateVal = document.getElementById('dateInput').value;
         const priority = document.getElementById('prioritySelect').value;
 
-        if (!text) return alert("Please enter a task text");
+        if (!text) return alert("Enter a task");
+
+        const newTask = {
+            text, 
+            dueDate: dateVal, 
+            priority, 
+            completed: false, 
+            createdAt: new Date().toISOString(),
+            subtasks: []
+        };
 
         try {
-            updateStatus("Saving...");
-            await addDoc(collection(db, "tasks"), {
-                text: text,
-                completed: false,
-                priority: priority,
-                dueDate: dateVal,
-                createdAt: new Date().toISOString(),
-                subtasks: [] // Array structure for subtasks
-            });
+            if (isGuest) {
+                newTask.id = Date.now().toString();
+                tasks.push(newTask);
+                saveLocal();
+            } else {
+                updateStatus('Saving...');
+                await addDoc(collection(db, "tasks"), { ...newTask, uid: currentUser.uid });
+            }
             document.getElementById('taskInput').value = '';
-        } catch (e) {
-            console.error(e);
-            alert("Error adding task");
-        }
-    };
-
-    window.toggleTask = async function(id, currentStatus) {
-        try {
-            await updateDoc(doc(db, "tasks", id), { completed: !currentStatus });
         } catch (e) { console.error(e); }
     };
 
+    window.toggleTask = async function(id, currentStatus) {
+        if (isGuest) {
+            const t = tasks.find(x => x.id === id);
+            if(t) t.completed = !t.completed;
+            saveLocal();
+        } else {
+            await updateDoc(doc(db, "tasks", id), { completed: !currentStatus });
+        }
+    };
+
     window.removeTask = async function(id) {
-        if(confirm("Delete this task?")) {
-            try { await deleteDoc(doc(db, "tasks", id)); } catch(e) { console.error(e); }
+        if (!confirm("Delete task?")) return;
+        if (isGuest) {
+            tasks = tasks.filter(t => t.id !== id);
+            saveLocal();
+        } else {
+            await deleteDoc(doc(db, "tasks", id));
         }
     };
 
     // --- SUBTASK LOGIC ---
-    
     window.addSubtask = async function(taskId) {
         const input = document.getElementById(`sub-input-${taskId}`);
         const text = input.value.trim();
         if(!text) return;
 
         const task = tasks.find(t => t.id === taskId);
-        const newSubtasks = [...(task.subtasks || []), { 
-            id: Date.now().toString(), 
-            text: text, 
-            completed: false 
-        }];
+        const newSubtasks = [...(task.subtasks || []), { id: Date.now().toString(), text, completed: false }];
 
-        try {
+        if (isGuest) {
+            task.subtasks = newSubtasks;
+            saveLocal();
+        } else {
             await updateDoc(doc(db, "tasks", taskId), { subtasks: newSubtasks });
-            // Input will clear on re-render
-        } catch(e) { console.error(e); }
+        }
     };
 
-    window.toggleSubtask = async function(taskId, subtaskId) {
+    window.toggleSubtask = async function(taskId, subId) {
         const task = tasks.find(t => t.id === taskId);
-        const newSubtasks = task.subtasks.map(s => 
-            s.id === subtaskId ? { ...s, completed: !s.completed } : s
-        );
-
-        try {
+        const newSubtasks = task.subtasks.map(s => s.id === subId ? {...s, completed: !s.completed} : s);
+        
+        if (isGuest) {
+            task.subtasks = newSubtasks;
+            saveLocal();
+        } else {
             await updateDoc(doc(db, "tasks", taskId), { subtasks: newSubtasks });
-        } catch(e) { console.error(e); }
+        }
     };
 
-    window.deleteSubtask = async function(taskId, subtaskId) {
+    window.removeSubtask = async function(taskId, subId) {
         const task = tasks.find(t => t.id === taskId);
-        const newSubtasks = task.subtasks.filter(s => s.id !== subtaskId);
-        try {
+        const newSubtasks = task.subtasks.filter(s => s.id !== subId);
+        
+        if (isGuest) {
+            task.subtasks = newSubtasks;
+            saveLocal();
+        } else {
             await updateDoc(doc(db, "tasks", taskId), { subtasks: newSubtasks });
-        } catch(e) { console.error(e); }
+        }
     };
 
     window.cleanupCompleted = async function() {
         if(!confirm("Remove all completed tasks?")) return;
-        const completed = tasks.filter(t => t.completed);
-        for(let task of completed) {
-            await deleteDoc(doc(db, "tasks", task.id));
+        const toDelete = tasks.filter(t => t.completed);
+        
+        if(isGuest) {
+            tasks = tasks.filter(t => !t.completed);
+            saveLocal();
+        } else {
+            updateStatus('Cleaning...');
+            const promises = toDelete.map(t => deleteDoc(doc(db, "tasks", t.id)));
+            await Promise.all(promises);
+            updateStatus('Cleaned', 'success');
         }
-    }
+    };
 
-    // --- RENDERING ---
+    // --- UI RENDER ---
 
     function renderTasks() {
         const container = document.getElementById('tasksContainer');
-        if (tasks.length === 0) {
-            container.innerHTML = `<div class="empty-state"><span class="empty-state-icon">🎯</span><p>No tasks found. Add one!</p></div>`;
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Filter: Show all incomplete tasks (even old ones) + today's completed tasks
+        const visibleTasks = tasks.filter(t => !t.completed || t.dueDate === today || t.createdAt.startsWith(today));
+
+        // Sort: Overdue -> Priority -> Created
+        visibleTasks.sort((a,b) => {
+            if(a.completed !== b.completed) return a.completed - b.completed;
+            const prio = {high:0, medium:1, low:2};
+            return prio[a.priority] - prio[b.priority];
+        });
+
+        if (visibleTasks.length === 0) {
+            container.innerHTML = `<div class="empty-state"><span class="empty-state-icon">✅</span><p>All caught up!</p></div>`;
             return;
         }
 
-        // Sort: Overdue first, then by priority, then date
-        const today = new Date().toISOString().split('T')[0];
-        
-        container.innerHTML = tasks.map(task => {
+        container.innerHTML = visibleTasks.map(task => {
             const isOverdue = !task.completed && task.dueDate < today;
             const subtasks = task.subtasks || [];
             
-            // Subtasks HTML
             const subtasksHtml = subtasks.map(st => `
                 <div class="subtask-item ${st.completed ? 'completed' : ''}">
                     <input type="checkbox" ${st.completed ? 'checked' : ''} 
-                        onchange="toggleSubtask('${task.id}', '${st.id}')">
-                    <span class="subtask-text">${st.text}</span>
-                    <button onclick="deleteSubtask('${task.id}', '${st.id}')" style="border:none;background:none;color:#f44336;cursor:pointer;">×</button>
+                        onchange="window.toggleSubtask('${task.id}', '${st.id}')">
+                    <span class="subtask-text">${escapeHtml(st.text)}</span>
+                    <button onclick="window.removeSubtask('${task.id}', '${st.id}')" style="border:none;background:none;color:#f44336;cursor:pointer;">×</button>
                 </div>
             `).join('');
 
@@ -377,11 +508,11 @@
                         onchange="window.toggleTask('${task.id}', ${task.completed})">
                     
                     <div class="task-content">
-                        <div class="task-text">${task.text}</div>
+                        <div class="task-text">${escapeHtml(task.text)}</div>
                         <div class="task-meta">
                             <span class="priority-badge ${task.priority}">${task.priority}</span>
                             <span class="task-date ${isOverdue ? 'overdue-text' : ''}">
-                                ${isOverdue ? '⚠️ Overdue: ' : '📅'} ${task.dueDate || 'No Date'}
+                                ${isOverdue ? '⚠️ ' : '📅 '}${task.dueDate || 'No Date'}
                             </span>
                         </div>
                     </div>
@@ -391,7 +522,7 @@
                 <div class="subtasks-list">
                     ${subtasksHtml}
                     <div class="add-subtask-form">
-                        <input type="text" id="sub-input-${task.id}" placeholder="Add subtask..." style="padding:5px;font-size:12px;">
+                        <input type="text" id="sub-input-${task.id}" placeholder="New subtask..." style="padding:5px;font-size:12px;flex:1">
                         <button class="btn btn-primary btn-mini" onclick="window.addSubtask('${task.id}')">+</button>
                     </div>
                 </div>
@@ -400,67 +531,54 @@
         }).join('');
     }
 
-    function updateStats() {
-        // Filter for "Today's" stats specifically
-        const today = new Date().toISOString().split('T')[0];
-        const todaysTasks = tasks.filter(t => t.dueDate === today || t.completed); // Simplified logic
-        
-        const total = todaysTasks.length;
-        const completed = todaysTasks.filter(t => t.completed).length;
-        const percent = total > 0 ? Math.round((completed/total)*100) : 0;
+    function escapeHtml(text) {
+        if(!text) return '';
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
 
+    function updateStats() {
+        const total = tasks.length;
+        const completed = tasks.filter(t => t.completed).length;
+        const percent = total > 0 ? Math.round((completed/total)*100) : 0;
+        
         document.getElementById('completionPercent').textContent = percent + '%';
         document.getElementById('completedCount').textContent = completed;
-        document.getElementById('pendingCount').textContent = tasks.filter(t => !t.completed).length;
+        document.getElementById('pendingCount').textContent = total - completed;
     }
 
     // --- TABS & CHARTS ---
-    
     window.switchTab = function(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        
         document.getElementById(tabId).classList.add('active');
         event.target.classList.add('active');
-
         if(tabId === 'reports') renderChart();
     };
 
     function renderChart() {
-        const ctx = document.getElementById('reportChart').getContext('2d');
+        const ctx = document.getElementById('reportChart');
+        if(!ctx) return;
         
-        // Group tasks by Priority
+        if (myChart) myChart.destroy();
+
         const high = tasks.filter(t => t.priority === 'high' && !t.completed).length;
         const med = tasks.filter(t => t.priority === 'medium' && !t.completed).length;
         const low = tasks.filter(t => t.priority === 'low' && !t.completed).length;
         const done = tasks.filter(t => t.completed).length;
 
-        if (myChart) myChart.destroy();
-
         myChart = new Chart(ctx, {
-            type: 'bar',
+            type: 'doughnut',
             data: {
-                labels: ['Completed', 'High Priority', 'Medium', 'Low'],
+                labels: ['Done', 'High Priority', 'Medium', 'Low'],
                 datasets: [{
-                    label: 'Task Distribution',
                     data: [done, high, med, low],
-                    backgroundColor: [
-                        '#4caf50',
-                        '#ff5252',
-                        '#ff9800',
-                        '#208084'
-                    ],
-                    borderWidth: 1
+                    backgroundColor: ['#4caf50', '#ff5252', '#ff9800', '#208084']
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true } }
-            }
+            options: { responsive: true, maintainAspectRatio: false }
         });
     }
-</script>
 
+</script>
 </body>
 </html>
