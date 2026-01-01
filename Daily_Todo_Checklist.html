@@ -1579,7 +1579,7 @@ async function saveTasks() {
         };
 
         // ===== INITIALIZATION =====
-       console.log('🚀 App ready');
+      console.log('🚀 App ready');
 
 document.getElementById('taskInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') addTask();
@@ -1591,21 +1591,21 @@ thirtyDaysAgo.setDate(todayDate.getDate() - 30);
 document.getElementById('filterFromDate').valueAsDate = thirtyDaysAgo;
 document.getElementById('filterToDate').valueAsDate = new Date();
 
-// Always start on auth screen
+// Always start by showing login/guest form
 showAuthSection();
-updateSyncStatus('Connecting...');  // or 'Not logged in'
+updateSyncStatus('Not logged in');  // instead of 'Connecting...'
 
-// Do NOT call loadTasks() here; tasks depend on guest/login mode
+// Do NOT call loadTasks() here – mode (guest / login) not chosen yet
+updateStreakCounter();
 
 setInterval(() => {
     const newToday = new Date().toDateString();
     if (newToday !== today) {
         today = newToday;
-        // when day changes, only update streak; tasks will refresh on next mode use
         updateStreakCounter();
     }
 }, 60000);
-        
+     
     </script>
 </body>
 </html>
