@@ -814,8 +814,9 @@
                 <div class="auth-buttons">
                     <button class="auth-login" onclick="firebaseLogin()">🔐 Login</button>
                     <button class="auth-signup" onclick="firebaseSignup()">📝 Sign Up</button>
-                    <button class="auth-guest" onclick="loginAsGuest()">👤 Continue as Guest (Local)</button>
                 </div>
+                <button class="auth-guest" onclick="loginAsGuest()">👤 Continue as Guest (Local)</button>
+            </div>
             <div style="text-align: center; color: #999; font-size: 12px;">
                 <p>💡 Demo Account:</p>
                 <p>Email: <strong>test@example.com</strong></p>
@@ -831,8 +832,8 @@
             </div>
 
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('tasks', this)">📝 Tasks</button>
-                <button class="tab-btn" onclick="switchTab('reports', this)">📊 Reports</button>
+                <button class="tab-btn active" onclick="switchTab('tasks')">📝 Tasks</button>
+                <button class="tab-btn" onclick="switchTab('reports')">📊 Reports</button>
             </div>
 
             <!-- TASKS TAB -->
@@ -949,14 +950,6 @@
         let currentUser = null;
         let isGuest = false;
         let syncListener = null;
-        // Use different storage keys for guest vs logged-in user
-function getCurrentTasksKey() {
-    if (isGuest || !currentUser) {
-        return 'tasks_guest';
-    }
-    return 'tasks_' + currentUser.uid;
-}
-
 
         // ===== FIREBASE AUTH =====
         window.firebaseLogin = async function() {
@@ -1010,38 +1003,26 @@ function getCurrentTasksKey() {
             }
         };
 
-window.firebaseLogout = async function() {
-    if (!confirm('Logout?')) return;
-    try {
-        await signOut(auth);
-        currentUser = null;
-        isGuest = false;
-        tasks = [];
-        if (syncListener) syncListener();
-        document.getElementById('userEmail').textContent = 'Guest';
-        document.getElementById('logoutBtn').style.display = 'none';
-        updateSyncStatus('Logged out');
-        showAuthSection();
-        renderTasks();  // show empty
-    } catch (error) {
-        console.error('Logout error:', error);
-        alert(error.message);
-        updateSyncStatus('Error');
-    }
-};
+        window.firebaseLogout = async function() {
+            if (!confirm('Logout?')) return;
+            try {
+                await signOut(auth);
+                currentUser = null;
+                isGuest = false;
+                if (syncListener) syncListener();
+                updateSyncStatus('Logged out');
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        };
 
-
-
-window.loginAsGuest = function() {
-    isGuest = true;
-    currentUser = null;
-    document.getElementById('userEmail').textContent = '👤 Guest (Local)';
-    document.getElementById('logoutBtn').style.display = 'none';
-    updateSyncStatus('Guest Mode');
-    showTodoSection();
-    loadTasks(false);  // only guest local tasks
-};
-
+        window.loginAsGuest = function() {
+            isGuest = true;
+            currentUser = null;
+            updateSyncStatus('Guest Mode');
+            showTodoSection();
+            loadTasks();
+        };
 
         // ===== SYNC WITH FIREBASE =====
         function syncWithFirebase() {
@@ -1052,19 +1033,14 @@ window.loginAsGuest = function() {
                 
                 if (syncListener) syncListener();
 
-syncListener = onValue(tasksRef, 
-    (snapshot) => {
-        const data = snapshot.val();
-        tasks = data ? data : []; // keep as array
-        console.log('☁️ Synced from Firebase:', tasks.length, 'tasks');
-
-        // cache only to this user’s key, do NOT call saveTasks() again
-        const key = getCurrentTasksKey();
-        localStorage.setItem(key, JSON.stringify(tasks));
-
-        renderTasks();
-        updateSyncStatus('Synced');
-    }, (error) => {
+                syncListener = onValue(tasksRef, (snapshot) => {
+                    const data = snapshot.val();
+                    tasks = data ? Object.values(data) : [];
+                    console.log('☁️ Synced from Firebase:', tasks.length, 'tasks');
+                    saveTasks();
+                    renderTasks();
+                    updateSyncStatus('Synced');
+                }, (error) => {
                     console.error('Sync error:', error);
                     updateSyncStatus('Sync Error');
                 });
@@ -1074,27 +1050,25 @@ syncListener = onValue(tasksRef,
         }
 
         // ===== AUTH STATE LISTENER =====
-onAuthStateChanged(auth, (user) => {
-    console.log('Auth state changed:', user?.email || 'No user');
-    
-    if (user) {
-        currentUser = user;
-        isGuest = false;
-        document.getElementById('userEmail').textContent = user.email;
-        document.getElementById('logoutBtn').style.display = 'block';
-        showTodoSection();
-        loadTasks(true);      // from Firebase for this user
-        syncWithFirebase();
-    } else if (isGuest) {
-        document.getElementById('userEmail').textContent = 'Guest (Local)';
-        document.getElementById('logoutBtn').style.display = 'none';
-        showTodoSection();
-        loadTasks(false);     // guest local only
-    } else {
-        showAuthSection();
-    }
-});
-
+        onAuthStateChanged(auth, (user) => {
+            console.log('Auth state changed:', user?.email || 'No user');
+            
+            if (user) {
+                currentUser = user;
+                isGuest = false;
+                document.getElementById('userEmail').textContent = '✅ ' + user.email;
+                document.getElementById('logoutBtn').style.display = 'block';
+                showTodoSection();
+                loadTasks();
+                syncWithFirebase();
+            } else if (isGuest) {
+                document.getElementById('userEmail').textContent = '👤 Guest (Local)';
+                document.getElementById('logoutBtn').style.display = 'none';
+                showTodoSection();
+            } else {
+                showAuthSection();
+            }
+        });
 
         // ===== UI FUNCTIONS =====
         function showAuthSection() {
@@ -1121,61 +1095,44 @@ onAuthStateChanged(auth, (user) => {
             }
         }
 
-window.switchTab = function(tabName, el) {
-    document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
-    document.getElementById(tabName).classList.add('active');
-    if (el) el.classList.add('active');
-    if (tabName === 'reports') setTimeout(generateReport, 100);
-};
-
+        window.switchTab = function(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            if (tabName === 'reports') setTimeout(generateReport, 100);
+        };
 
         // ===== STORAGE FUNCTIONS =====
-function loadTasks(fromFirebase = false) {
-    const key = getCurrentTasksKey();
-
-    if (currentUser && !isGuest && fromFirebase) {
-        // ONLY logged-in user, ONLY when explicitly asked
-        const tasksRef = ref(db, 'users/' + currentUser.uid + '/tasks');
-        get(tasksRef).then(snapshot => {
-            const data = snapshot.val();
-            tasks = data ? data : [];
-            localStorage.setItem(key, JSON.stringify(tasks));
+        function loadTasks() {
+            const stored = localStorage.getItem('tasks');
+            try {
+                tasks = stored ? JSON.parse(stored) : [];
+            } catch (e) {
+                console.error('Error loading tasks', e);
+                tasks = [];
+            }
             renderTasks();
-        }).catch(e => {
-            console.error('Firebase load error', e);
-            const stored = localStorage.getItem(key);
-            tasks = stored ? JSON.parse(stored) : [];
-            renderTasks();
-        });
-    } else {
-        // guest or cached
-        const stored = localStorage.getItem(key);
-        tasks = stored ? JSON.parse(stored) : [];
-        renderTasks();
-    }
-}
-
-async function saveTasks() {
-    const key = getCurrentTasksKey();
-    try {
-        localStorage.setItem(key, JSON.stringify(tasks));
-
-        if (currentUser && !isGuest) {
-            const tasksRef = ref(db, 'users/' + currentUser.uid + '/tasks');
-            await set(tasksRef, tasks);
-            console.log('✅ Saved to Firebase');
-            updateSyncStatus('Synced');
         }
-    } catch (e) {
-        if (e.name === 'QuotaExceededError') {
-            alert('Storage limit exceeded! Please clear old tasks.');
-            updateSyncStatus('Storage Full');
-        } else {
-            console.error('Error saving tasks', e);
+
+        async function saveTasks() {
+            try {
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                
+                if (currentUser && !isGuest) {
+                    const tasksRef = ref(db, 'users/' + currentUser.uid + '/tasks');
+                    await set(tasksRef, tasks);
+                    console.log('✅ Saved to Firebase');
+                }
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    alert('Storage limit exceeded! Please clear old tasks.');
+                    updateSyncStatus('Storage Full');
+                } else {
+                    console.error('Error saving tasks', e);
+                }
+            }
         }
-    }
-}
 
         function getStreakCount() {
             return parseInt(localStorage.getItem('streakCount')) || 0;
@@ -1579,33 +1536,30 @@ async function saveTasks() {
         };
 
         // ===== INITIALIZATION =====
-      console.log('🚀 App ready');
+        console.log('🚀 App ready');
 
-document.getElementById('taskInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addTask();
-});
+        document.getElementById('taskInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask();
+        });
 
-const todayDate = new Date();
-const thirtyDaysAgo = new Date(todayDate);
-thirtyDaysAgo.setDate(todayDate.getDate() - 30);
-document.getElementById('filterFromDate').valueAsDate = thirtyDaysAgo;
-document.getElementById('filterToDate').valueAsDate = new Date();
+        const todayDate = new Date();
+        const thirtyDaysAgo = new Date(todayDate);
+        thirtyDaysAgo.setDate(todayDate.getDate() - 30);
 
-// Always start by showing login/guest form
-showAuthSection();
-updateSyncStatus('Not logged in');  // instead of 'Connecting...'
+        document.getElementById('filterFromDate').valueAsDate = thirtyDaysAgo;
+        document.getElementById('filterToDate').valueAsDate = new Date();
 
-// Do NOT call loadTasks() here – mode (guest / login) not chosen yet
-updateStreakCounter();
-
-setInterval(() => {
-    const newToday = new Date().toDateString();
-    if (newToday !== today) {
-        today = newToday;
+        loadTasks();
         updateStreakCounter();
-    }
-}, 60000);
-     
+
+        setInterval(() => {
+            const newToday = new Date().toDateString();
+            if (newToday !== today) {
+                today = newToday;
+                loadTasks();
+                updateStreakCounter();
+            }
+        }, 60000);
     </script>
 </body>
 </html>
