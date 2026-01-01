@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskPro - Settings</title>
+    <link rel="stylesheet" href="../shared/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header-bar">
+            <div class="header-left">
+                <div class="logo">⚡ TaskPro Pro</div>
+            </div>
+            <div class="header-right">
+                <div class="status-indicator" id="syncStatus"></div>
+                <button class="btn btn-secondary" onclick="goBack()" style="font-size: 12px;">← Back</button>
+            </div>
+        </div>
+
+        <div class="sidebar scrollbar">
+            <a href="../index.html" class="nav-item">📊 Dashboard</a>
+            <a href="settings.html" class="nav-item active">⚙️ Settings</a>
+        </div>
+
+        <div class="main-content scrollbar">
+            <div class="content-header">
+                <h1>⚙️ Settings</h1>
+                <p>Manage your TaskPro preferences</p>
+            </div>
+
+            <!-- ACCOUNT SETTINGS -->
+            <div class="card">
+                <h3>Account</h3>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 12px;">Logged in as</label>
+                    <div style="background: var(--bg-surface); padding: 10px; border-radius: 6px;" id="userInfo">
+                        Guest (not signed in)
+                    </div>
+                </div>
+                <button class="btn btn-danger" onclick="logout()">🚪 Logout</button>
+            </div>
+
+            <!-- SYNC SETTINGS -->
+            <div class="card">
+                <h3>Sync Settings</h3>
+                <label style="display: block; margin-bottom: 10px;">
+                    <input type="checkbox" id="autoSync" checked /> Auto-sync every 30 seconds
+                </label>
+                <label style="display: block; margin-bottom: 15px;">
+                    <input type="checkbox" id="offlineMode" checked /> Offline-first mode
+                </label>
+                <button class="btn btn-primary" onclick="syncNow()">☁️ Sync Now</button>
+            </div>
+
+            <!-- NOTIFICATION SETTINGS -->
+            <div class="card">
+                <h3>Notifications</h3>
+                <label style="display: block; margin-bottom: 10px;">
+                    <input type="checkbox" id="taskReminders" checked /> Task reminders
+                </label>
+                <label style="display: block; margin-bottom: 10px;">
+                    <input type="checkbox" id="dueDateAlerts" checked /> Due date alerts
+                </label>
+                <label style="display: block; margin-bottom: 15px;">
+                    <input type="checkbox" id="syncNotifications" checked /> Sync notifications
+                </label>
+                <button class="btn btn-primary" onclick="saveNotifications()">💾 Save</button>
+            </div>
+
+            <!-- DATA MANAGEMENT -->
+            <div class="card">
+                <h3>Data Management</h3>
+                <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">
+                    Manage your stored data and preferences.
+                </p>
+                <button class="btn btn-secondary" onclick="exportData()">📥 Export Data</button>
+                <button class="btn btn-danger" style="margin-left: 10px;" onclick="clearData()">🗑️ Clear All Data</button>
+            </div>
+
+            <!-- ABOUT -->
+            <div class="card">
+                <h3>About</h3>
+                <div style="color: var(--text-secondary); font-size: 13px;">
+                    <p><strong>TaskPro Pro Enterprise</strong></p>
+                    <p>Version 2.0 - Modular Edition</p>
+                    <p>Built with Firebase & IndexedDB for offline-first productivity.</p>
+                    <p>© 2026 TaskPro Inc. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/firebase-config.js"></script>
+    <script src="../shared/shared.js"></script>
+    <script>
+        window.addEventListener('load', async () => {
+            await initApp();
+            const email = localStorage.getItem('userEmail');
+            if (email) {
+                document.getElementById('userInfo').textContent = email;
+            }
+        });
+
+        async function syncNow() {
+            window.updateSyncStatus('syncing');
+            await window.syncWithFirebase();
+            alert('✅ Sync completed!');
+        }
+
+        function saveNotifications() {
+            const settings = {
+                taskReminders: document.getElementById('taskReminders').checked,
+                dueDateAlerts: document.getElementById('dueDateAlerts').checked,
+                syncNotifications: document.getElementById('syncNotifications').checked
+            };
+            localStorage.setItem('notificationSettings', JSON.stringify(settings));
+            alert('✅ Notification settings saved!');
+        }
+
+        async function exportData() {
+            const tasks = await window.getAllTasks();
+            const data = {
+                exportedAt: new Date().toISOString(),
+                tasks
+            };
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `TaskPro_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            alert('✅ Data exported successfully!');
+        }
+
+        function clearData() {
+            if (confirm('⚠️ This will delete ALL your tasks. Are you sure?')) {
+                if (confirm('Really? This cannot be undone!')) {
+                    localStorage.clear();
+                    indexedDB.deleteDatabase('TaskProDB');
+                    alert('✅ All data cleared');
+                    window.location.href = '../index.html';
+                }
+            }
+        }
+
+        function logout() {
+            window.logoutUser();
+            alert('✅ Logged out');
+            window.location.href = '../index.html';
+        }
+
+        function goBack() {
+            window.location.href = '../index.html';
+        }
+    </script>
+</body>
+</html>

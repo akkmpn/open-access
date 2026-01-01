@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskPro - Reports</title>
+    <link rel="stylesheet" href="../shared/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header-bar">
+            <div class="header-left">
+                <div class="logo">⚡ TaskPro Pro</div>
+            </div>
+            <div class="header-right">
+                <div class="status-indicator" id="syncStatus"></div>
+                <button class="btn btn-secondary" onclick="goBack()" style="font-size: 12px;">← Back</button>
+            </div>
+        </div>
+
+        <div class="sidebar scrollbar">
+            <a href="../index.html" class="nav-item">📊 Dashboard</a>
+            <a href="reports.html" class="nav-item active">📈 Reports</a>
+        </div>
+
+        <div class="main-content scrollbar">
+            <div class="content-header">
+                <h1>📈 Reports</h1>
+                <p>Generate and download productivity reports</p>
+            </div>
+
+            <!-- REPORT OPTIONS -->
+            <div class="card">
+                <h3>Generate Report</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                    <button class="btn btn-primary" onclick="generateSummaryReport()">📋 Summary Report</button>
+                    <button class="btn btn-primary" onclick="generateDetailedReport()">📊 Detailed Report</button>
+                </div>
+            </div>
+
+            <!-- REPORT OUTPUT -->
+            <div id="reportOutput"></div>
+
+            <!-- EXPORT OPTIONS -->
+            <div class="card" id="exportCard" style="display: none;">
+                <h3>Export</h3>
+                <button class="btn btn-primary" onclick="exportAsCSV()">📥 Download as CSV</button>
+                <button class="btn btn-primary" onclick="exportAsJSON()">📥 Download as JSON</button>
+                <button class="btn btn-primary" onclick="printReport()">🖨️ Print</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/firebase-config.js"></script>
+    <script src="../shared/shared.js"></script>
+    <script>
+        let currentReportData = null;
+
+        window.addEventListener('load', async () => {
+            await initApp();
+        });
+
+        async function generateSummaryReport() {
+            const tasks = await window.getAllTasks();
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.completed).length;
+            const pending = total - completed;
+            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            const highCount = tasks.filter(t => t.priority === 'high').length;
+            const mediumCount = tasks.filter(t => t.priority === 'medium').length;
+            const lowCount = tasks.filter(t => t.priority === 'low').length;
+
+            const overdueCount = tasks.filter(t => {
+                return !t.completed && t.dueDate && new Date(t.dueDate) < new Date();
+            }).length;
+
+            const report = `
+                <div class="card" id="reportContent">
+                    <h2>Summary Report - ${new Date().toLocaleDateString()}</h2>
+                    
+                    <h3>Key Metrics</h3>
+                    <table class="table">
+                        <tr>
+                            <td>Total Tasks</td>
+                            <td><strong>${total}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Completed Tasks</td>
+                            <td><strong>${completed}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Pending Tasks</td>
+                            <td><strong>${pending}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Completion Rate</td>
+                            <td><strong>${rate}%</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Overdue Tasks</td>
+                            <td><strong>${overdueCount}</strong></td>
+                        </tr>
+                    </table>
+
+                    <h3>Priority Breakdown</h3>
+                    <table class="table">
+                        <tr>
+                            <td>High Priority</td>
+                            <td><span class="badge badge-high">${highCount}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Medium Priority</td>
+                            <td><span class="badge badge-medium">${mediumCount}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Low Priority</td>
+                            <td><span class="badge badge-low">${lowCount}</span></td>
+                        </tr>
+                    </table>
+
+                    <p style="margin-top: 20px; color: var(--text-secondary); font-size: 12px;">
+                        Report generated on ${new Date().toLocaleString()}
+                    </p>
+                </div>
+            `;
+
+            currentReportData = {
+                total, completed, pending, rate, highCount, mediumCount, lowCount, overdueCount, tasks
+            };
+
+            document.getElementById('reportOutput').innerHTML = report;
+            document.getElementById('exportCard').style.display = 'block';
+        }
+
+        async function generateDetailedReport() {
+            const tasks = await window.getAllTasks();
+            
+            let tasksHtml = tasks.map(task => `
+                <tr>
+                    <td>${window.escapeHtml(task.text)}</td>
+                    <td><span class="badge badge-${task.priority}">${task.priority}</span></td>
+                    <td>${task.completed ? '✓' : '✗'}</td>
+                    <td>${task.dueDate ? window.formatDate(task.dueDate) : '-'}</td>
+                </tr>
+            `).join('');
+
+            const report = `
+                <div class="card" id="reportContent">
+                    <h2>Detailed Report - ${new Date().toLocaleDateString()}</h2>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Priority</th>
+                                <th>Completed</th>
+                                <th>Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tasksHtml}
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 20px; color: var(--text-secondary); font-size: 12px;">
+                        Report generated on ${new Date().toLocaleString()} • Total tasks: ${tasks.length}
+                    </p>
+                </div>
+            `;
+
+            currentReportData = { tasks };
+            document.getElementById('reportOutput').innerHTML = report;
+            document.getElementById('exportCard').style.display = 'block';
+        }
+
+        function exportAsCSV() {
+            if (!currentReportData) return;
+
+            const tasks = currentReportData.tasks || [];
+            let csv = 'Task,Priority,Completed,Due Date\n';
+            
+            tasks.forEach(task => {
+                csv += `"${task.text}","${task.priority}","${task.completed ? 'Yes' : 'No'}","${task.dueDate || ''}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `TaskPro_Report_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+
+        function exportAsJSON() {
+            if (!currentReportData) return;
+
+            const json = JSON.stringify(currentReportData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `TaskPro_Report_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        function printReport() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent) {
+                alert('Generate a report first');
+                return;
+            }
+
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow.document.write('<html><head><title>TaskPro Report</title></head><body>');
+            printWindow.document.write(reportContent.innerHTML);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function goBack() {
+            window.location.href = '../index.html';
+        }
+    </script>
+</body>
+</html>

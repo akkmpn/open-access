@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskPro - Subtasks</title>
+    <link rel="stylesheet" href="../shared/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header-bar">
+            <div class="header-left">
+                <div class="logo">⚡ TaskPro Pro</div>
+            </div>
+            <div class="header-right">
+                <div class="status-indicator" id="syncStatus"></div>
+                <button class="btn btn-secondary" onclick="goBack()" style="font-size: 12px;">← Back</button>
+            </div>
+        </div>
+
+        <div class="sidebar scrollbar">
+            <div class="sidebar-section">
+                <a href="../index.html" class="nav-item">📊 Dashboard</a>
+                <a href="lists.html" class="nav-item">📝 Tasks</a>
+                <a href="subtasks.html" class="nav-item active">📋 Subtasks</a>
+                <a href="calendar.html" class="nav-item">📅 Calendar</a>
+            </div>
+        </div>
+
+        <div class="main-content scrollbar">
+            <div class="content-header">
+                <h1>Subtasks</h1>
+                <p>Break down your tasks into smaller steps</p>
+            </div>
+
+            <!-- SELECT PARENT TASK -->
+            <div class="card">
+                <h3>Select Parent Task</h3>
+                <select id="parentTaskSelect" style="width: 100%; margin-bottom: 10px;">
+                    <option value="">Choose a task...</option>
+                </select>
+            </div>
+
+            <!-- CREATE SUBTASK -->
+            <div class="card" id="subtaskFormCard" style="display: none;">
+                <h3>Add Subtask</h3>
+                <div class="input-grid">
+                    <input type="text" id="subtaskInput" placeholder="Subtask description..." />
+                    <button class="btn btn-primary" onclick="addSubtask()">Add</button>
+                </div>
+            </div>
+
+            <!-- SUBTASKS LIST -->
+            <div id="subtasksContainer"></div>
+        </div>
+    </div>
+
+    <script src="../shared/firebase-config.js"></script>
+    <script src="../shared/shared.js"></script>
+    <script>
+        window.addEventListener('load', async () => {
+            await initApp();
+            loadParentTasks();
+        });
+
+        async function loadParentTasks() {
+            const tasks = await window.getAllTasks();
+            const select = document.getElementById('parentTaskSelect');
+            select.innerHTML = '<option value="">Choose a task...</option>';
+            
+            tasks.forEach(task => {
+                select.innerHTML += `<option value="${task.id}">${window.escapeHtml(task.text)}</option>`;
+            });
+
+            select.addEventListener('change', loadSubtasks);
+        }
+
+        async function loadSubtasks() {
+            const taskId = document.getElementById('parentTaskSelect').value;
+            
+            if (!taskId) {
+                document.getElementById('subtaskFormCard').style.display = 'none';
+                document.getElementById('subtasksContainer').innerHTML = '';
+                return;
+            }
+
+            document.getElementById('subtaskFormCard').style.display = 'block';
+
+            const task = await window.getTask(parseInt(taskId));
+            const subtasks = task.subtasks || [];
+            const container = document.getElementById('subtasksContainer');
+
+            if (subtasks.length === 0) {
+                container.innerHTML = '<div class="card">No subtasks yet</div>';
+                return;
+            }
+
+            container.innerHTML = subtasks.map((sub, idx) => `
+                <div class="card">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" ${sub.completed ? 'checked' : ''} 
+                               onchange="toggleSubtask(${taskId}, ${idx})" />
+                        <span style="flex: 1; ${sub.completed ? 'text-decoration: line-through;' : ''}">${window.escapeHtml(sub.text)}</span>
+                        <button class="btn btn-danger" style="padding: 6px 10px; font-size: 12px;" 
+                                onclick="deleteSubtask(${taskId}, ${idx})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function addSubtask() {
+            const taskId = parseInt(document.getElementById('parentTaskSelect').value);
+            const text = document.getElementById('subtaskInput').value.trim();
+
+            if (!text) {
+                alert('Enter subtask description');
+                return;
+            }
+
+            const task = await window.getTask(taskId);
+            if (!task.subtasks) task.subtasks = [];
+
+            task.subtasks.push({
+                id: Date.now(),
+                text,
+                completed: false
+            });
+
+            await window.saveTask(task);
+            document.getElementById('subtaskInput').value = '';
+            loadSubtasks();
+        }
+
+        async function toggleSubtask(taskId, idx) {
+            const task = await window.getTask(taskId);
+            task.subtasks[idx].completed = !task.subtasks[idx].completed;
+            await window.saveTask(task);
+            loadSubtasks();
+        }
+
+        async function deleteSubtask(taskId, idx) {
+            if (confirm('Delete this subtask?')) {
+                const task = await window.getTask(taskId);
+                task.subtasks.splice(idx, 1);
+                await window.saveTask(task);
+                loadSubtasks();
+            }
+        }
+
+        function goBack() {
+            window.location.href = '../index.html';
+        }
+    </script>
+</body>
+</html>
