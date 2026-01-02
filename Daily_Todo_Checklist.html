@@ -568,14 +568,14 @@
 
             // ==================== DATA & SYNC ====================
 saveLifetime: () => {
-                // Only save to local_tasks if the user is NOT signed in
-                if (!state.user) {
-                    localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
-                }
-                // Save other settings like theme/design regardless
-                localStorage.setItem('taskHistory', JSON.stringify(state.history));
-                if(state.customDesign) localStorage.setItem('customDesign', state.customDesign);
-            },
+    // ONLY save the task list to local storage if the user is a GUEST
+    if (!state.user) {
+        localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+    }
+    // Always save history and design
+    localStorage.setItem('taskHistory', JSON.stringify(state.history));
+    if(state.customDesign) localStorage.setItem('customDesign', state.customDesign);
+},
 
             backupData: () => {
                 const data = {
@@ -746,29 +746,28 @@ updateTask: async (id) => {
             },
 
 deleteTask: async (id) => {
-                if(!confirm("Permanently delete?")) return;
+    if(!confirm("Permanently delete?")) return;
 
-                // 1. Remove from the current view immediately
-                state.tasks = state.tasks.filter(t => t.id !== id);
+    // 1. Remove from the local state immediately
+    state.tasks = state.tasks.filter(t => t.id !== id);
 
-                // 2. Force wipe from the local "Guest" storage bucket
-                const localData = JSON.parse(localStorage.getItem('local_tasks')) || [];
-                const updatedLocal = localData.filter(t => t.id !== id);
-                localStorage.setItem('local_tasks', JSON.stringify(updatedLocal));
+    // 2. Explicitly wipe it from the local storage bucket
+    const localData = JSON.parse(localStorage.getItem('local_tasks')) || [];
+    const filteredLocal = localData.filter(t => t.id !== id);
+    localStorage.setItem('local_tasks', JSON.stringify(filteredLocal));
 
-                // 3. If it's a Cloud task, delete from Firebase
-                const isLocalId = id.toString().startsWith('local_') || id.toString().startsWith('t_');
-                if(state.user && !isLocalId) {
-                    try {
-                        await deleteDoc(doc(db, 'tasks', id));
-                    } catch (e) {
-                        console.error("Cloud delete failed, but local is cleared.");
-                    }
-                }
+    // 3. Only attempt Cloud delete if it's a real Cloud ID
+    const isLocalId = id.toString().startsWith('local_') || id.toString().startsWith('t_');
+    if(state.user && !isLocalId) {
+        try {
+            await deleteDoc(doc(db, 'tasks', id));
+        } catch (e) {
+            console.error("Cloud delete failed, but local is gone.");
+        }
+    }
 
-                renderTasks();
-                app.saveLifetime();
-            },
+    renderTasks();
+},
 
             addSubtask: async (parentId) => {
                 const input = document.getElementById(`sub-input-${parentId}`);
@@ -1110,36 +1109,22 @@ deleteTask: async (id) => {
 
         // ==================== AUTH LISTENER ====================
 onAuthStateChanged(auth, (user) => {
-            if(user) {
-                state.user = user;
-                document.getElementById('authBtn').textContent = "Sign Out";
-                document.getElementById('syncDot').style.background = "var(--success)";
-                document.getElementById('syncText').textContent = "Synced";
-                
-                // CRITICAL FIX: Clear local state so local ghosts don't merge with Cloud
-                state.tasks = []; 
-
-                const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
-                onSnapshot(q, (snap) => {
-                    // Update state with Cloud data ONLY
-                    state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                    renderTasks();
-                    
-                    // Do NOT call app.saveLifetime() here! 
-                    // Calling it here is what was causing the reappearing bug.
-                    
-                    if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
-                    if(document.getElementById('calendar').classList.contains('active')) renderCalendar();
-                });
-            } else {
-                state.user = null;
-                document.getElementById('authBtn').textContent = "Sign In";
-                document.getElementById('syncDot').style.background = "var(--warning)";
-                document.getElementById('syncText').textContent = "Offline";
-                state.tasks = JSON.parse(localStorage.getItem('local_tasks')) || [];
-                renderTasks();
-            }
+    if(user) {
+        state.user = user;
+        document.getElementById('authBtn').textContent = "Sign Out";
+        // Clear local tasks from view so they don't sync to the cloud by mistake
+        state.tasks = []; 
+        
+        const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
+        onSnapshot(q, (snap) => {
+            state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
+            renderTasks();
+            // REMOVE any saveLifetime() calls from inside this listener!
         });
+    } else {
+        // ... (rest of your sign-out code)
+    }
+});
 
         // Initialize
         app.init();
