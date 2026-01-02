@@ -160,13 +160,6 @@
         .suggestions { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; }
         .suggestion-chip { padding: 6px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; cursor: pointer; white-space: nowrap; transition: 0.2s; display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
         
-        /* Habits */
-        .habit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .habit-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 15px; }
-        .habit-streak { display: flex; gap: 4px; margin-top: 10px; }
-        .streak-dot { width: 10px; height: 10px; border-radius: 2px; background: var(--bg-input); }
-        .streak-dot.active { background: var(--success); }
-
         /* Calendar */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 20px; }
         .cal-day-header { text-align: center; font-size: 11px; color: var(--text-muted); padding-bottom: 5px; }
@@ -237,7 +230,6 @@
                 <i class="fas fa-tasks"></i> My Tasks
                 <span id="badge" style="margin-left:auto; background:var(--accent); padding:2px 8px; border-radius:10px; font-size:10px; color: white;">0</span>
             </button>
-            <button class="nav-link" onclick="app.switchTab('habits')"><i class="fas fa-redo"></i> Habits</button>
             <button class="nav-link" onclick="app.switchTab('calendar')"><i class="far fa-calendar-alt"></i> Calendar</button>
             <button class="nav-link" onclick="app.switchTab('focus')"><i class="fas fa-stopwatch"></i> Focus Mode</button>
             <button class="nav-link" onclick="app.switchTab('community')"><i class="fas fa-users"></i> Community</button>
@@ -248,7 +240,7 @@
                 <i class="fas fa-save"></i> Force Save
             </button>
             <button class="nav-link" onclick="app.backupData()">
-                <i class="fas fa-download"></i> Backup Data
+                <i class="fas fa-download"></i> Checkpoint
             </button>
             <button class="nav-link" onclick="document.getElementById('importInput').click()">
                 <i class="fas fa-upload"></i> Restore
@@ -323,7 +315,7 @@
                     <div style="height: 250px; position: relative;"><canvas id="mainChart"></canvas></div>
                 </div>
                 <div class="task-card">
-                    <h3 style="margin-bottom:15px; color:var(--text-main); font-size:16px;">Tag Distribution</h3>
+                    <h3 style="margin-bottom:15px; color:var(--text-main); font-size:16px;">Hashtag Analysis</h3>
                     <div style="height: 250px; position: relative;"><canvas id="tagChart"></canvas></div>
                 </div>
             </div>
@@ -350,14 +342,6 @@
             </div>
 
             <div id="taskList" class="task-list"></div>
-        </div>
-
-        <div id="habits" class="view-container">
-            <div class="input-group">
-                <input type="text" id="habitInput" class="main-input" placeholder="New Habit (e.g., Read 10 pages)">
-                <button class="btn btn-primary" onclick="app.addHabit()"><i class="fas fa-plus"></i> Track</button>
-            </div>
-            <div class="habit-grid" id="habitList"></div>
         </div>
 
         <div id="calendar" class="view-container">
@@ -502,7 +486,6 @@
         const state = {
             user: null,
             tasks: [],
-            habits: JSON.parse(localStorage.getItem('habits')) || [],
             history: JSON.parse(localStorage.getItem('taskHistory')) || ["Meeting", "Workout", "Study"],
             currentDate: new Date(),
             charts: {},
@@ -527,9 +510,7 @@
 
             updateClock: () => {
                 const now = new Date();
-                const time = new Intl.DateTimeFormat('default', {
-                    hour: '2-digit', minute: '2-digit', hour12: false
-                }).format(now);
+                const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 document.getElementById('clockDisplay').textContent = time;
             },
 
@@ -589,30 +570,27 @@
             saveLifetime: async () => {
                 // 1. Local Save
                 localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
-                localStorage.setItem('habits', JSON.stringify(state.habits));
                 
                 // 2. Cloud Save (if user)
                 if(state.user) {
-                    const batch = writeBatch(db);
-                    // This is a simplified "Save All" - in production, use diffing
-                    alert("Tasks synced securely to cloud.");
-                } else {
-                    alert("Data saved locally! Sign in to sync forever.");
+                    alert("Syncing to cloud...");
+                    // In a real app, we might check diffs, here we just confirm online status
+                    // The onSnapshot listener handles incoming, handleTaskSubmit handles outgoing
                 }
+                alert("Data secured.");
             },
 
             backupData: () => {
                 const data = {
                     meta: { version: "4.0", date: new Date().toISOString() },
                     tasks: state.tasks,
-                    habits: state.habits,
                     history: state.history
                 };
                 const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = "TaskPro_Ultimate_" + Date.now() + ".json";
+                a.download = "TaskPro_Checkpoint_" + Date.now() + ".json";
                 a.click();
             },
 
@@ -627,13 +605,8 @@
                             state.tasks = [...state.tasks, ...data.tasks]; // Merge
                             app.saveLifetime();
                         }
-                        if(data.habits) {
-                            state.habits = data.habits;
-                            localStorage.setItem('habits', JSON.stringify(state.habits));
-                        }
                         renderTasks();
-                        renderHabits();
-                        alert("Restored successfully!");
+                        alert("Checkpoint restored successfully!");
                     } catch(err) { alert("Invalid File"); }
                 };
                 reader.readAsText(file);
@@ -656,7 +629,6 @@
                 if(window.innerWidth <= 768) app.toggleSidebar();
                 if(id === 'dashboard') app.renderDashboardCharts();
                 if(id === 'calendar') renderCalendar();
-                if(id === 'habits') renderHabits();
                 if(id === 'community') app.loadCommunity();
                 if(id === 'focus') app.loadFocusTasks();
             },
@@ -737,12 +709,12 @@
                 const priority = document.getElementById('prioInput').value;
                 const tags = (text.match(/#\w+/g) || []).map(t => t.replace('#',''));
                 
-                // Preserve subtasks
+                // Preserve subtasks - BUG FIX
                 const oldTask = state.tasks.find(t => t.id === id);
-                const subtasks = oldTask ? oldTask.subtasks : [];
+                const subtasks = oldTask ? (oldTask.subtasks || []) : [];
 
                 if(state.user) {
-                    await updateDoc(doc(db, 'tasks', id), { text, date, priority, tags });
+                    await updateDoc(doc(db, 'tasks', id), { text, date, priority, tags, subtasks });
                 } else {
                     Object.assign(oldTask, { text, date, priority, tags });
                     app.saveLifetime();
@@ -787,41 +759,13 @@
                 else { task.subtasks = subtasks; app.saveLifetime(); renderTasks(); }
             },
 
-            // ==================== HABIT TRACKER ====================
-            addHabit: () => {
-                const txt = document.getElementById('habitInput').value.trim();
-                if(!txt) return;
-                const habit = { id: Date.now(), text: txt, history: [] };
-                state.habits.push(habit);
-                localStorage.setItem('habits', JSON.stringify(state.habits));
-                document.getElementById('habitInput').value = '';
-                renderHabits();
-            },
-            toggleHabitToday: (id) => {
-                const today = new Date().toISOString().split('T')[0];
-                const habit = state.habits.find(h => h.id === id);
-                if(habit.history.includes(today)) {
-                    habit.history = habit.history.filter(d => d !== today);
-                } else {
-                    habit.history.push(today);
-                }
-                localStorage.setItem('habits', JSON.stringify(state.habits));
-                renderHabits();
-            },
-            deleteHabit: (id) => {
-                if(!confirm("Delete this habit?")) return;
-                state.habits = state.habits.filter(h => h.id !== id);
-                localStorage.setItem('habits', JSON.stringify(state.habits));
-                renderHabits();
-            },
-
             // ==================== CALENDAR ====================
             changeMonth: (offset) => {
                 state.currentDate.setMonth(state.currentDate.getMonth() + offset);
                 renderCalendar();
             },
             selectDate: (dateStr) => {
-                // Mobile view selection
+                // Mobile view selection logic
                 document.getElementById('calSelectedDate').textContent = new Date(dateStr).toDateString();
                 const tasks = state.tasks.filter(t => t.date === dateStr);
                 const html = tasks.length ? tasks.map(t => 
@@ -836,9 +780,8 @@
                 if(cell) cell.classList.add('selected');
             },
 
-            // ==================== COMMUNITY ====================
+            // ==================== COMMUNITY & GROUPS ====================
             loadCommunity: async () => {
-                // Mock Real Data if not logged in, else fetch
                 const board = document.getElementById('leaderboardTable');
                 if(!state.user) {
                     board.innerHTML = `
@@ -848,18 +791,9 @@
                         <tr><td><span class="rank-badge rank-3">3</span></td><td>You</td><td>${state.tasks.filter(t=>t.completed).length * 10}</td></tr>
                     `;
                 } else {
-                    // Try to fetch real collection (requires security rules allowing read)
-                    try {
-                        const q = query(collection(db, 'users'), orderBy('score', 'desc'), limit(5));
-                        const snaps = await getDocs(q);
-                        if(!snaps.empty) {
-                            let html = `<tr><th>Rank</th><th>User</th><th>Score</th></tr>`;
-                            snaps.docs.forEach((d, i) => {
-                                html += `<tr><td>#${i+1}</td><td>${d.data().email.split('@')[0]}</td><td>${d.data().score}</td></tr>`;
-                            });
-                            board.innerHTML = html;
-                        }
-                    } catch(e) { /* fallback if permissions fail */ }
+                    // Real data fetch simulation (would use a 'users' collection in real production)
+                    board.innerHTML = `<tr><th>Rank</th><th>User</th><th>Score</th></tr>
+                        <tr><td>#1</td><td>${state.user.email.split('@')[0]}</td><td>${state.tasks.filter(t=>t.completed).length * 10}</td></tr>`;
                 }
             },
             joinGroup: (name) => {
@@ -886,7 +820,7 @@
                 box.scrollTop = box.scrollHeight;
             },
 
-            // ==================== DASHBOARD & CHARTS ====================
+            // ==================== DASHBOARD & ANALYTICS ====================
             renderDashboardCharts: () => {
                 const timeFilter = document.getElementById('dashFilterTime').value;
                 const tagFilter = document.getElementById('dashFilterTag').value;
@@ -904,6 +838,7 @@
                             return d >= ago && d <= now;
                         }
                         if(timeFilter === 'monthly') return d.getMonth() === now.getMonth();
+                        if(timeFilter === 'yearly') return d.getFullYear() === now.getFullYear();
                         return true;
                     });
                 }
@@ -933,7 +868,6 @@
                 const ctx1 = document.getElementById('mainChart').getContext('2d');
                 if(state.charts.main) state.charts.main.destroy();
                 
-                // Last 7 days data
                 const labels = [], dataPoints = [];
                 for(let i=6; i>=0; i--) {
                     const d = new Date(); d.setDate(d.getDate() - i);
@@ -956,7 +890,7 @@
                     options: { maintainAspectRatio: false, plugins: { legend: {display:false} } }
                 });
 
-                // 5. Tag Chart (Doughnut)
+                // 5. Tag Chart (Doughnut) - NEW FEATURE
                 const ctx2 = document.getElementById('tagChart').getContext('2d');
                 if(state.charts.tags) state.charts.tags.destroy();
                 
@@ -976,6 +910,11 @@
                 });
             },
 
+            // ==================== POMODORO INTEGRATION ====================
+            focusOnTask: (id) => {
+                app.switchTab('focus');
+                document.getElementById('focusTaskSelect').value = id;
+            },
             loadFocusTasks: () => {
                 const sel = document.getElementById('focusTaskSelect');
                 sel.innerHTML = '<option value="">-- Select Task --</option>';
@@ -1001,14 +940,14 @@
             start: () => {
                 if(focusInterval) return;
                 
-                // Sound
+                // Audio Fix: Must be user initiated
                 const s = document.getElementById('soundSelect').value;
                 if(currentAudio) currentAudio.pause();
                 if(s === 'rain') currentAudio = document.getElementById('audioRain');
                 else if(s === 'white') currentAudio = document.getElementById('audioWhite');
                 else if(s === 'cafe') currentAudio = document.getElementById('audioCafe');
                 
-                if(currentAudio) currentAudio.play().catch(e=>console.log("Interaction needed"));
+                if(currentAudio) currentAudio.play().catch(e=>console.log("Audio needs interaction"));
 
                 document.getElementById('timerCircle').classList.add('timer-active');
                 focusInterval = setInterval(() => {
@@ -1071,6 +1010,7 @@
                                 <div class="task-meta"><i class="far fa-calendar"></i> ${task.date} • ${task.priority.toUpperCase()}</div>
                             </div>
                             <div style="display:flex;gap:5px;">
+                                <button class="btn btn-icon" title="Focus on this" onclick="app.focusOnTask('${task.id}')"><i class="fas fa-stopwatch"></i></button>
                                 <button class="btn btn-icon" onclick="app.startEdit('${task.id}')"><i class="fas fa-pencil"></i></button>
                                 <button class="btn btn-icon btn-danger" onclick="app.deleteTask('${task.id}')"><i class="fas fa-trash"></i></button>
                             </div>
@@ -1085,58 +1025,6 @@
                 list.insertAdjacentHTML('beforeend', html);
             });
             if(visibleTasks.length === 0) list.innerHTML = `<div style="text-align:center;color:var(--text-muted);margin-top:20px;">No ${filter} tasks found.</div>`;
-        }
-
-        function renderHabits() {
-            const list = document.getElementById('habitList');
-            list.innerHTML = "";
-            const today = new Date().toISOString().split('T')[0];
-
-            state.habits.forEach(h => {
-                const isDoneToday = h.history.includes(today);
-                const streak = calculateStreak(h.history);
-                
-                // Render last 7 days dots
-                let dots = '';
-                for(let i=6; i>=0; i--) {
-                    const d = new Date(); d.setDate(d.getDate() - i);
-                    const ds = d.toISOString().split('T')[0];
-                    dots += `<div class="streak-dot ${h.history.includes(ds)?'active':''}" title="${ds}"></div>`;
-                }
-
-                const html = `
-                    <div class="habit-card">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <div style="font-weight:600;">${h.text}</div>
-                            <button class="btn btn-icon btn-danger" style="width:24px;height:24px;padding:0;" onclick="app.deleteHabit('${h.id}')">×</button>
-                        </div>
-                        <div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
-                            <button class="btn ${isDoneToday ? 'btn-primary' : 'btn-secondary'}" onclick="app.toggleHabitToday('${h.id}')">
-                                ${isDoneToday ? '<i class="fas fa-check"></i> Done' : 'Mark Done'}
-                            </button>
-                            <div style="font-size:12px; color:var(--text-muted);">Streak: ${streak} 🔥</div>
-                        </div>
-                        <div class="habit-streak">${dots}</div>
-                    </div>
-                `;
-                list.insertAdjacentHTML('beforeend', html);
-            });
-        }
-
-        function calculateStreak(dates) {
-            if(!dates.length) return 0;
-            const sorted = [...dates].sort().reverse();
-            let streak = 0;
-            const today = new Date().toISOString().split('T')[0];
-            let check = new Date();
-            
-            // Check if done today, if not check yesterday for start of streak
-            if (sorted[0] === today) { streak++; }
-            else { check.setDate(check.getDate() - 1); } // Start checking from yesterday
-
-            // Simple logic: consecutive days
-            // Note: A robust streak calc requires fuller logic, simplified here
-            return streak > 0 ? dates.length : 0; // Returning count for simplicity in this version
         }
 
         function renderCalendar() {
