@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v4.0 (Ultimate)</title>
+    <title>Enterprise TaskPro - v4.0 (Ultimate Fixed)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -87,7 +87,7 @@
 
         /* HEADER */
         .header {
-            height: 70px; /* Increased for weather */
+            height: 70px;
             border-bottom: var(--border-width) solid var(--border);
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 20px; background: var(--bg-body); transition: background 0.3s; flex-shrink: 0;
@@ -574,8 +574,6 @@
                 // 2. Cloud Save (if user)
                 if(state.user) {
                     alert("Syncing to cloud...");
-                    // In a real app, we might check diffs, here we just confirm online status
-                    // The onSnapshot listener handles incoming, handleTaskSubmit handles outgoing
                 }
                 alert("Data secured.");
             },
@@ -716,10 +714,15 @@
                 if(state.user) {
                     await updateDoc(doc(db, 'tasks', id), { text, date, priority, tags, subtasks });
                 } else {
-                    Object.assign(oldTask, { text, date, priority, tags });
-                    app.saveLifetime();
+                    // Update Local
+                    const taskIndex = state.tasks.findIndex(t => t.id === id);
+                    if(taskIndex !== -1) {
+                        state.tasks[taskIndex] = { ...state.tasks[taskIndex], text, date, priority, tags };
+                        app.saveLifetime();
+                    }
                 }
                 app.cancelEdit();
+                renderTasks(); // Refresh UI
             },
 
             cancelEdit: () => {
@@ -756,6 +759,20 @@
                 const subtasks = [...(task.subtasks||[]), newSub];
                 
                 if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
+                else { task.subtasks = subtasks; app.saveLifetime(); renderTasks(); }
+            },
+            
+            toggleSubtask: async (parentId, subId) => {
+                const task = state.tasks.find(t => t.id === parentId);
+                const subtasks = task.subtasks.map(s => s.id == subId ? {...s, completed: !s.completed} : s);
+                if(state.user) { await updateDoc(doc(db, 'tasks', parentId), { subtasks }); } 
+                else { task.subtasks = subtasks; app.saveLifetime(); renderTasks(); }
+            },
+
+            deleteSubtask: async (parentId, subId) => {
+                const task = state.tasks.find(t => t.id === parentId);
+                const subtasks = task.subtasks.filter(s => s.id != subId);
+                if(state.user) { await updateDoc(doc(db, 'tasks', parentId), { subtasks }); } 
                 else { task.subtasks = subtasks; app.saveLifetime(); renderTasks(); }
             },
 
@@ -993,7 +1010,9 @@
             visibleTasks.forEach(task => {
                 const subsHtml = (task.subtasks||[]).map(s => `
                     <div class="subtask-row">
-                        <input type="checkbox" ${s.completed ? 'checked' : ''} onchange="app.toggleSubtask('${task.id}', '${s.id}')"> <span style="text-decoration:${s.completed?'line-through':'none'}; opacity:${s.completed?0.5:1}">${s.text}</span>
+                        <input type="checkbox" ${s.completed ? 'checked' : ''} onchange="app.toggleSubtask('${task.id}', '${s.id}')">
+                        <span style="text-decoration:${s.completed?'line-through':'none'}; opacity:${s.completed?0.5:1}; flex:1; color:var(--text-muted);">${s.text}</span>
+                        <button class="btn btn-icon btn-danger" style="width:20px;height:20px;padding:0;font-size:10px;" onclick="app.deleteSubtask('${task.id}', '${s.id}')"><i class="fas fa-times"></i></button>
                     </div>
                 `).join('');
                 
