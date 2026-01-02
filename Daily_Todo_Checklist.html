@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v4.2 (Stable Core)</title>
+    <title>Enterprise TaskPro - v4.3 (Reset Capability)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -220,7 +220,7 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="fas fa-bolt"></i> TaskPro 4.2
+            <i class="fas fa-bolt"></i> TaskPro 4.3
             <button class="btn btn-icon" style="margin-left:auto; background:transparent; display:none;" onclick="app.toggleSidebar()" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
         </div>
         
@@ -242,6 +242,10 @@
             <button class="nav-link" onclick="app.backupData()">
                 <i class="fas fa-download"></i> Checkpoint
             </button>
+            <button class="nav-link" onclick="app.resetAllData()" style="color:var(--danger);">
+                <i class="fas fa-trash-alt"></i> Reset All Data
+            </button>
+
             <button class="nav-link" onclick="document.getElementById('importInput').click()">
                 <i class="fas fa-upload"></i> Restore
             </button>
@@ -573,7 +577,7 @@
                 }
             },
 
-            // ==================== DATA & SYNC ====================
+            // ==================== DATA & RESET ====================
             // FIXED: Added silent parameter to avoid alerts on every interaction
             saveLifetime: async (showNotification = false) => {
                 localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
@@ -583,9 +587,51 @@
                 }
             },
 
+            // NEW: COMPLETE DATA WIPE FEATURE
+            resetAllData: async () => {
+                // Double Confirmation for safety
+                if(!confirm("⚠️ DANGER ZONE ⚠️\n\nThis will permanently DELETE ALL tasks, history, and statistics.\n\nAre you sure?")) return;
+                if(!confirm("Last chance: This cannot be undone. Confirm full data wipe?")) return;
+
+                // 1. Reset Internal State
+                state.tasks = [];
+                state.history = ["Meeting", "Workout", "Study"]; 
+                state.charts = {};
+
+                // 2. Wipe Local Storage (Works for Offline)
+                localStorage.removeItem('local_tasks');
+                localStorage.setItem('taskHistory', JSON.stringify(state.history));
+
+                // 3. Wipe Online Data (If logged in)
+                if(state.user) {
+                    try {
+                        const q = query(collection(db, 'tasks'), where('uid', '==', state.user.uid));
+                        const snapshot = await getDocs(q);
+                        const batch = writeBatch(db);
+                        
+                        snapshot.docs.forEach(doc => {
+                            batch.delete(doc.ref);
+                        });
+                        
+                        await batch.commit();
+                        alert("Cloud data wiped successfully.");
+                    } catch (e) {
+                        console.error("Wipe failed", e);
+                        alert("Error wiping cloud data: " + e.message);
+                    }
+                } else {
+                    alert("Local data wiped successfully.");
+                }
+
+                // 4. Re-render UI
+                renderTasks();
+                renderSuggestions();
+                if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
+            },
+
             backupData: () => {
                 const data = {
-                    meta: { version: "4.2", date: new Date().toISOString() },
+                    meta: { version: "4.3", date: new Date().toISOString() },
                     tasks: state.tasks,
                     history: state.history
                 };
@@ -683,7 +729,6 @@
                 if(state.user) {
                     await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
                 } else {
-                    // FIXED: More robust ID to prevent rapid-fire conflicts (e.g. sss, sdf)
                     newTask.id = 'local_' + Date.now() + Math.random().toString(36).substr(2, 9);
                     state.tasks.push(newTask);
                     app.saveLifetime(false); // Silent save
@@ -748,7 +793,6 @@
                 }
             },
 
-            // FIXED: Correct filtering and removed alert for smoother UX
             deleteTask: async (id) => {
                 if(!confirm("Permanently delete?")) return;
                 if(state.user) {
