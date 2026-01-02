@@ -744,26 +744,30 @@
 deleteTask: async (id) => {
     if(!confirm("Permanently delete?")) return;
 
-    // Check if it's a local task (they start with 'local_')
-    if(id.toString().startsWith('local_')) {
+    // 1. Force remove from the local screen immediately
+    const isLocal = id.toString().startsWith('local_');
+    
+    if (isLocal) {
+        // Remove from the local array and local storage
         state.tasks = state.tasks.filter(t => t.id !== id);
         localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
         renderTasks();
-        return;
+        // If we are logged out, we stop here. 
+        // If logged in, we proceed to see if it also exists in cloud.
+        if (!state.user) return;
     }
 
-    // If logged in and it's a cloud task
+    // 2. If signed in, try to delete from Firebase Cloud
     if(state.user) {
         try {
             await deleteDoc(doc(db, 'tasks', id));
+            // The onSnapshot listener will handle updating the UI for cloud tasks
         } catch (e) {
-            console.error("Cloud delete failed, trying local fallback", e);
+            console.error("Cloud delete failed: ", e);
+            // Fallback for stuck tasks:
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            renderTasks();
         }
-    } else {
-        // Fallback for any other stuck tasks
-        state.tasks = state.tasks.filter(t => t.id !== id);
-        app.saveLifetime();
-        renderTasks();
     }
 },
 
