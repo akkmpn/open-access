@@ -668,34 +668,38 @@
                 if(id) await app.updateTask(id); else await app.addTask();
             },
 
-const originalAddTask = app.addTask;
-app.addTask = async (title = null) => {
-    // We add the user email to the task document so we know who it belongs to in the leaderboard
-    const input = document.getElementById('taskInput');
-    const text = title || input.value.trim();
-    if(!text) return;
+            addTask: async (title = null) => {
+                const input = document.getElementById('taskInput');
+                const text = title || input.value.trim();
+                if(!text) return;
 
-    const newTask = {
-        text,
-        completed: false,
-        date: document.getElementById('dateInput').value,
-        priority: document.getElementById('prioInput').value,
-        tags: (text.match(/#\w+/g) || []).map(t => t.replace('#','')),
-        subtasks: [],
-        createdAt: Date.now(),
-        userEmail: state.user ? state.user.email : null // Added for leaderboard display
-    };
+                if(!state.history.includes(text)) {
+                    state.history.unshift(text);
+                    if(state.history.length > 8) state.history.pop();
+                    localStorage.setItem('taskHistory', JSON.stringify(state.history));
+                    renderSuggestions();
+                }
 
-    if(state.user) {
-        await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
-    } else {
-        newTask.id = 'local_' + Date.now();
-        state.tasks.push(newTask);
-        app.saveLifetime(false);
-        renderTasks();
-    }
-    if(!title) input.value = '';
-};
+                const newTask = {
+                    text,
+                    completed: false,
+                    date: document.getElementById('dateInput').value,
+                    priority: document.getElementById('prioInput').value,
+                    tags: (text.match(/#\w+/g) || []).map(t => t.replace('#','')),
+                    subtasks: [],
+                    createdAt: Date.now()
+                };
+
+                if(state.user) {
+                    await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
+                } else {
+                    newTask.id = 'local_' + Date.now();
+                    state.tasks.push(newTask);
+                    app.saveLifetime(false);
+                    renderTasks();
+                }
+                if(!title) input.value = '';
+            },
 
             startEdit: (id) => {
                 const task = state.tasks.find(t => t.id === id);
@@ -788,67 +792,97 @@ app.addTask = async (title = null) => {
                 if(cell) cell.classList.add('selected');
             },
 
-loadCommunity: async () => {
+            loadCommunity: async () => {
                 const board = document.getElementById('leaderboardTable');
-                
-                // 1. Show a loading state while fetching data
-                board.innerHTML = `<tr><th>Rank</th><th>User</th><th>Score</th></tr><tr><td colspan="3" style="text-align:center; padding:20px;">Updating rankings...</td></tr>`;
-
-                // 2. Guest View (If not logged in)
                 if(!state.user) {
-                    board.innerHTML = `
-                        <tr><th>Rank</th><th>User</th><th>Score</th></tr>
-                        <tr><td><span class="rank-badge rank-1">1</span></td><td>Sarah C. (Demo)</td><td>1,250</td></tr>
-                        <tr><td><span class="rank-badge rank-2">2</span></td><td>John W. (Demo)</td><td>1,100</td></tr>
-                        <tr><td><span class="rank-badge rank-3">3</span></td><td>Guest (You)</td><td>${state.tasks.filter(t=>t.completed).length * 10}</td></tr>
-                        <tr><td colspan="3" style="text-align:center; font-size:10px; color:var(--warning); padding-top:10px;">Sign in to compete with others!</td></tr>`;
-                    return;
-                }
-
-                // 3. Live Global View (If logged in)
-                try {
-                    // Fetch ALL tasks from the database to see everyone's progress
-                    const allTasksSnapshot = await getDocs(collection(db, 'tasks'));
-                    const userScores = {};
-
-                    // Aggregate scores by User ID (UID)
-                    allTasksSnapshot.forEach(doc => {
-                        const data = doc.data();
-                        if (data.completed) {
-                            // Use the email prefix as a display name
-                            const userName = data.uid === state.user.uid ? "You" : (data.userEmail ? data.userEmail.split('@')[0] : "User_" + data.uid.slice(0,4));
-                            
-                            if (!userScores[data.uid]) {
-                                userScores[data.uid] = { name: userName, score: 0 };
-                            }
-                            userScores[data.uid].score += 10; // 10 points per task
-                        }
-                    });
-
-                    // Sort leaderboard by highest score
-                    const sortedLeaderboard = Object.values(userScores).sort((a, b) => b.score - a.score);
-
-                    let tableHtml = `<tr><th>Rank</th><th>User</th><th>Score</th></tr>`;
-                    sortedLeaderboard.forEach((entry, index) => {
-                        const rank = index + 1;
-                        const rankClass = rank <= 3 ? `rank-badge rank-${rank}` : '';
-                        const highlight = entry.name === "You" ? 'style="color:var(--accent); font-weight:bold;"' : '';
-                        
-                        tableHtml += `
-                            <tr ${highlight}>
-                                <td><span class="${rankClass}">${rank || '#'+rank}</span></td>
-                                <td>${entry.name}</td>
-                                <td>${entry.score.toLocaleString()}</td>
-                            </tr>`;
-                    });
-
-                    board.innerHTML = tableHtml;
-
-                } catch (e) {
-                    console.error("Leaderboard Error:", e);
-                    board.innerHTML = `<tr><td colspan="3" style="color:var(--danger); text-align:center;">Failed to load global data.</td></tr>`;
+                    board.innerHTML = `<tr><th>Rank</th><th>User</th><th>Score</th></tr><tr><td><span class="rank-badge rank-1">1</span></td><td>Sarah C.</td><td>1,250</td></tr><tr><td><span class="rank-badge rank-2">2</span></td><td>John W.</td><td>1,100</td></tr><tr><td><span class="rank-badge rank-3">3</span></td><td>You</td><td>${state.tasks.filter(t=>t.completed).length * 10}</td></tr>`;
+                } else {
+                    board.innerHTML = `<tr><th>Rank</th><th>User</th><th>Score</th></tr><tr><td>#1</td><td>${state.user.email.split('@')[0]}</td><td>${state.tasks.filter(t=>t.completed).length * 10}</td></tr>`;
                 }
             },
+            sendMessage: (isSys = false) => {
+                const box = document.getElementById('chatMsgs');
+                const input = document.getElementById('chatInput');
+                const txt = isSys ? "Welcome to the group!" : input.value;
+                if(!txt) return;
+                const div = document.createElement('div');
+                div.className = isSys ? 'chat-msg them' : 'chat-msg me';
+                div.textContent = txt;
+                box.appendChild(div);
+                input.value = '';
+                box.scrollTop = box.scrollHeight;
+            },
+
+            renderDashboardCharts: () => {
+                const timeFilter = document.getElementById('dashFilterTime').value;
+                const tagFilter = document.getElementById('dashFilterTag').value;
+                let filtered = state.tasks;
+                const now = new Date();
+                if (timeFilter !== 'all') {
+                    filtered = filtered.filter(t => {
+                        const d = new Date(t.date);
+                        if(timeFilter === 'daily') return d.toDateString() === now.toDateString();
+                        if(timeFilter === 'weekly') { const ago = new Date(); ago.setDate(now.getDate() - 7); return d >= ago && d <= now; }
+                        if(timeFilter === 'monthly') return d.getMonth() === now.getMonth();
+                        if(timeFilter === 'yearly') return d.getFullYear() === now.getFullYear();
+                        return true;
+                    });
+                }
+                if (tagFilter !== 'all') filtered = filtered.filter(t => (t.tags||[]).includes(tagFilter));
+
+                document.getElementById('dashTotal').textContent = filtered.length;
+                const done = filtered.filter(t => t.completed).length;
+                document.getElementById('dashDone').textContent = done;
+                document.getElementById('dashPending').textContent = filtered.length - done;
+
+                const allTags = [...new Set(state.tasks.flatMap(t => t.tags || []))];
+                const tagSelect = document.getElementById('dashFilterTag');
+                if(tagSelect.options.length === 1) { 
+                    allTags.forEach(tag => {
+                        const opt = document.createElement('option');
+                        opt.value = tag; opt.textContent = '#' + tag;
+                        tagSelect.appendChild(opt);
+                    });
+                }
+
+                const ctx1 = document.getElementById('mainChart').getContext('2d');
+                if(state.charts.main) state.charts.main.destroy();
+                const labels = [], dataPoints = [];
+                for(let i=6; i>=0; i--) {
+                    const d = new Date(); d.setDate(d.getDate() - i);
+                    const k = d.toISOString().split('T')[0];
+                    labels.push(k.slice(5));
+                    dataPoints.push(state.tasks.filter(t => t.date === k && t.completed).length);
+                }
+                state.charts.main = new Chart(ctx1, {
+                    type: 'line',
+                    data: { labels: labels, datasets: [{ label: 'Completed', data: dataPoints, borderColor: getComputedStyle(document.body).getPropertyValue('--accent'), tension: 0.4 }] },
+                    options: { maintainAspectRatio: false, plugins: { legend: {display:false} } }
+                });
+
+                const ctx2 = document.getElementById('tagChart').getContext('2d');
+                if(state.charts.tags) state.charts.tags.destroy();
+                const tagCounts = {};
+                filtered.forEach(t => (t.tags||[]).forEach(tag => tagCounts[tag] = (tagCounts[tag]||0)+1));
+                state.charts.tags = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: { labels: Object.keys(tagCounts), datasets: [{ data: Object.values(tagCounts), backgroundColor: ['#208084', '#10b981', '#f59e0b', '#ef4444', '#6366f1'] }] },
+                    options: { maintainAspectRatio: false }
+                });
+            },
+
+            focusOnTask: (id) => { app.switchTab('focus'); document.getElementById('focusTaskSelect').value = id; },
+            loadFocusTasks: () => {
+                const sel = document.getElementById('focusTaskSelect');
+                sel.innerHTML = '<option value="">-- Select Task --</option>';
+                state.tasks.filter(t => !t.completed).forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id; opt.textContent = t.text;
+                    sel.appendChild(opt);
+                });
+            }
+        };
+
         // FOCUS TIMER
         let focusInterval;
         let timeLeft = 25 * 60;
