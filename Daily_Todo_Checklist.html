@@ -25,7 +25,7 @@
             --danger: #ef4444;
             --warning: #f59e0b;
             --streak-fire: #f97316;
-            --streak-target: #8b5cf6; /* Purple for Target Streak */
+            --streak-target: #8b5cf6;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             --radius: 12px;
             --font-main: 'Inter', sans-serif;
@@ -194,8 +194,13 @@
             font-family: 'Playfair Display', serif; position: relative;
         }
         .note-card::before { content: '"'; font-size: 60px; position: absolute; top: 0px; left: 10px; opacity: 0.1; color: var(--accent); }
-        .note-content { font-size: 18px; line-height: 1.6; color: var(--text-main); white-space: pre-wrap; margin-bottom: 10px; }
-        .note-date { font-family: var(--font-main); font-size: 11px; color: var(--text-muted); text-align: right; }
+        .note-content { font-size: 18px; line-height: 1.6; color: var(--text-main); white-space: pre-wrap; margin-bottom: 10px; padding-right: 50px; }
+        .note-date { font-family: var(--font-main); font-size: 11px; color: var(--text-muted); text-align: right; margin-top:10px; }
+        
+        .note-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 5; }
+        .note-btn { background: var(--bg-body); border: 1px solid var(--border); color: var(--text-muted); width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .note-btn:hover { color: var(--accent); border-color: var(--accent); }
+        .note-btn.delete:hover { color: var(--danger); border-color: var(--danger); }
 
         /* Chat */
         .chat-layout { display: flex; height: 500px; background: var(--bg-body); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 20px; }
@@ -886,7 +891,7 @@
                 else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
             },
 
-            // --- NOTES LOGIC ---
+            // --- NOTES LOGIC (FIXED) ---
             addNote: async () => {
                 const input = document.getElementById('noteInput');
                 const content = input.value.trim();
@@ -916,6 +921,38 @@
                 }
             },
 
+            editNote: (id) => {
+                const note = state.notes.find(n => n.id === id);
+                if(!note) return;
+                const card = document.getElementById(`note-card-${id}`);
+                // Switch to Edit Mode in-place
+                card.innerHTML = `
+                    <textarea id="note-edit-${id}" class="main-input" style="width:100%; min-height:100px; resize:vertical; background:var(--bg-body); border:1px solid var(--accent); margin-bottom:10px;">${note.content}</textarea>
+                    <div style="display:flex; gap:10px; justify-content:flex-end;">
+                        <button class="btn btn-secondary" onclick="app.renderNotes()">Cancel</button>
+                        <button class="btn btn-primary" onclick="app.saveEditedNote('${id}')">Save</button>
+                    </div>
+                `;
+            },
+
+            saveEditedNote: async (id) => {
+                const input = document.getElementById(`note-edit-${id}`);
+                const content = input.value.trim();
+                if(!content) { alert("Note cannot be empty"); return; }
+
+                if(state.user) {
+                    await updateDoc(doc(db, 'notes', id), { content });
+                } else {
+                    const idx = state.notes.findIndex(n => n.id === id);
+                    if(idx !== -1) {
+                        state.notes[idx].content = content;
+                        localStorage.setItem('local_notes', JSON.stringify(state.notes));
+                    }
+                }
+                // Re-render handled by listener for cloud, manual for local
+                if(!state.user) app.renderNotes();
+            },
+
             renderNotes: () => {
                 const list = document.getElementById('notesList');
                 if(!list) return;
@@ -933,8 +970,11 @@
                 list.innerHTML = sortedNotes.map(note => {
                     const date = new Date(note.createdAt).toLocaleDateString() + ' ' + new Date(note.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
                     return `
-                    <div class="note-card">
-                        <button class="btn btn-icon btn-danger" style="position:absolute; top:10px; right:10px; width:24px; height:24px; font-size:10px;" onclick="app.deleteNote('${note.id}')"><i class="fas fa-trash"></i></button>
+                    <div class="note-card" id="note-card-${note.id}">
+                        <div class="note-actions">
+                            <button class="note-btn" onclick="app.editNote('${note.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button class="note-btn delete" onclick="app.deleteNote('${note.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                        </div>
                         <div class="note-content">${note.content}</div>
                         <div class="note-date">${date}</div>
                     </div>`;
@@ -1021,9 +1061,6 @@
             },
 
             // --- STREAK CALCULATORS ---
-            
-            // Generic Streak Function (used for both Global and Sub-streak)
-            // If filterName is provided, it only checks tasks with that exact text (cleaned)
             getStreak: (filterName = null) => {
                 let streak = 0;
                 let today = new Date();
@@ -1038,8 +1075,7 @@
 
                 const cleanText = (txt) => txt.replace(/#\w+/g, '').trim();
 
-                // Logic for GLOBAL STREAK:
-                // Counts if ALL tasks for a day are done.
+                // Logic for GLOBAL STREAK
                 if(!filterName) {
                     const todayStr = getIsoDate(today);
                     const tasksToday = state.tasks.filter(t => t.date === todayStr);
@@ -1059,28 +1095,23 @@
                     return streak;
                 } 
                 
-                // Logic for SUB-STREAK (Specific Task):
-                // Counts if AT LEAST ONE of that specific task was done on consecutive days.
+                // Logic for SUB-STREAK
                 else {
-                    // Check Today
                     const todayStr = getIsoDate(today);
                     const doneToday = state.tasks.some(t => t.date === todayStr && cleanText(t.text) === filterName && t.completed);
                     if(doneToday) streak++;
 
-                    // Check Past
                     let checkDate = new Date(today);
                     checkDate.setDate(checkDate.getDate() - 1);
                     
                     while(true) {
                         const dateStr = getIsoDate(checkDate);
-                        // Did we do this specific task on this date?
                         const doneOnDate = state.tasks.some(t => t.date === dateStr && cleanText(t.text) === filterName && t.completed);
                         
                         if (doneOnDate) {
                             streak++;
                             checkDate.setDate(checkDate.getDate() - 1);
                         } else {
-                            // If we didn't do it, stop looking.
                             break; 
                         }
                     }
@@ -1120,14 +1151,12 @@
 
                 // 2. SUB STREAK POPULATION
                 const subSelect = document.getElementById('subStreakSelect');
-                // Get unique task names from history and current tasks
                 const cleanText = (txt) => txt.replace(/#\w+/g, '').trim();
                 const allTaskNames = new Set([
                     ...state.history,
                     ...state.tasks.map(t => cleanText(t.text))
                 ]);
                 
-                // Clear existing options except first
                 while(subSelect.options.length > 1) { subSelect.remove(1); }
                 
                 allTaskNames.forEach(name => {
@@ -1139,7 +1168,6 @@
                     subSelect.appendChild(opt);
                 });
 
-                // Calculate sub streak initial
                 app.updateSubStreak();
 
                 // 3. CHARTS & STATS
