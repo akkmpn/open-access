@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v4.1 (Fixed & Secure)</title>
+    <title>Enterprise TaskPro - v4.2 (Stable Core)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -220,7 +220,7 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="fas fa-bolt"></i> TaskPro 4.0
+            <i class="fas fa-bolt"></i> TaskPro 4.2
             <button class="btn btn-icon" style="margin-left:auto; background:transparent; display:none;" onclick="app.toggleSidebar()" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
         </div>
         
@@ -236,7 +236,7 @@
         </nav>
 
         <div style="margin-top: auto;">
-            <button class="nav-link" onclick="app.saveLifetime()">
+            <button class="nav-link" onclick="app.saveLifetime(true)">
                 <i class="fas fa-save"></i> Force Save
             </button>
             <button class="nav-link" onclick="app.backupData()">
@@ -502,12 +502,17 @@
                 app.updateClock();
                 setInterval(app.updateClock, 1000 * 60);
                 app.fetchWeather();
-                
-                // Set default date input
                 document.getElementById('dateInput').valueAsDate = new Date();
-                
-                // Restore Design
                 if(state.customDesign) document.getElementById('dynamic-theme-style').textContent = state.customDesign;
+                
+                // SYNC: Listen for storage changes (multi-tab support)
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'local_tasks' && !state.user) {
+                        state.tasks = JSON.parse(e.newValue || "[]");
+                        renderTasks();
+                        if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
+                    }
+                });
             },
 
             updateClock: () => {
@@ -569,20 +574,18 @@
             },
 
             // ==================== DATA & SYNC ====================
-            saveLifetime: async () => {
-                // 1. Local Save
+            // FIXED: Added silent parameter to avoid alerts on every interaction
+            saveLifetime: async (showNotification = false) => {
                 localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
-                
-                // 2. Cloud Save (if user)
-                if(state.user) {
-                    alert("Syncing to cloud...");
+                if (showNotification) {
+                    if(state.user) { alert("Syncing to cloud..."); }
+                    else { alert("Local data secured."); }
                 }
-                alert("Data secured.");
             },
 
             backupData: () => {
                 const data = {
-                    meta: { version: "4.0", date: new Date().toISOString() },
+                    meta: { version: "4.2", date: new Date().toISOString() },
                     tasks: state.tasks,
                     history: state.history
                 };
@@ -602,8 +605,8 @@
                     try {
                         const data = JSON.parse(e.target.result);
                         if(data.tasks) {
-                            state.tasks = [...state.tasks, ...data.tasks]; // Merge
-                            app.saveLifetime();
+                            state.tasks = [...state.tasks, ...data.tasks]; 
+                            app.saveLifetime(true);
                         }
                         renderTasks();
                         alert("Checkpoint restored successfully!");
@@ -660,7 +663,6 @@
                 const text = title || input.value.trim();
                 if(!text) return;
 
-                // Update History
                 if(!state.history.includes(text)) {
                     state.history.unshift(text);
                     if(state.history.length > 8) state.history.pop();
@@ -681,9 +683,10 @@
                 if(state.user) {
                     await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
                 } else {
-                    newTask.id = 'local_' + Date.now();
+                    // FIXED: More robust ID to prevent rapid-fire conflicts (e.g. sss, sdf)
+                    newTask.id = 'local_' + Date.now() + Math.random().toString(36).substr(2, 9);
                     state.tasks.push(newTask);
-                    app.saveLifetime();
+                    app.saveLifetime(false); // Silent save
                 }
                 if(!title) input.value = '';
                 renderTasks();
@@ -709,22 +712,20 @@
                 const priority = document.getElementById('prioInput').value;
                 const tags = (text.match(/#\w+/g) || []).map(t => t.replace('#',''));
                 
-                // Preserve subtasks - BUG FIX
                 const oldTask = state.tasks.find(t => t.id === id);
                 const subtasks = oldTask ? (oldTask.subtasks || []) : [];
 
                 if(state.user) {
                     await updateDoc(doc(db, 'tasks', id), { text, date, priority, tags, subtasks });
                 } else {
-                    // Update Local
                     const taskIndex = state.tasks.findIndex(t => t.id === id);
                     if(taskIndex !== -1) {
                         state.tasks[taskIndex] = { ...state.tasks[taskIndex], text, date, priority, tags };
-                        app.saveLifetime();
+                        app.saveLifetime(false); // Silent save
                     }
                 }
                 app.cancelEdit();
-                renderTasks(); // Refresh UI
+                renderTasks();
             },
 
             cancelEdit: () => {
@@ -740,15 +741,21 @@
                 const task = state.tasks.find(t => t.id === id);
                 const newVal = !task.completed;
                 if(state.user) await updateDoc(doc(db, 'tasks', id), { completed: newVal });
-                else { task.completed = newVal; app.saveLifetime(); renderTasks(); }
+                else { 
+                    task.completed = newVal; 
+                    app.saveLifetime(false); 
+                    renderTasks(); 
+                }
             },
 
+            // FIXED: Correct filtering and removed alert for smoother UX
             deleteTask: async (id) => {
                 if(!confirm("Permanently delete?")) return;
-                if(state.user) await deleteDoc(doc(db, 'tasks', id));
-                else {
+                if(state.user) {
+                    await deleteDoc(doc(db, 'tasks', id));
+                } else {
                     state.tasks = state.tasks.filter(t => t.id !== id);
-                    app.saveLifetime();
+                    app.saveLifetime(false); // Silent save
                     renderTasks();
                 }
             },
@@ -761,21 +768,33 @@
                 const subtasks = [...(task.subtasks||[]), newSub];
                 
                 if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
-                else { task.subtasks = subtasks; app.saveLifetime(); renderTasks(); }
+                else { 
+                    task.subtasks = subtasks; 
+                    app.saveLifetime(false); 
+                    renderTasks(); 
+                }
             },
             
             toggleSubtask: async (parentId, subId) => {
                 const task = state.tasks.find(t => t.id === parentId);
                 const subtasks = task.subtasks.map(s => s.id == subId ? {...s, completed: !s.completed} : s);
                 if(state.user) { await updateDoc(doc(db, 'tasks', parentId), { subtasks }); } 
-                else { task.subtasks = subtasks; app.saveLifetime(); renderTasks(); }
+                else { 
+                    task.subtasks = subtasks; 
+                    app.saveLifetime(false); 
+                    renderTasks(); 
+                }
             },
 
             deleteSubtask: async (parentId, subId) => {
                 const task = state.tasks.find(t => t.id === parentId);
                 const subtasks = task.subtasks.filter(s => s.id != subId);
                 if(state.user) { await updateDoc(doc(db, 'tasks', parentId), { subtasks }); } 
-                else { task.subtasks = subtasks; app.saveLifetime(); renderTasks(); }
+                else { 
+                    task.subtasks = subtasks; 
+                    app.saveLifetime(false); 
+                    renderTasks(); 
+                }
             },
 
             // ==================== CALENDAR ====================
@@ -784,7 +803,6 @@
                 renderCalendar();
             },
             selectDate: (dateStr) => {
-                // Mobile view selection logic
                 document.getElementById('calSelectedDate').textContent = new Date(dateStr).toDateString();
                 const tasks = state.tasks.filter(t => t.date === dateStr);
                 const html = tasks.length ? tasks.map(t => 
@@ -793,7 +811,6 @@
                     </div>`).join('') : '<div style="color:var(--text-muted)">No tasks.</div>';
                 document.getElementById('calSelectedTasks').innerHTML = html;
                 
-                // Highlight Cell
                 document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
                 const cell = document.querySelector(`.cal-cell[data-date="${dateStr}"]`);
                 if(cell) cell.classList.add('selected');
@@ -810,7 +827,6 @@
                         <tr><td><span class="rank-badge rank-3">3</span></td><td>You</td><td>${state.tasks.filter(t=>t.completed).length * 10}</td></tr>
                     `;
                 } else {
-                    // Real data fetch simulation (would use a 'users' collection in real production)
                     board.innerHTML = `<tr><th>Rank</th><th>User</th><th>Score</th></tr>
                         <tr><td>#1</td><td>${state.user.email.split('@')[0]}</td><td>${state.tasks.filter(t=>t.completed).length * 10}</td></tr>`;
                 }
@@ -819,7 +835,7 @@
                 document.getElementById('commBoard').style.display = 'none';
                 document.getElementById('groupChat').style.display = 'flex';
                 document.getElementById('chatTitle').textContent = name;
-                app.sendMessage(true); // Welcome msg
+                app.sendMessage(true);
             },
             leaveGroup: () => {
                 document.getElementById('groupChat').style.display = 'none';
@@ -844,7 +860,6 @@
                 const timeFilter = document.getElementById('dashFilterTime').value;
                 const tagFilter = document.getElementById('dashFilterTag').value;
 
-                // 1. Filter Tasks
                 let filtered = state.tasks;
                 const now = new Date();
                 
@@ -866,16 +881,14 @@
                     filtered = filtered.filter(t => (t.tags||[]).includes(tagFilter));
                 }
 
-                // 2. Stats
                 document.getElementById('dashTotal').textContent = filtered.length;
                 const done = filtered.filter(t => t.completed).length;
                 document.getElementById('dashDone').textContent = done;
                 document.getElementById('dashPending').textContent = filtered.length - done;
 
-                // 3. Populate Tags Dropdown
                 const allTags = [...new Set(state.tasks.flatMap(t => t.tags || []))];
                 const tagSelect = document.getElementById('dashFilterTag');
-                if(tagSelect.options.length === 1) { // only populate if empty
+                if(tagSelect.options.length === 1) { 
                     allTags.forEach(tag => {
                         const opt = document.createElement('option');
                         opt.value = tag; opt.textContent = '#' + tag;
@@ -883,7 +896,6 @@
                     });
                 }
 
-                // 4. Main Chart (Productivity)
                 const ctx1 = document.getElementById('mainChart').getContext('2d');
                 if(state.charts.main) state.charts.main.destroy();
                 
@@ -909,7 +921,6 @@
                     options: { maintainAspectRatio: false, plugins: { legend: {display:false} } }
                 });
 
-                // 5. Tag Chart (Doughnut) - NEW FEATURE
                 const ctx2 = document.getElementById('tagChart').getContext('2d');
                 if(state.charts.tags) state.charts.tags.destroy();
                 
@@ -959,7 +970,6 @@
             start: () => {
                 if(focusInterval) return;
                 
-                // Audio Fix: Must be user initiated
                 const s = document.getElementById('soundSelect').value;
                 if(currentAudio) currentAudio.pause();
                 if(s === 'rain') currentAudio = document.getElementById('audioRain');
@@ -976,7 +986,6 @@
                         clearInterval(focusInterval);
                         focusMode.reset();
                         alert("Focus Session Complete!");
-                        // Mark task done if selected
                         const tid = document.getElementById('focusTaskSelect').value;
                         if(tid) app.toggleTask(tid);
                     }
@@ -1005,7 +1014,7 @@
         function renderTasks() {
             const list = document.getElementById('taskList');
             list.innerHTML = "";
-            const filter = state.taskFilter; // 'active' or 'completed'
+            const filter = state.taskFilter; 
 
             const visibleTasks = state.tasks.filter(t => filter === 'completed' ? t.completed : !t.completed);
 
