@@ -659,45 +659,34 @@ handleTaskSubmit: async () => {
 },
 
 addTask: async (title = null) => {
-    const input = document.getElementById('taskInput');
-    const text = title || input.value.trim();
-    if(!text) return;
+                const input = document.getElementById('taskInput');
+                const text = title || input.value.trim();
+                if(!text) return;
 
-    // Update History
-    if(!state.history.includes(text)) {
-        state.history.unshift(text);
-        if(state.history.length > 8) state.history.pop();
-        localStorage.setItem('taskHistory', JSON.stringify(state.history));
-        renderSuggestions();
-    }
+                const newTask = {
+                    text,
+                    completed: false,
+                    date: document.getElementById('dateInput').value,
+                    priority: document.getElementById('prioInput').value,
+                    tags: (text.match(/#\w+/g) || []).map(t => t.replace('#','')),
+                    subtasks: [],
+                    createdAt: Date.now()
+                };
 
-    const newTask = {
-        text,
-        completed: false,
-        date: document.getElementById('dateInput').value,
-        priority: document.getElementById('prioInput').value,
-        tags: (text.match(/#\w+/g) || []).map(t => t.replace('#','')),
-        subtasks: [],
-        createdAt: Date.now()
-    };
-
-    if(state.user) {
-        // If logged in, ONLY send the single new task to Firebase.
-        // DO NOT call saveLifetime() here, as it would save ghosts to local storage.
-        await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
-    } else {
-        // If guest, add to local array and save correctly.
-        newTask.id = 'local_' + Date.now();
-        state.tasks.push(newTask);
-        
-        // Explicitly update the local bucket
-        localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
-        app.saveLifetime();
-    }
-
-    if(!title) input.value = '';
-    renderTasks();
-},
+                if(state.user) {
+                    // CLOUD ONLY: Do not call saveLifetime() here
+                    await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
+                } else {
+                    // LOCAL ONLY
+                    newTask.id = 'local_' + Date.now();
+                    state.tasks.push(newTask);
+                    localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+                    app.saveLifetime();
+                }
+                
+                if(!title) input.value = '';
+                renderTasks();
+            },
 
             startEdit: (id) => {
                 const task = state.tasks.find(t => t.id === id);
@@ -759,27 +748,27 @@ updateTask: async (id) => {
 
 deleteTask: async (id) => {
                 if(!confirm("Permanently delete?")) return;
-                
-                // 1. Remove from screen immediately
-                state.tasks = state.tasks.filter(t => t.id !== id);
-                
-                // 2. Force remove from Local Storage so it can't reappear
-                const locals = JSON.parse(localStorage.getItem('local_tasks')) || [];
-                const filtered = locals.filter(t => t.id !== id);
-                localStorage.setItem('local_tasks', JSON.stringify(filtered));
 
-                // 3. Try Cloud delete ONLY if it's not a local ID
-                const isLocal = id.toString().startsWith('t_') || id.toString().startsWith('local_');
-                
-                if(state.user && !isLocal) {
+                // 1. Remove from the current view immediately
+                state.tasks = state.tasks.filter(t => t.id !== id);
+
+                // 2. Force wipe from the local "Guest" storage bucket
+                const localData = JSON.parse(localStorage.getItem('local_tasks')) || [];
+                const updatedLocal = localData.filter(t => t.id !== id);
+                localStorage.setItem('local_tasks', JSON.stringify(updatedLocal));
+
+                // 3. If it's a Cloud task, delete from Firebase
+                const isLocalId = id.toString().startsWith('local_') || id.toString().startsWith('t_');
+                if(state.user && !isLocalId) {
                     try {
-                        // We don't 'await' here so the UI doesn't freeze if blocked
-                        deleteDoc(doc(db, 'tasks', id)).catch(e => console.log("Cloud sync blocked, but local deleted."));
-                    } catch (e) {}
+                        await deleteDoc(doc(db, 'tasks', id));
+                    } catch (e) {
+                        console.error("Cloud delete failed, but local is cleared.");
+                    }
                 }
-                
+
                 renderTasks();
-                app.saveLifetime(); // Double-save to be sure
+                app.saveLifetime();
             },
 
             addSubtask: async (parentId) => {
