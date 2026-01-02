@@ -668,39 +668,34 @@
                 if(id) await app.updateTask(id); else await app.addTask();
             },
 
-            addTask: async (title = null) => {
-                const input = document.getElementById('taskInput');
-                const text = title || input.value.trim();
-                if(!text) return;
+const originalAddTask = app.addTask;
+app.addTask = async (title = null) => {
+    // We add the user email to the task document so we know who it belongs to in the leaderboard
+    const input = document.getElementById('taskInput');
+    const text = title || input.value.trim();
+    if(!text) return;
 
-                if(!state.history.includes(text)) {
-                    state.history.unshift(text);
-                    if(state.history.length > 8) state.history.pop();
-                    localStorage.setItem('taskHistory', JSON.stringify(state.history));
-                    renderSuggestions();
-                }
+    const newTask = {
+        text,
+        completed: false,
+        date: document.getElementById('dateInput').value,
+        priority: document.getElementById('prioInput').value,
+        tags: (text.match(/#\w+/g) || []).map(t => t.replace('#','')),
+        subtasks: [],
+        createdAt: Date.now(),
+        userEmail: state.user ? state.user.email : null // Added for leaderboard display
+    };
 
-                const newTask = {
-                    text,
-                    completed: false,
-                    date: document.getElementById('dateInput').value,
-                    priority: document.getElementById('prioInput').value,
-                    tags: (text.match(/#\w+/g) || []).map(t => t.replace('#','')),
-                    subtasks: [],
-                    createdAt: Date.now()
-                    userEmail: state.user ? state.user.email : null
-                };
-
-                if(state.user) {
-                    await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
-                } else {
-                    newTask.id = 'local_' + Date.now();
-                    state.tasks.push(newTask);
-                    app.saveLifetime(false);
-                    renderTasks();
-                }
-                if(!title) input.value = '';
-            },
+    if(state.user) {
+        await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
+    } else {
+        newTask.id = 'local_' + Date.now();
+        state.tasks.push(newTask);
+        app.saveLifetime(false);
+        renderTasks();
+    }
+    if(!title) input.value = '';
+};
 
             startEdit: (id) => {
                 const task = state.tasks.find(t => t.id === id);
