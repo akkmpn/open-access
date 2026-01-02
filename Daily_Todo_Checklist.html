@@ -701,29 +701,31 @@
                 document.getElementById('cancelEditBtn').style.display = 'inline-block';
             },
 
-            updateTask: async (id) => {
-                const text = document.getElementById('taskInput').value;
-                const date = document.getElementById('dateInput').value;
-                const priority = document.getElementById('prioInput').value;
-                const tags = (text.match(/#\w+/g) || []).map(t => t.replace('#',''));
-                
-                // Preserve subtasks - BUG FIX
-                const oldTask = state.tasks.find(t => t.id === id);
-                const subtasks = oldTask ? (oldTask.subtasks || []) : [];
+updateTask: async (id) => {
+    const text = document.getElementById('taskInput').value;
+    const date = document.getElementById('dateInput').value;
+    const priority = document.getElementById('prioInput').value;
+    const tags = (text.match(/#\w+/g) || []).map(t => t.replace('#',''));
+    
+    const taskIndex = state.tasks.findIndex(t => t.id === id);
+    if(taskIndex === -1) return;
 
-                if(state.user) {
-                    await updateDoc(doc(db, 'tasks', id), { text, date, priority, tags, subtasks });
-                } else {
-                    // Update Local
-                    const taskIndex = state.tasks.findIndex(t => t.id === id);
-                    if(taskIndex !== -1) {
-                        state.tasks[taskIndex] = { ...state.tasks[taskIndex], text, date, priority, tags };
-                        app.saveLifetime();
-                    }
-                }
-                app.cancelEdit();
-                renderTasks(); // Refresh UI
-            },
+    const isLocal = id.toString().startsWith('local_') || id.toString().startsWith('t_');
+
+    if(state.user && !isLocal) {
+        try {
+            await updateDoc(doc(db, 'tasks', id), { text, date, priority, tags });
+        } catch (e) {
+            console.error("Cloud update failed, updating locally instead", e);
+            state.tasks[taskIndex] = { ...state.tasks[taskIndex], text, date, priority, tags };
+        }
+    } else {
+        state.tasks[taskIndex] = { ...state.tasks[taskIndex], text, date, priority, tags };
+        app.saveLifetime();
+    }
+    app.cancelEdit();
+    renderTasks();
+},
 
             cancelEdit: () => {
                 document.getElementById('taskInput').value = '';
@@ -734,40 +736,46 @@
                 document.getElementById('cancelEditBtn').style.display = 'none';
             },
 
-            toggleTask: async (id) => {
-                const task = state.tasks.find(t => t.id === id);
-                const newVal = !task.completed;
-                if(state.user) await updateDoc(doc(db, 'tasks', id), { completed: newVal });
-                else { task.completed = newVal; app.saveLifetime(); renderTasks(); }
-            },
+toggleTask: async (id) => {
+    const task = state.tasks.find(t => t.id === id);
+    if(!task) return;
+    const newVal = !task.completed;
+    const isLocal = id.toString().startsWith('local_') || id.toString().startsWith('t_');
+
+    if(state.user && !isLocal) {
+        try {
+            await updateDoc(doc(db, 'tasks', id), { completed: newVal });
+        } catch (e) {
+            task.completed = newVal;
+            renderTasks();
+        }
+    } else {
+        task.completed = newVal; 
+        app.saveLifetime(); 
+        renderTasks(); 
+    }
+},
 
 deleteTask: async (id) => {
     if(!confirm("Permanently delete?")) return;
-
-    // 1. Force remove from the local screen immediately
-    const isLocal = id.toString().startsWith('local_');
     
-    if (isLocal) {
-        // Remove from the local array and local storage
-        state.tasks = state.tasks.filter(t => t.id !== id);
-        localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
-        renderTasks();
-        // If we are logged out, we stop here. 
-        // If logged in, we proceed to see if it also exists in cloud.
-        if (!state.user) return;
-    }
+    // Check if it's a local task first
+    const isLocal = id.toString().startsWith('local_') || id.toString().startsWith('t_');
 
-    // 2. If signed in, try to delete from Firebase Cloud
-    if(state.user) {
+    if(state.user && !isLocal) {
         try {
             await deleteDoc(doc(db, 'tasks', id));
-            // The onSnapshot listener will handle updating the UI for cloud tasks
         } catch (e) {
-            console.error("Cloud delete failed: ", e);
-            // Fallback for stuck tasks:
+            console.error("Cloud delete failed, removing locally", e);
             state.tasks = state.tasks.filter(t => t.id !== id);
             renderTasks();
         }
+    } else {
+        // Handle local or orphaned tasks
+        state.tasks = state.tasks.filter(t => t.id !== id);
+        localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+        app.saveLifetime();
+        renderTasks();
     }
 },
 
