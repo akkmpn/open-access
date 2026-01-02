@@ -748,26 +748,25 @@ updateTask: async (id) => {
 deleteTask: async (id) => {
     if(!confirm("Permanently delete?")) return;
     
-    // Check if the task is local (IDs starting with 'local_' or 't_')
-    const isLocal = id.toString().startsWith('local_') || id.toString().startsWith('t_');
+    // 1. ALWAYS remove from the local state array immediately
+    state.tasks = state.tasks.filter(t => t.id !== id);
 
-    if(state.user && !isLocal) {
-        // Only call Firebase if it's a real cloud task
+    // 2. ALWAYS wipe from LocalStorage (fixes the "reappearing" bug)
+    const localData = JSON.parse(localStorage.getItem('local_tasks')) || [];
+    const filteredLocal = localData.filter(t => t.id !== id);
+    localStorage.setItem('local_tasks', JSON.stringify(filteredLocal));
+
+    // 3. If it's a Cloud task, delete from Firebase
+    const isLocalId = id.toString().startsWith('local_') || id.toString().startsWith('t_');
+    if(state.user && !isLocalId) {
         try {
             await deleteDoc(doc(db, 'tasks', id));
         } catch (e) {
-            console.error("Cloud delete failed:", e);
-            // Fallback: Remove it locally if cloud fails
-            state.tasks = state.tasks.filter(t => t.id !== id);
-            renderTasks();
+            console.error("Cloud delete failed, but task removed locally.");
         }
-    } else {
-        // Directly remove local tasks from state and localStorage
-        state.tasks = state.tasks.filter(t => t.id !== id);
-        localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
-        app.saveLifetime();
-        renderTasks();
     }
+
+    renderTasks();
 },
 
             addSubtask: async (parentId) => {
@@ -1109,29 +1108,32 @@ deleteTask: async (id) => {
         };
 
         // ==================== AUTH LISTENER ====================
-        onAuthStateChanged(auth, (user) => {
-            if(user) {
-                state.user = user;
-                document.getElementById('authBtn').textContent = "Sign Out";
-                document.getElementById('syncDot').style.background = "var(--success)";
-                document.getElementById('syncText').textContent = "Cloud Active";
-                
-                const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
-                onSnapshot(q, (snap) => {
-                    state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                    renderTasks();
-                    if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
-                    if(document.getElementById('calendar').classList.contains('active')) renderCalendar();
-                });
-            } else {
-                state.user = null;
-                document.getElementById('authBtn').textContent = "Sign In";
-                document.getElementById('syncDot').style.background = "var(--warning)";
-                document.getElementById('syncText').textContent = "Offline";
-                state.tasks = JSON.parse(localStorage.getItem('local_tasks')) || [];
-                renderTasks();
-            }
+onAuthStateChanged(auth, (user) => {
+    if(user) {
+        state.user = user;
+        document.getElementById('authBtn').textContent = "Sign Out";
+        document.getElementById('syncDot').style.background = "var(--success)";
+        document.getElementById('syncText').textContent = "Cloud Active";
+        
+        const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
+        onSnapshot(q, (snap) => {
+            // Merge Cloud tasks with any unsynced local tasks if desired, 
+            // or just show Cloud:
+            state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
+            renderTasks();
         });
+    } else {
+        state.user = null;
+        document.getElementById('authBtn').textContent = "Sign In";
+        document.getElementById('syncDot').style.background = "var(--warning)";
+        document.getElementById('syncText').textContent = "Offline";
+        
+        // FIX: Ensure local tasks are retrieved properly
+        const saved = localStorage.getItem('local_tasks');
+        state.tasks = saved ? JSON.parse(saved) : [];
+        renderTasks();
+    }
+});
 
         // Initialize
         app.init();
