@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v4.6 (Streak Feature)</title>
+    <title>Enterprise TaskPro - v5.0 (Streak & Notes)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -24,7 +24,8 @@
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
-            --streak-fire: #f97316; /* Orange for Streak Fire */
+            --streak-fire: #f97316;
+            --streak-target: #8b5cf6; /* Purple for Target Streak */
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             --radius: 12px;
             --font-main: 'Inter', sans-serif;
@@ -186,6 +187,16 @@
         .rank-badge { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; margin-right: 10px; }
         .rank-1 { background: #fbbf24; color: #78350f; } .rank-2 { background: #94a3b8; color: #0f172a; } .rank-3 { background: #b45309; color: #fffbeb; }
 
+        /* Notes & Quotes */
+        .note-card { 
+            background: var(--bg-card); border-radius: var(--radius); padding: 20px;
+            border: var(--border-width) solid var(--border); margin-bottom: 15px;
+            font-family: 'Playfair Display', serif; position: relative;
+        }
+        .note-card::before { content: '"'; font-size: 60px; position: absolute; top: 0px; left: 10px; opacity: 0.1; color: var(--accent); }
+        .note-content { font-size: 18px; line-height: 1.6; color: var(--text-main); white-space: pre-wrap; margin-bottom: 10px; }
+        .note-date { font-family: var(--font-main); font-size: 11px; color: var(--text-muted); text-align: right; }
+
         /* Chat */
         .chat-layout { display: flex; height: 500px; background: var(--bg-body); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 20px; }
         .chat-main { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
@@ -220,7 +231,7 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="fas fa-bolt"></i> TaskPro 4.6
+            <i class="fas fa-bolt"></i> TaskPro 5.0
             <button class="btn btn-icon" style="margin-left:auto; background:transparent; display:none;" onclick="app.toggleSidebar()" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
         </div>
         
@@ -230,6 +241,7 @@
                 <i class="fas fa-tasks"></i> My Tasks
                 <span id="badge" style="margin-left:auto; background:var(--accent); padding:2px 8px; border-radius:10px; font-size:10px; color: white;">0</span>
             </button>
+            <button class="nav-link" onclick="app.switchTab('notes')"><i class="fas fa-sticky-note"></i> My Notes</button>
             <button class="nav-link" onclick="app.switchTab('calendar')"><i class="far fa-calendar-alt"></i> Calendar</button>
             <button class="nav-link" onclick="app.switchTab('focus')"><i class="fas fa-stopwatch"></i> Focus Mode</button>
             <button class="nav-link" onclick="app.switchTab('community')"><i class="fas fa-users"></i> Community</button>
@@ -317,8 +329,21 @@
                         <span id="streakCount">0</span>
                         <i class="fas fa-fire" id="streakIcon" style="font-size:20px; opacity:0.3; transition:0.3s;"></i>
                     </div>
-                    <div style="color:var(--text-muted); font-size:11px; margin-top:5px;">CURRENT STREAK</div>
-                    <div style="font-size:9px; color:var(--text-muted); margin-top:3px;">(Consecutive Days All Done)</div>
+                    <div style="color:var(--text-muted); font-size:11px; margin-top:5px;">DAILY STREAK</div>
+                    <div style="font-size:9px; color:var(--text-muted); margin-top:3px;">(Consecutive Days)</div>
+                </div>
+
+                <div class="task-card" style="text-align:center; padding: 20px 10px; border-left-color: var(--streak-target);">
+                    <div style="font-size:28px; font-weight:700; color:var(--streak-target); display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <span id="subStreakCount">0</span>
+                        <i class="fas fa-crosshairs" style="font-size:18px;"></i>
+                    </div>
+                    <div style="margin-top:5px; padding:0 10px;">
+                        <select id="subStreakSelect" class="select-input" style="width:100%; font-size:11px; padding:5px; background: var(--bg-body);" onchange="app.updateSubStreak()">
+                            <option value="">Select Task...</option>
+                        </select>
+                    </div>
+                    <div style="font-size:9px; color:var(--text-muted); margin-top:5px;">TASK SPECIFIC STREAK</div>
                 </div>
             </div>
 
@@ -355,6 +380,23 @@
             </div>
 
             <div id="taskList" class="task-list"></div>
+        </div>
+
+        <div id="notes" class="view-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <h2 style="color:var(--text-main);">My Notes & Quotes</h2>
+                    <p style="color:var(--text-muted); font-size:13px;">Saved online. Keep your motivation here.</p>
+                </div>
+                <div style="font-size:30px; color:var(--accent); opacity:0.5;"><i class="fas fa-feather-alt"></i></div>
+            </div>
+            
+            <div class="input-group" style="align-items:flex-start;">
+                <textarea id="noteInput" class="main-input" rows="3" style="resize:vertical; min-height:80px;" placeholder="Write a quote, thought, or memo..."></textarea>
+                <button class="btn btn-primary" style="height:fit-content;" onclick="app.addNote()">Save Note</button>
+            </div>
+            
+            <div id="notesList"></div>
         </div>
 
         <div id="calendar" class="view-container">
@@ -490,12 +532,14 @@
         const state = {
             user: null,
             tasks: [],
+            notes: [],
             history: JSON.parse(localStorage.getItem('taskHistory')) || ["Meeting", "Workout", "Study"],
             currentDate: new Date(),
             charts: {},
             customDesign: localStorage.getItem('customDesignCSS') || null,
             taskFilter: 'active',
-            weather: { temp: '--', condition: 'Unknown' }
+            weather: { temp: '--', condition: 'Unknown' },
+            subStreakTask: localStorage.getItem('subStreakTask') || ''
         };
 
         window.app = {
@@ -506,6 +550,12 @@
                 document.getElementById('dateInput').valueAsDate = new Date();
                 if(state.customDesign) document.getElementById('dynamic-theme-style').textContent = state.customDesign;
                 
+                // Load local notes if offline
+                if(!state.user) {
+                    state.notes = JSON.parse(localStorage.getItem('local_notes')) || [];
+                    app.renderNotes();
+                }
+
                 window.addEventListener('storage', (e) => {
                     if (e.key === 'local_tasks' && !state.user) {
                         state.tasks = JSON.parse(e.newValue || "[]");
@@ -566,6 +616,7 @@
             // ==================== CLOUD SYNC & DATA ====================
             saveLifetime: async (showNotification = false) => {
                 localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+                localStorage.setItem('local_notes', JSON.stringify(state.notes));
                 if (showNotification) {
                     if(state.user) { 
                         alert("Cloud Sync is active. All changes are being saved to your account."); 
@@ -576,21 +627,30 @@
             },
 
             resetAllData: async () => {
-                if(!confirm("⚠️ DANGER ZONE ⚠️\n\nThis will permanently DELETE ALL tasks, history, and statistics.\n\nAre you sure?")) return;
+                if(!confirm("⚠️ DANGER ZONE ⚠️\n\nThis will permanently DELETE ALL tasks, history, notes, and statistics.\n\nAre you sure?")) return;
                 if(!confirm("Last chance: This cannot be undone. Confirm full data wipe?")) return;
 
                 state.tasks = [];
+                state.notes = [];
                 state.history = ["Meeting", "Workout", "Study"]; 
                 state.charts = {};
                 localStorage.removeItem('local_tasks');
+                localStorage.removeItem('local_notes');
                 localStorage.setItem('taskHistory', JSON.stringify(state.history));
 
                 if(state.user) {
                     try {
-                        const q = query(collection(db, 'tasks'), where('uid', '==', state.user.uid));
-                        const snapshot = await getDocs(q);
                         const batch = writeBatch(db);
-                        snapshot.docs.forEach(doc => { batch.delete(doc.ref); });
+                        // Delete Tasks
+                        const qTasks = query(collection(db, 'tasks'), where('uid', '==', state.user.uid));
+                        const snapTasks = await getDocs(qTasks);
+                        snapTasks.docs.forEach(doc => { batch.delete(doc.ref); });
+
+                        // Delete Notes
+                        const qNotes = query(collection(db, 'notes'), where('uid', '==', state.user.uid));
+                        const snapNotes = await getDocs(qNotes);
+                        snapNotes.docs.forEach(doc => { batch.delete(doc.ref); });
+
                         await batch.commit();
                         
                         // Also reset leaderboard score
@@ -605,12 +665,13 @@
                 } else { alert("Local data wiped successfully."); }
 
                 renderTasks();
+                app.renderNotes();
                 renderSuggestions();
                 if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
             },
 
             backupData: () => {
-                const data = { meta: { version: "4.3", date: new Date().toISOString() }, tasks: state.tasks, history: state.history };
+                const data = { meta: { version: "5.0", date: new Date().toISOString() }, tasks: state.tasks, notes: state.notes, history: state.history };
                 const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -635,12 +696,22 @@
                                     const newDocRef = doc(collection(db, 'tasks'));
                                     batch.set(newDocRef, { ...taskData, uid: state.user.uid });
                                 });
+                                // Restore Notes if present
+                                if(data.notes) {
+                                    data.notes.forEach(n => {
+                                        const { id, ...noteData } = n;
+                                        const newNoteRef = doc(collection(db, 'notes'));
+                                        batch.set(newNoteRef, { ...noteData, uid: state.user.uid });
+                                    });
+                                }
                                 await batch.commit();
                                 alert("Cloud restore successful!");
                             } else {
-                                state.tasks = [...state.tasks, ...data.tasks]; 
+                                state.tasks = [...state.tasks, ...data.tasks];
+                                if(data.notes) state.notes = [...state.notes, ...data.notes];
                                 app.saveLifetime(true);
                                 renderTasks();
+                                app.renderNotes();
                             }
                         }
                     } catch(err) { alert("Invalid File Format"); console.error(err); }
@@ -659,13 +730,14 @@
                 document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
                 document.getElementById(id).classList.add('active');
                 event.currentTarget.classList.add('active');
-                document.getElementById('pageTitle').textContent = id.charAt(0).toUpperCase() + id.slice(1);
+                document.getElementById('pageTitle').textContent = (id === 'notes' ? "My Notes" : id.charAt(0).toUpperCase() + id.slice(1));
                 
                 if(window.innerWidth <= 768) app.toggleSidebar();
                 if(id === 'dashboard') app.renderDashboardCharts();
                 if(id === 'calendar') renderCalendar();
                 if(id === 'community') app.loadCommunity();
                 if(id === 'focus') app.loadFocusTasks();
+                if(id === 'notes') app.renderNotes();
             },
 
             toggleAuth: () => { if(state.user) signOut(auth); else document.getElementById('authModal').style.display = 'flex'; },
@@ -814,6 +886,61 @@
                 else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
             },
 
+            // --- NOTES LOGIC ---
+            addNote: async () => {
+                const input = document.getElementById('noteInput');
+                const content = input.value.trim();
+                if(!content) return;
+                
+                const newNote = { content, createdAt: Date.now() };
+
+                if(state.user) {
+                    await addDoc(collection(db, 'notes'), { ...newNote, uid: state.user.uid });
+                } else {
+                    newNote.id = 'local_note_' + Date.now();
+                    state.notes.unshift(newNote);
+                    localStorage.setItem('local_notes', JSON.stringify(state.notes));
+                    app.renderNotes();
+                }
+                input.value = '';
+            },
+
+            deleteNote: async (id) => {
+                if(!confirm("Delete this note?")) return;
+                if(state.user) {
+                    await deleteDoc(doc(db, 'notes', id));
+                } else {
+                    state.notes = state.notes.filter(n => n.id !== id);
+                    localStorage.setItem('local_notes', JSON.stringify(state.notes));
+                    app.renderNotes();
+                }
+            },
+
+            renderNotes: () => {
+                const list = document.getElementById('notesList');
+                if(!list) return;
+                
+                const sortedNotes = [...state.notes].sort((a,b) => b.createdAt - a.createdAt);
+                
+                if(sortedNotes.length === 0) {
+                    list.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin-top:30px;">
+                        <i class="fas fa-pencil-alt" style="font-size:24px; margin-bottom:10px;"></i><br>
+                        No notes yet. Save your first thought!
+                    </div>`;
+                    return;
+                }
+
+                list.innerHTML = sortedNotes.map(note => {
+                    const date = new Date(note.createdAt).toLocaleDateString() + ' ' + new Date(note.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                    return `
+                    <div class="note-card">
+                        <button class="btn btn-icon btn-danger" style="position:absolute; top:10px; right:10px; width:24px; height:24px; font-size:10px;" onclick="app.deleteNote('${note.id}')"><i class="fas fa-trash"></i></button>
+                        <div class="note-content">${note.content}</div>
+                        <div class="note-date">${date}</div>
+                    </div>`;
+                }).join('');
+            },
+
             changeMonth: (offset) => {
                 state.currentDate.setMonth(state.currentDate.getMonth() + offset);
                 renderCalendar();
@@ -893,13 +1020,15 @@
                 box.scrollTop = box.scrollHeight;
             },
 
-            // --- STREAK LOGIC ---
-            calculateStreak: () => {
+            // --- STREAK CALCULATORS ---
+            
+            // Generic Streak Function (used for both Global and Sub-streak)
+            // If filterName is provided, it only checks tasks with that exact text (cleaned)
+            getStreak: (filterName = null) => {
                 let streak = 0;
                 let today = new Date();
                 today.setHours(0,0,0,0);
                 
-                // Helper to get formatted date string matching task date input
                 const getIsoDate = (d) => {
                     const year = d.getFullYear();
                     const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -907,37 +1036,66 @@
                     return `${year}-${month}-${day}`;
                 };
 
-                // Check Today
-                const todayStr = getIsoDate(today);
-                const tasksToday = state.tasks.filter(t => t.date === todayStr);
-                
-                // If today has tasks and ALL are completed, streak counts for today
-                if (tasksToday.length > 0 && tasksToday.every(t => t.completed)) {
-                    streak++;
-                }
+                const cleanText = (txt) => txt.replace(/#\w+/g, '').trim();
 
-                // Check Previous Days
-                let checkDate = new Date(today);
-                checkDate.setDate(checkDate.getDate() - 1); // Start from yesterday
-
-                while (true) {
-                    const dateStr = getIsoDate(checkDate);
-                    const tasksOnDate = state.tasks.filter(t => t.date === dateStr);
+                // Logic for GLOBAL STREAK:
+                // Counts if ALL tasks for a day are done.
+                if(!filterName) {
+                    const todayStr = getIsoDate(today);
+                    const tasksToday = state.tasks.filter(t => t.date === todayStr);
+                    if (tasksToday.length > 0 && tasksToday.every(t => t.completed)) streak++;
                     
-                    if (tasksOnDate.length === 0) {
-                        // Strict Streak: If a day has NO tasks, streak breaks? 
-                        // Or do we skip it? Let's treat "no tasks" as a break for stricter productivity.
-                        break; 
+                    let checkDate = new Date(today);
+                    checkDate.setDate(checkDate.getDate() - 1);
+                    while (true) {
+                        const dateStr = getIsoDate(checkDate);
+                        const tasksOnDate = state.tasks.filter(t => t.date === dateStr);
+                        if (tasksOnDate.length === 0) break; // Gap day breaks global streak
+                        if (tasksOnDate.every(t => t.completed)) {
+                            streak++;
+                            checkDate.setDate(checkDate.getDate() - 1);
+                        } else break;
                     }
+                    return streak;
+                } 
+                
+                // Logic for SUB-STREAK (Specific Task):
+                // Counts if AT LEAST ONE of that specific task was done on consecutive days.
+                else {
+                    // Check Today
+                    const todayStr = getIsoDate(today);
+                    const doneToday = state.tasks.some(t => t.date === todayStr && cleanText(t.text) === filterName && t.completed);
+                    if(doneToday) streak++;
 
-                    if (tasksOnDate.every(t => t.completed)) {
-                        streak++;
-                        checkDate.setDate(checkDate.getDate() - 1);
-                    } else {
-                        break; // Streak broken
+                    // Check Past
+                    let checkDate = new Date(today);
+                    checkDate.setDate(checkDate.getDate() - 1);
+                    
+                    while(true) {
+                        const dateStr = getIsoDate(checkDate);
+                        // Did we do this specific task on this date?
+                        const doneOnDate = state.tasks.some(t => t.date === dateStr && cleanText(t.text) === filterName && t.completed);
+                        
+                        if (doneOnDate) {
+                            streak++;
+                            checkDate.setDate(checkDate.getDate() - 1);
+                        } else {
+                            // If we didn't do it, stop looking.
+                            break; 
+                        }
                     }
+                    return streak;
                 }
-                return streak;
+            },
+
+            updateSubStreak: () => {
+                const select = document.getElementById('subStreakSelect');
+                const val = select.value;
+                state.subStreakTask = val;
+                localStorage.setItem('subStreakTask', val);
+                
+                const count = val ? app.getStreak(val) : 0;
+                document.getElementById('subStreakCount').textContent = count;
             },
 
             renderDashboardCharts: () => {
@@ -946,8 +1104,8 @@
                 let filtered = state.tasks;
                 const now = new Date();
                 
-                // --- STREAK RENDER ---
-                const currentStreak = app.calculateStreak();
+                // 1. GLOBAL STREAK
+                const currentStreak = app.getStreak(null);
                 document.getElementById('streakCount').textContent = currentStreak;
                 const streakIcon = document.getElementById('streakIcon');
                 if(currentStreak > 0) {
@@ -960,6 +1118,31 @@
                     streakIcon.classList.remove('fa-beat');
                 }
 
+                // 2. SUB STREAK POPULATION
+                const subSelect = document.getElementById('subStreakSelect');
+                // Get unique task names from history and current tasks
+                const cleanText = (txt) => txt.replace(/#\w+/g, '').trim();
+                const allTaskNames = new Set([
+                    ...state.history,
+                    ...state.tasks.map(t => cleanText(t.text))
+                ]);
+                
+                // Clear existing options except first
+                while(subSelect.options.length > 1) { subSelect.remove(1); }
+                
+                allTaskNames.forEach(name => {
+                    if(!name) return;
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    if(name === state.subStreakTask) opt.selected = true;
+                    subSelect.appendChild(opt);
+                });
+
+                // Calculate sub streak initial
+                app.updateSubStreak();
+
+                // 3. CHARTS & STATS
                 if (timeFilter !== 'all') {
                     filtered = filtered.filter(t => {
                         const d = new Date(t.date);
@@ -1101,23 +1284,31 @@
                 document.getElementById('syncText').textContent = "Cloud Active";
                 
                 // Load tasks
-                const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
-                onSnapshot(q, (snap) => {
+                const qTasks = query(collection(db, 'tasks'), where('uid', '==', user.uid));
+                onSnapshot(qTasks, (snap) => {
                     state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
                     renderTasks();
                     if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
                     if(document.getElementById('calendar').classList.contains('active')) renderCalendar();
-                    
-                    // Trigger leaderboard update immediately when tasks change
                     app.syncLeaderboard();
                 });
+
+                // Load Notes
+                const qNotes = query(collection(db, 'notes'), where('uid', '==', user.uid));
+                onSnapshot(qNotes, (snap) => {
+                    state.notes = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    if(document.getElementById('notes').classList.contains('active')) app.renderNotes();
+                });
+
             } else {
                 state.user = null;
                 document.getElementById('authBtn').textContent = "Sign In";
                 document.getElementById('syncDot').style.background = "var(--warning)";
                 document.getElementById('syncText').textContent = "Offline";
                 state.tasks = JSON.parse(localStorage.getItem('local_tasks')) || [];
+                state.notes = JSON.parse(localStorage.getItem('local_notes')) || [];
                 renderTasks();
+                app.renderNotes();
             }
         });
 
