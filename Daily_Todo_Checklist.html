@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v4.0 (Ultra)</title>
+    <title>Enterprise TaskPro - v4.0 (Analytics + Habits)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* ==================== CORE VARIABLES ==================== */
+        /* ==================== 1. CORE VARIABLES ==================== */
         :root {
             --bg-body: #0f172a;
             --bg-sidebar: #1e293b;
             --bg-card: #334155;
             --bg-input: #1e293b;
             --bg-hover: rgba(255,255,255,0.05);
-            --accent: #208084;
+            --accent: #3b82f6; /* Changed to a modern blue default */
+            --accent-hover: #60a5fa;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border: #475569;
@@ -24,7 +25,7 @@
             --danger: #ef4444;
             --warning: #f59e0b;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --radius: 10px;
+            --radius: 12px;
             --font-main: 'Inter', sans-serif;
             --border-width: 1px;
             --sidebar-width: 260px;
@@ -66,783 +67,1082 @@
             flex-shrink: 0;
         }
 
-        .logo { font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+        .logo {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.5px;
+        }
         .logo i { color: var(--accent); }
 
         .nav-link {
-            display: flex; align-items: center; gap: 12px; padding: 12px 15px;
-            color: var(--text-muted); text-decoration: none; border-radius: var(--radius);
-            margin-bottom: 5px; transition: 0.2s; cursor: pointer; font-size: 14px; font-weight: 500;
-            border: var(--border-width) solid transparent; background: none; width: 100%; text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: var(--radius);
+            margin-bottom: 5px;
+            transition: 0.2s;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            border: var(--border-width) solid transparent;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: var(--font-main);
         }
         .nav-link:hover { background: var(--bg-hover); color: var(--text-main); }
         .nav-link.active { background: var(--accent); color: white; box-shadow: var(--shadow); border-color: var(--accent); }
 
         .sidebar-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 40; display: none; backdrop-filter: blur(2px);
+            background: rgba(0,0,0,0.5); z-index: 40; display: none;
+            backdrop-filter: blur(2px);
         }
 
         /* ==================== MAIN CONTENT ==================== */
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%; }
-
-        .header {
-            height: 60px; border-bottom: var(--border-width) solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px; background: var(--bg-body); flex-shrink: 0;
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
         }
 
-        .menu-btn { display: none; background: none; border: none; color: var(--text-main); font-size: 20px; cursor: pointer; }
-        .header-actions { display: flex; align-items: center; gap: 10px; }
+        .header {
+            height: 65px;
+            border-bottom: var(--border-width) solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            background: var(--bg-body);
+            flex-shrink: 0;
+        }
 
-        .view-container { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px; display: none; animation: fadeIn 0.3s ease; }
+        .location-badge {
+            font-size: 11px; color: var(--text-muted); 
+            display: flex; flex-direction: column; line-height: 1.2;
+            margin-right: 15px; text-align: right;
+            display: none;
+        }
+        @media(min-width: 600px) { .location-badge { display: flex; } }
+
+        .menu-btn { display: none; background: none; border: none; color: var(--text-main); font-size: 20px; cursor: pointer; padding: 5px; }
+
+        .header-actions { display: flex; align-items: center; gap: 10px; }
+        
+        .icon-btn-header {
+            background: var(--bg-card);
+            border: var(--border-width) solid var(--border);
+            color: var(--text-muted);
+            width: 36px; height: 36px;
+            border-radius: var(--radius);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .icon-btn-header:hover { color: var(--accent); border-color: var(--accent); }
+
+        .view-container {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 20px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
         .view-container.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* ==================== COMPONENTS ==================== */
         .btn {
-            padding: 8px 14px; border-radius: var(--radius); border: var(--border-width) solid transparent;
-            font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 13px;
-            display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--font-main);
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            border: var(--border-width) solid transparent;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 13px;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            font-family: var(--font-main);
+            box-shadow: var(--shadow);
         }
-        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+        .btn-primary:hover { opacity: 0.9; filter: brightness(110%); }
         .btn-secondary { background: var(--bg-card); color: var(--text-main); border-color: var(--border); }
+        .btn-secondary:hover { border-color: var(--text-muted); }
         .btn-icon { padding: 8px; border-radius: 50%; width: 36px; height: 36px; }
-
+        .btn-danger { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        
         .input-group {
             background: var(--bg-card); padding: 15px; border-radius: var(--radius);
             display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
-            border: var(--border-width) solid var(--border); align-items: center;
+            border: var(--border-width) solid var(--border); box-shadow: var(--shadow);
         }
-        .main-input { background: transparent; border: none; color: var(--text-main); padding: 10px; flex: 1; min-width: 200px; outline: none; }
-        .date-input, .select-input { background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); padding: 10px; border-radius: var(--radius); }
+        .main-input {
+            background: transparent; border: none; color: var(--text-main);
+            padding: 10px; flex: 1; min-width: 200px; outline: none; font-size: 16px; font-family: var(--font-main);
+        }
+        .date-input, .select-input {
+            background: var(--bg-body); border: var(--border-width) solid var(--border);
+            color: var(--text-main); padding: 10px 12px; border-radius: var(--radius); outline: none; font-size: 14px;
+        }
 
-        /* Tasks */
+        /* --- DASHBOARD & CHARTS --- */
+        .chart-container {
+            background: var(--bg-card); border-radius: var(--radius); padding: 20px;
+            border: var(--border-width) solid var(--border); margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+        .chart-header { display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card {
+            background: var(--bg-card); padding: 20px; border-radius: var(--radius);
+            border: var(--border-width) solid var(--border); text-align: center;
+        }
+
+        /* --- TASKS --- */
+        .task-list { display: flex; flex-direction: column; gap: 12px; padding-bottom: 80px; }
         .task-card {
             background: var(--bg-card); border-radius: var(--radius); padding: 16px;
-            border: 1px solid var(--border); border-left: 4px solid var(--border);
-            margin-bottom: 10px; transition: all 0.2s; position: relative;
+            border: var(--border-width) solid var(--border); border-left: 4px solid var(--border);
+            transition: all 0.2s; box-shadow: var(--shadow); position: relative;
         }
         .priority-high { border-left-color: var(--danger); }
         .priority-medium { border-left-color: var(--warning); }
         .priority-low { border-left-color: var(--success); }
+        
+        .task-header { display: flex; align-items: flex-start; gap: 15px; }
+        .checkbox {
+            appearance: none; width: 24px; height: 24px; border: 2px solid var(--text-muted);
+            border-radius: 6px; cursor: pointer; flex-shrink: 0; margin-top: 2px; position: relative;
+        }
+        .checkbox:checked { background: var(--accent); border-color: var(--accent); }
+        .checkbox:checked::after { content: '✓'; position: absolute; color: white; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; }
+        
+        .task-content { flex: 1; min-width: 0; }
+        .task-title { font-size: 15px; margin-bottom: 5px; color: var(--text-main); word-wrap: break-word; }
+        .tag { padding: 2px 8px; border-radius: 10px; background: rgba(59, 130, 246, 0.15); color: var(--accent); font-size: 11px; font-weight: 600; margin-right: 5px; }
 
-        .tag { padding: 2px 8px; border-radius: 10px; background: rgba(32, 128, 132, 0.15); color: var(--accent); font-size: 11px; font-weight: 600; margin-left: 5px; }
+        /* --- HABITS --- */
+        .habit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .habit-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 20px; display: flex; flex-direction: column; justify-content: space-between; height: 160px;
+        }
+        .streak-fire { color: var(--warning); font-size: 18px; margin-right: 5px; }
+        .habit-days { display: flex; justify-content: space-between; margin-top: 15px; }
+        .habit-day {
+            width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-size: 10px; background: var(--bg-body); border: 1px solid var(--border);
+            color: var(--text-muted); cursor: pointer;
+        }
+        .habit-day.done { background: var(--success); color: white; border-color: var(--success); }
 
-        /* Calendar Mobile Optimized */
+        /* --- CALENDAR --- */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 20px; }
+        .cal-day-header { text-align: center; font-size: 11px; color: var(--text-muted); padding-bottom: 5px; }
         .cal-cell {
             background: var(--bg-card); border-radius: var(--radius); min-height: 80px; padding: 5px;
-            border: 1px solid var(--border); overflow: hidden; position: relative;
+            border: 1px solid var(--border); cursor: pointer; position: relative;
         }
+        .cal-cell:hover { border-color: var(--accent); }
+        .cal-cell.today { background: rgba(59, 130, 246, 0.05); border-color: var(--accent); }
+        .cal-cell.selected { border: 2px solid var(--accent); }
+        .cal-date { font-size: 11px; font-weight: bold; margin-bottom: 3px; }
         .cal-task-dot {
             width: 100%; margin-bottom: 2px; padding: 2px; border-radius: 3px;
             font-size: 9px; background: var(--bg-input); color: var(--text-main);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        
-        /* Habits */
-        .habit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .habit-card {
-            background: var(--bg-card); padding: 15px; border-radius: var(--radius);
-            border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;
-        }
-        .streak-flame { color: #f59e0b; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        .mobile-cal-list { margin-top: 20px; display: none; background: var(--bg-card); border-radius: var(--radius); padding: 15px; }
 
-        /* Focus & Audio */
+        /* --- FOCUS & CHAT --- */
         .timer-circle {
             width: 220px; height: 220px; border-radius: 50%; border: 8px solid var(--bg-card);
             display: flex; align-items: center; justify-content: center; margin: 30px auto;
             font-size: 42px; font-weight: 700; background: radial-gradient(circle, var(--bg-sidebar) 0%, var(--bg-body) 100%);
+            box-shadow: var(--shadow); position: relative; transition: 0.3s;
         }
-        .timer-active { border-color: var(--accent); box-shadow: 0 0 30px rgba(32, 128, 132, 0.4); }
-
-        /* Filter Buttons */
-        .filter-bar { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
-        .filter-btn {
-            background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted);
-            padding: 4px 12px; border-radius: 15px; font-size: 11px; cursor: pointer; white-space: nowrap;
-        }
-        .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-
-        /* Clock Widget */
-        .clock-widget {
-            font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--text-muted);
-            text-align: right; display: flex; flex-direction: column; line-height: 1.2;
+        .timer-active { border-color: var(--accent); box-shadow: 0 0 30px rgba(59, 130, 246, 0.4); }
+        
+        .chat-layout {
+            display: flex; height: 500px; background: var(--bg-body); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden; margin-top: 20px;
         }
 
-        /* Chat */
-        .chat-layout { display: flex; height: 500px; background: var(--bg-body); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-        .chat-main { flex: 1; display: flex; flex-direction: column; }
-        .chat-msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
-        .chat-msg { max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 13px; word-wrap: break-word; }
-        .chat-msg.them { background: var(--bg-card); align-self: flex-start; }
-        .chat-msg.me { background: var(--accent); color: white; align-self: flex-end; }
-
+        /* ==================== RESPONSIVE ==================== */
         @media (max-width: 768px) {
-            .sidebar { position: fixed; top: 0; left: 0; bottom: 0; transform: translateX(-100%); }
+            .sidebar { position: fixed; top: 0; left: 0; bottom: 0; transform: translateX(-100%); box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
             .sidebar.open { transform: translateX(0); }
             .menu-btn { display: block; }
-            .cal-cell { min-height: 50px; }
-            /* Mobile Calendar Fix */
-            .cal-task-dot { display: none; } 
-            .cal-cell.has-task::after {
-                content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
-                width: 6px; height: 6px; background-color: var(--accent); border-radius: 50%;
+            .view-container { padding: 15px; }
+            .input-group { flex-direction: column; align-items: stretch; }
+            .date-input, .select-input, .btn { width: 100%; }
+            .timer-circle { width: 180px; height: 180px; font-size: 36px; border-width: 6px; }
+            
+            /* Mobile Calendar Fixes */
+            .cal-cell { min-height: 40px; display: flex; justify-content: center; align-items: center; padding: 0; }
+            .cal-task-dot { display: none; } /* Hide text dots on mobile */
+            .cal-cell .mobile-dot {
+                position: absolute; bottom: 4px; width: 6px; height: 6px; 
+                background: var(--accent); border-radius: 50%; display: block;
             }
-            .chat-layout { flex-direction: column; }
+            .mobile-cal-list { display: block; }
+            .chart-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+        }
+        
+        @media (min-width: 769px) {
+            .cal-cell .mobile-dot { display: none; }
         }
     </style>
     <style id="dynamic-theme-style"></style>
 </head>
 <body>
 
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="app.toggleSidebar()"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="app.toggleSidebar()"></div>
 
-<aside class="sidebar" id="sidebar">
-    <div class="logo">
-        <i class="fas fa-layer-group"></i> TaskPro 4.0
-    </div>
-    
-    <nav>
-        <button class="nav-link active" onclick="app.switchTab('dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</button>
-        <button class="nav-link" onclick="app.switchTab('tasks')"><i class="fas fa-tasks"></i> My Tasks</button>
-        <button class="nav-link" onclick="app.switchTab('habits')"><i class="fas fa-check-circle"></i> Habits</button>
-        <button class="nav-link" onclick="app.switchTab('calendar')"><i class="far fa-calendar-alt"></i> Calendar</button>
-        <button class="nav-link" onclick="app.switchTab('focus')"><i class="fas fa-stopwatch"></i> Focus Mode</button>
-        <button class="nav-link" onclick="app.switchTab('community')"><i class="fas fa-users"></i> Community</button>
-    </nav>
-
-    <div style="margin-top: auto;">
-        <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="app.manualSave()">
-            <i class="fas fa-save"></i> Save Data
-        </button>
-        <div class="nav-link" style="cursor: default; opacity: 0.7;">
-            <i class="fas fa-cloud"></i> <span id="syncText">Offline</span>
-        </div>
-        <button class="btn btn-secondary" style="width:100%; margin-top:5px;" id="authBtn" onclick="app.toggleAuth()">Sign In</button>
-    </div>
-</aside>
-
-<main class="main">
-    <header class="header">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <button class="menu-btn" onclick="app.toggleSidebar()"><i class="fas fa-bars"></i></button>
-            <h2 id="pageTitle" style="font-size: 18px;">Dashboard</h2>
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="fas fa-cube"></i> TaskPro Ent.
+            <button class="btn btn-icon" style="margin-left:auto; background:transparent; display:none;" onclick="app.toggleSidebar()" id="closeSidebarBtn">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         
-        <div class="header-actions">
-            <div class="clock-widget" id="clockWidget">
-                <span id="clockTime">--:--</span>
-                <span id="clockLoc" style="font-size:10px; opacity:0.7;">Locating...</span>
-            </div>
-            <button class="btn btn-icon btn-secondary" onclick="app.toggleTheme()"><i class="fas fa-moon" id="themeIcon"></i></button>
-        </div>
-    </header>
-
-    <div id="dashboard" class="view-container active">
-        <div class="filter-bar">
-            <button class="filter-btn active" onclick="app.filterDash('all', this)">All Time</button>
-            <button class="filter-btn" onclick="app.filterDash('today', this)">Today</button>
-            <button class="filter-btn" onclick="app.filterDash('week', this)">This Week</button>
-            <button class="filter-btn" onclick="app.filterDash('month', this)">This Month</button>
-        </div>
-
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px;">
-            <div class="task-card" style="text-align:center;">
-                <div style="font-size:24px; font-weight:700; color:var(--accent);" id="dashTotal">0</div>
-                <div style="font-size:11px; opacity:0.7;">TOTAL</div>
-            </div>
-            <div class="task-card" style="text-align:center;">
-                <div style="font-size:24px; font-weight:700; color:var(--success);" id="dashDone">0</div>
-                <div style="font-size:11px; opacity:0.7;">COMPLETED</div>
-            </div>
-            <div class="task-card" style="text-align:center;">
-                <div style="font-size:24px; font-weight:700; color:var(--warning);" id="dashPending">0</div>
-                <div style="font-size:11px; opacity:0.7;">PENDING</div>
-            </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
-            <div class="task-card">
-                <h3>Productivity Trend</h3>
-                <div style="height: 200px;"><canvas id="mainChart"></canvas></div>
-            </div>
-            <div class="task-card">
-                <h3>Hashtag Performance</h3>
-                <div style="height: 200px;"><canvas id="tagChart"></canvas></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="tasks" class="view-container">
-        <div class="input-group">
-            <input type="hidden" id="editTaskId">
-            <input type="text" id="taskInput" class="main-input" placeholder="New task... (Use #tag)">
-            <input type="date" id="dateInput" class="date-input">
-            <select id="prioInput" class="select-input">
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="low">Low</option>
-            </select>
-            <button class="btn btn-primary" onclick="app.addTask()"><i class="fas fa-plus"></i></button>
-        </div>
-
-        <div id="taskList" style="padding-bottom: 20px;"></div>
-
-        <div style="margin-top:30px;">
-            <button class="btn btn-secondary" onclick="document.getElementById('completedList').style.display = document.getElementById('completedList').style.display === 'none' ? 'block' : 'none'" style="width:100%; justify-content:space-between;">
-                <span>Show Completed History</span> <i class="fas fa-chevron-down"></i>
+        <nav>
+            <button class="nav-link active" onclick="app.switchTab('dashboard')">
+                <i class="fas fa-chart-pie"></i> Dashboard
             </button>
-            <div id="completedList" style="display:none; margin-top:10px; opacity:0.7;"></div>
-        </div>
-    </div>
+            <button class="nav-link" onclick="app.switchTab('tasks')">
+                <i class="fas fa-tasks"></i> My Tasks
+                <span id="badge" style="margin-left:auto; background:var(--accent); padding:2px 8px; border-radius:10px; font-size:10px; color: white;">0</span>
+            </button>
+            <button class="nav-link" onclick="app.switchTab('habits')">
+                <i class="fas fa-running"></i> Habits
+            </button>
+            <button class="nav-link" onclick="app.switchTab('calendar')">
+                <i class="far fa-calendar-alt"></i> Calendar
+            </button>
+            <button class="nav-link" onclick="app.switchTab('focus')">
+                <i class="fas fa-stopwatch"></i> Focus Mode
+            </button>
+            <button class="nav-link" onclick="app.switchTab('community')">
+                <i class="fas fa-users"></i> Community
+            </button>
+        </nav>
 
-    <div id="habits" class="view-container">
-        <div class="input-group">
-            <input type="text" id="habitInput" class="main-input" placeholder="New Habit (e.g. Read 10 pages)">
-            <button class="btn btn-primary" onclick="app.addHabit()">Add Habit</button>
-        </div>
-        <div class="habit-grid" id="habitList"></div>
-    </div>
+        <div style="margin-top: auto;">
+             <button class="nav-link" onclick="app.forceSave()">
+                <i class="fas fa-save"></i> Force Save
+            </button>
+            <button class="nav-link" onclick="app.backupData()">
+                <i class="fas fa-download"></i> Backup Data
+            </button>
+            <button class="nav-link" onclick="document.getElementById('importInput').click()">
+                <i class="fas fa-upload"></i> Restore
+            </button>
+            <input type="file" id="importInput" style="display:none" onchange="app.restoreData(this)">
 
-    <div id="calendar" class="view-container">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h2 id="calMonthYear"></h2>
-            <div>
-                <button class="btn btn-secondary btn-icon" onclick="app.changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
-                <button class="btn btn-secondary btn-icon" onclick="app.changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+            <div class="nav-link" style="cursor: default; opacity: 0.7;">
+                <i class="fas fa-cloud"></i> <span id="syncText">Offline</span>
             </div>
+            <button class="btn btn-secondary" style="width:100%; margin-top:10px;" id="authBtn" onclick="app.toggleAuth()">Sign In</button>
         </div>
-        <div class="calendar-grid" id="calGrid"></div>
-        <div style="margin-top:10px; font-size:12px; color:var(--text-muted); text-align:center;">
-            * On mobile, dots indicate tasks. Click day to view in Tasks tab.
-        </div>
-    </div>
+    </aside>
 
-    <div id="focus" class="view-container">
-        <div style="text-align:center; max-width:500px; margin:0 auto;">
-            <h2>Deep Work</h2>
+    <main class="main">
+        <header class="header">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button class="menu-btn" onclick="app.toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2 id="pageTitle" style="color:var(--text-main); font-size: 18px;">Dashboard</h2>
+            </div>
             
-            <div style="margin: 20px 0;">
-                <label style="display:block; font-size:12px; margin-bottom:5px; color:var(--text-muted);">Select Task to Focus On:</label>
-                <select id="focusTaskSelect" class="select-input" style="width:100%; max-width:300px;">
-                    <option value="">-- General Focus --</option>
-                </select>
+            <div class="header-actions">
+                <div class="location-badge">
+                    <span id="clockDisplay">00:00</span>
+                    <span id="locationDisplay" style="opacity:0.7;">Locating...</span>
+                </div>
+                <button class="btn btn-primary" style="font-size:11px; padding: 8px 12px;" onclick="app.generateRandomDesign()" title="Generate Unique Design">
+                    <i class="fas fa-magic"></i> Design
+                </button>
+
+                <button class="icon-btn-header" onclick="app.toggleTheme()">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--warning);" id="syncDot"></div>
+                    <span id="userEmail" style="display:none; @media(min-width:400px){display:inline;}">Guest</span>
+                </div>
+            </div>
+        </header>
+
+        <div id="dashboard" class="view-container active">
+            <div class="chart-header">
+                <h3 style="margin:0;">Analytics Overview</h3>
+                <div style="display:flex; gap:10px;">
+                    <select id="dashRange" class="select-input" style="padding: 5px;" onchange="renderDashboard()">
+                        <option value="today">Today</option>
+                        <option value="week" selected>This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="year">This Year</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="timer-circle" id="timerCircle">
-                <span id="timerDisplay">25:00</span>
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div style="font-size:24px; font-weight:700; color:var(--accent);" id="dashTotal">0</div>
+                    <div style="color:var(--text-muted); font-size:11px;">TASKS CREATED</div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size:24px; font-weight:700; color:var(--success);" id="dashDone">0</div>
+                    <div style="color:var(--text-muted); font-size:11px;">COMPLETED</div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size:24px; font-weight:700; color:var(--warning);" id="dashPending">0</div>
+                    <div style="color:var(--text-muted); font-size:11px;">PENDING</div>
+                </div>
+                 <div class="stat-card">
+                    <div style="font-size:24px; font-weight:700; color:#ec4899;" id="dashHabit">0</div>
+                    <div style="color:var(--text-muted); font-size:11px;">ACTIVE HABITS</div>
+                </div>
             </div>
 
-            <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
-                <button class="btn btn-primary" onclick="focusMode.start()">Start</button>
-                <button class="btn btn-secondary" onclick="focusMode.pause()">Pause</button>
-                <button class="btn btn-secondary btn-danger" onclick="focusMode.reset()">Reset</button>
-            </div>
-
-            <div style="display:flex; justify-content:center; gap:10px;">
-                <button class="btn btn-secondary" onclick="focusMode.toggleNoise('white')"><i class="fas fa-wave-square"></i> White Noise</button>
-                <button class="btn btn-secondary" onclick="focusMode.toggleNoise('brown')"><i class="fas fa-water"></i> Deep Noise</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="community" class="view-container">
-        <div class="task-card" style="margin-bottom:20px;">
-            <h3><i class="fas fa-trophy" style="color:#fbbf24;"></i> Leaderboard</h3>
-            <table style="width:100%; text-align:left; margin-top:10px; font-size:14px; border-collapse:collapse;">
-                <tbody id="leaderboardBody">
-                    </tbody>
-            </table>
-        </div>
-
-        <div class="chat-layout">
-            <div class="chat-main">
-                <div style="padding:10px; border-bottom:1px solid var(--border); font-weight:bold;">Global Chat Room</div>
-                <div class="chat-msgs" id="chatMsgs"></div>
-                <div style="padding:10px; border-top:1px solid var(--border); display:flex; gap:10px;">
-                    <input type="text" id="chatInput" class="main-input" placeholder="Type message..." onkeydown="if(event.key==='Enter') app.sendMsg()">
-                    <button class="btn btn-primary" onclick="app.sendMsg()"><i class="fas fa-paper-plane"></i></button>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+                <div class="chart-container">
+                    <h4 style="margin-bottom:15px; color:var(--text-muted);">Productivity Trend</h4>
+                    <div style="height: 200px;"><canvas id="mainChart"></canvas></div>
+                </div>
+                <div class="chart-container">
+                    <h4 style="margin-bottom:15px; color:var(--text-muted);">Tag Performance (Time spent)</h4>
+                    <div style="height: 200px;"><canvas id="tagChart"></canvas></div>
                 </div>
             </div>
         </div>
-    </div>
 
-</main>
+        <div id="tasks" class="view-container">
+            <div style="display:flex; gap:10px; margin-bottom:15px; overflow-x:auto;">
+                <button class="btn btn-secondary" onclick="app.setTaskFilter('all')" id="filterAll">All</button>
+                <button class="btn btn-secondary" onclick="app.setTaskFilter('pending')" id="filterPending">Pending</button>
+                <button class="btn btn-secondary" onclick="app.setTaskFilter('completed')" id="filterCompleted">Completed</button>
+            </div>
 
-<div id="authModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:none; align-items:center; justify-content:center;">
-    <div style="background:var(--bg-card); padding:30px; border-radius:16px; width:300px; text-align:center;">
-        <h3>Cloud Sync</h3>
-        <p style="font-size:12px; margin-bottom:15px; color:var(--text-muted);">Sign in to sync tasks & chat real-time.</p>
-        <input type="email" id="authEmail" class="main-input" placeholder="Email" style="border:1px solid var(--border); margin-bottom:10px; width:100%;">
-        <input type="password" id="authPass" class="main-input" placeholder="Password" style="border:1px solid var(--border); margin-bottom:20px; width:100%;">
-        <div style="display:flex; gap:10px;">
-            <button class="btn btn-primary" style="flex:1" onclick="app.login()">Login</button>
-            <button class="btn btn-secondary" style="flex:1" onclick="app.register()">Sign Up</button>
+            <div class="input-group">
+                <input type="hidden" id="editTaskId">
+                <input type="text" id="taskInput" class="main-input" placeholder="Add task... (#tag for reporting)">
+                <input type="date" id="dateInput" class="date-input">
+                <select id="prioInput" class="select-input">
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="low">Low</option>
+                </select>
+                <button class="btn btn-primary" id="addUpdateBtn" onclick="app.handleTaskSubmit()"><i class="fas fa-plus"></i></button>
+                <button class="btn btn-secondary" id="cancelEditBtn" style="display:none;" onclick="app.cancelEdit()">✕</button>
+            </div>
+
+            <div id="taskList" class="task-list"></div>
         </div>
-        <button class="btn" style="margin-top:10px; background:none; color:var(--text-muted);" onclick="document.getElementById('authModal').style.display='none'">Close</button>
-    </div>
-</div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        <div id="habits" class="view-container">
+            <div class="input-group">
+                <input type="text" id="habitInput" class="main-input" placeholder="New Habit (e.g. Read 10 mins)">
+                <button class="btn btn-primary" onclick="app.addHabit()">Add Habit</button>
+            </div>
+            <div id="habitGrid" class="habit-grid"></div>
+        </div>
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyCoCFw0hezldX3t33AYa1ytddYMuQCWliM",
-        authDomain: "daily-todo-1e4ad.firebaseapp.com",
-        projectId: "daily-todo-1e4ad",
-        storageBucket: "daily-todo-1e4ad.firebasestorage.app",
-        messagingSenderId: "629797690976",
-        appId: "1:629797690976:web:fda66df1691eb920e12d05"
-    };
-
-    const appInit = initializeApp(firebaseConfig);
-    const auth = getAuth(appInit);
-    const db = getFirestore(appInit);
-
-    const state = {
-        user: null,
-        tasks: JSON.parse(localStorage.getItem('tasks')) || [],
-        habits: JSON.parse(localStorage.getItem('habits')) || [],
-        currentDate: new Date(),
-        charts: {},
-        audioCtx: null,
-        oscillator: null,
-        location: 'Unknown'
-    };
-
-    window.app = {
-        // === CORE ===
-        init: () => {
-            app.renderAll();
-            app.getLocation();
-            setInterval(app.updateClock, 1000);
+        <div id="calendar" class="view-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 id="calMonthYear" style="color:var(--text-main); font-size:18px;">January 2024</h2>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn btn-secondary btn-icon" onclick="app.changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                    <button class="btn btn-secondary btn-icon" onclick="app.changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="calendar-grid" id="calGrid"></div>
             
-            // Listen for Global Chat regardless of login (ReadOnly) or RW if logged in
-            const chatQ = query(collection(db, 'global_chat'), orderBy('createdAt', 'desc'), limit(50));
-            onSnapshot(chatQ, snapshot => {
-                const msgs = snapshot.docs.map(d => d.data()).reverse();
-                const box = document.getElementById('chatMsgs');
-                box.innerHTML = msgs.map(m => `
-                    <div class="chat-msg ${state.user && m.uid === state.user.uid ? 'me' : 'them'}">
-                        <strong>${m.user.split('@')[0]}</strong>: ${m.text}
+            <div id="mobileCalView" class="mobile-cal-list">
+                <h4 style="margin-bottom:10px; color:var(--accent);">Selected Date Tasks</h4>
+                <div id="mobileCalTasks" style="font-size:13px; color:var(--text-muted);">Tap a date to see tasks.</div>
+            </div>
+        </div>
+
+        <div id="focus" class="view-container">
+            <div style="text-align:center; max-width:500px; margin:0 auto;">
+                <h2 style="color:var(--text-main);">Deep Work</h2>
+                
+                <div style="margin: 20px 0;">
+                    <select id="focusTaskSelect" class="select-input" style="width:100%; max-width:300px;">
+                        <option value="">-- Select a Task to Focus on --</option>
+                    </select>
+                </div>
+
+                <div class="timer-circle" id="timerCircle">
+                    <span id="timerDisplay">25:00</span>
+                </div>
+
+                <div style="display:flex; justify-content:center; gap:8px; margin-bottom:20px;">
+                    <button class="btn btn-secondary" onclick="focusMode.setDuration(25)">25m</button>
+                    <button class="btn btn-secondary" onclick="focusMode.setDuration(15)">15m</button>
+                    <button class="btn btn-secondary" onclick="focusMode.setDuration(5)">5m</button>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <select id="soundSelect" class="select-input">
+                        <option value="none">Silent</option>
+                        <option value="rain">Rain Ambience</option>
+                        <option value="white">White Noise</option>
+                    </select>
+                </div>
+
+                <div style="display:flex; justify-content:center; gap:10px;">
+                    <button class="btn btn-primary" onclick="focusMode.start()" style="min-width:120px;">Start Focus</button>
+                    <button class="btn btn-secondary" onclick="focusMode.pause()">Pause</button>
+                    <button class="btn btn-secondary btn-danger" onclick="focusMode.reset()">Reset</button>
+                </div>
+                
+                <audio id="bgMusic" loop></audio>
+            </div>
+        </div>
+
+        <div id="community" class="view-container">
+            <div style="display:grid; grid-template-columns: 1fr; gap:30px;">
+                <div id="commBoard">
+                    <div class="task-card">
+                        <h3 style="color:var(--accent); margin-bottom:10px;">Global Leaderboard</h3>
+                        <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                            <thead><tr style="border-bottom:1px solid var(--border); text-align:left;"><th style="padding:10px;">Rank</th><th>User</th><th>Score</th></tr></thead>
+                            <tbody id="leaderboardBody"></tbody>
+                        </table>
                     </div>
-                `).join('');
-                box.scrollTop = box.scrollHeight;
-            });
-        },
+                    
+                    <div class="task-card" style="margin-top:20px;">
+                        <h3 style="color:var(--warning);">Active Groups</h3>
+                        <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
+                            <div class="task-card" style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-body);">
+                                <div><b>Developers United</b><br><span style="font-size:11px; opacity:0.7;">1,204 Members</span></div>
+                                <button class="btn btn-primary" onclick="app.joinGroup('Developers United')">Join</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        manualSave: () => {
-            localStorage.setItem('tasks', JSON.stringify(state.tasks));
-            localStorage.setItem('habits', JSON.stringify(state.habits));
-            alert("Data saved securely to local storage!");
-        },
+                <div id="groupChat" style="display:none; flex-direction:column; height: 100%;">
+                    <div style="display:flex; align-items:center; margin-bottom:10px;">
+                        <button class="btn btn-secondary" onclick="app.leaveGroup()">← Back</button>
+                        <strong id="chatTitle" style="margin-left:10px;">Group</strong>
+                    </div>
+                    <div class="chat-layout">
+                        <div style="flex:1; padding:15px; overflow-y:auto;" id="chatMsgs"></div>
+                        <div style="padding:10px; border-top:1px solid var(--border); display:flex; gap:10px;">
+                            <input type="text" id="chatInput" class="main-input" placeholder="Message..." onkeydown="if(event.key==='Enter') app.sendMessage()">
+                            <button class="btn btn-primary" onclick="app.sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-        getLocation: () => {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        // Simple timezone approximation
-                        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                        state.location = tz;
-                        document.getElementById('clockLoc').textContent = tz.replace('_', ' ');
-                    }, 
-                    () => document.getElementById('clockLoc').textContent = "Location Denied"
-                );
-            }
-        },
+    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:none; align-items:center; justify-content:center; backdrop-filter: blur(5px);" id="authModal">
+        <div style="background:var(--bg-sidebar); padding:30px; border-radius:16px; width:90%; max-width:400px; border:1px solid var(--border); text-align:center;">
+            <h2 style="margin-bottom:10px;">Sync Data</h2>
+            <p style="color:var(--text-muted); font-size:12px; margin-bottom:20px;">Securely save your tasks and habits online.</p>
+            <input type="email" id="authEmail" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:10px; border-radius:8px;" placeholder="Email">
+            <input type="password" id="authPass" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:20px; border-radius:8px;" placeholder="Password">
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-primary" style="flex:1" onclick="app.login()">Login</button>
+                <button class="btn btn-secondary" style="flex:1" onclick="app.register()">Sign Up</button>
+            </div>
+            <button class="btn btn-secondary" style="margin-top:10px; width:100%;" onclick="document.getElementById('authModal').style.display='none'">Close</button>
+        </div>
+    </div>
 
-        updateClock: () => {
-            const now = new Date();
-            document.getElementById('clockTime').textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        },
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        toggleSidebar: () => {
-            document.getElementById('sidebar').classList.toggle('open');
-            const overlay = document.getElementById('sidebarOverlay');
-            overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
-        },
+        // CONFIG (Replace with your actual keys if deploying, this is a standard config structure)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCoCFw0hezldX3t33AYa1ytddYMuQCWliM",
+            authDomain: "daily-todo-1e4ad.firebaseapp.com",
+            projectId: "daily-todo-1e4ad",
+            storageBucket: "daily-todo-1e4ad.firebasestorage.app",
+            messagingSenderId: "629797690976",
+            appId: "1:629797690976:web:fda66df1691eb920e12d05"
+        };
 
-        switchTab: (id) => {
-            document.querySelectorAll('.view-container').forEach(e => e.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.getElementById('pageTitle').textContent = id.charAt(0).toUpperCase() + id.slice(1);
-            if(window.innerWidth <= 768) app.toggleSidebar();
-            if(id === 'dashboard') app.filterDash('all');
-            if(id === 'focus') app.populateFocusDropdown();
-        },
+        const appInit = initializeApp(firebaseConfig);
+        const auth = getAuth(appInit);
+        const db = getFirestore(appInit);
 
-        // === TASKS ===
-        addTask: async () => {
-            const input = document.getElementById('taskInput');
-            const text = input.value.trim();
-            if(!text) return;
+        const state = {
+            user: null,
+            tasks: [],
+            habits: JSON.parse(localStorage.getItem('habits')) || [],
+            history: JSON.parse(localStorage.getItem('taskHistory')) || [],
+            currentDate: new Date(),
+            charts: {},
+            customDesign: localStorage.getItem('customDesignCSS') || null,
+            taskFilter: 'all' // all, pending, completed
+        };
+
+        window.app = {
+            // ==================== DESIGN & UTILS ====================
+            generateRandomDesign: () => {
+                const hue = Math.floor(Math.random() * 360);
+                const sat = Math.floor(Math.random() * 40) + 20; 
+                const lit = Math.floor(Math.random() * 15) + 5;
+                const fonts = ["'Inter', sans-serif", "'Playfair Display', serif", "'Roboto Mono', monospace"];
+                
+                const css = `
+                    :root {
+                        --bg-body: hsl(${hue}, ${sat}%, ${lit}%);
+                        --bg-sidebar: hsl(${hue}, ${sat}%, ${lit + 5}%);
+                        --bg-card: hsl(${hue}, ${sat}%, ${lit + 10}%);
+                        --accent: hsl(${(hue + 180) % 360}, 70%, 50%);
+                        --text-main: #ffffff;
+                        --text-muted: rgba(255,255,255,0.6);
+                        --border: rgba(255,255,255,0.15);
+                        --radius: ${Math.floor(Math.random() * 20)}px;
+                        --font-main: ${fonts[Math.floor(Math.random() * fonts.length)]};
+                    }
+                `;
+                document.getElementById('dynamic-theme-style').textContent = css;
+                localStorage.setItem('customDesignCSS', css);
+                state.customDesign = css;
+            },
+
+            toggleTheme: () => {
+                const html = document.documentElement;
+                const isDark = html.getAttribute('data-theme') === 'dark';
+                html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+                document.getElementById('themeIcon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+                if(!isDark) document.getElementById('dynamic-theme-style').textContent = state.customDesign || ""; 
+                else document.getElementById('dynamic-theme-style').textContent = "";
+            },
+
+            forceSave: () => {
+                if(state.user) {
+                    alert("Data is automatically synced to cloud.");
+                } else {
+                    localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+                    localStorage.setItem('habits', JSON.stringify(state.habits));
+                    alert("Data Force Saved to Local Storage!");
+                }
+            },
+
+            // ==================== DASHBOARD & ANALYTICS ====================
+            renderDashboard: () => {
+                const range = document.getElementById('dashRange').value;
+                const now = new Date();
+                let filterDate = new Date();
+
+                // Calculate Date Range
+                if(range === 'week') filterDate.setDate(now.getDate() - 7);
+                if(range === 'month') filterDate.setMonth(now.getMonth() - 1);
+                if(range === 'year') filterDate.setFullYear(now.getFullYear() - 1);
+                if(range === 'today') filterDate = new Date(now.setHours(0,0,0,0));
+
+                const filteredTasks = state.tasks.filter(t => {
+                    const tDate = new Date(t.date);
+                    return range === 'all' ? true : tDate >= filterDate;
+                });
+
+                // Stats
+                const total = filteredTasks.length;
+                const done = filteredTasks.filter(t => t.completed).length;
+                document.getElementById('dashTotal').textContent = total;
+                document.getElementById('dashDone').textContent = done;
+                document.getElementById('dashPending').textContent = total - done;
+                document.getElementById('dashHabit').textContent = state.habits.length;
+
+                // Productivity Chart
+                const ctx1 = document.getElementById('mainChart').getContext('2d');
+                if(state.charts.main) state.charts.main.destroy();
+                
+                // Group by date for line chart
+                const days = {};
+                for(let i=6; i>=0; i--) {
+                    const d = new Date(); d.setDate(d.getDate() - i);
+                    days[d.toISOString().split('T')[0].slice(5)] = 0;
+                }
+                filteredTasks.forEach(t => {
+                    if(t.completed) {
+                        const dStr = t.date.slice(5);
+                        if(days[dStr] !== undefined) days[dStr]++;
+                    }
+                });
+
+                state.charts.main = new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: Object.keys(days),
+                        datasets: [{ label: 'Completed', data: Object.values(days), borderColor: '#3b82f6', tension: 0.4 }]
+                    },
+                    options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+
+                // Tags Chart
+                const ctx2 = document.getElementById('tagChart').getContext('2d');
+                if(state.charts.tags) state.charts.tags.destroy();
+                
+                const tagCounts = {};
+                filteredTasks.forEach(t => {
+                    if(t.completed && t.tags) {
+                        t.tags.forEach(tag => tagCounts[tag] = (tagCounts[tag] || 0) + 1);
+                    }
+                });
+
+                state.charts.tags = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(tagCounts),
+                        datasets: [{ 
+                            data: Object.values(tagCounts),
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                        }]
+                    },
+                    options: { maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+                });
+            },
+
+            // ==================== TASKS ====================
+            setTaskFilter: (filter) => {
+                state.taskFilter = filter;
+                document.querySelectorAll('#tasks .btn-secondary').forEach(b => b.style.background = '');
+                document.getElementById('filter' + filter.charAt(0).toUpperCase() + filter.slice(1)).style.background = 'var(--accent)';
+                renderTasks();
+            },
+
+            handleTaskSubmit: async () => {
+                const id = document.getElementById('editTaskId').value;
+                const input = document.getElementById('taskInput');
+                const text = input.value.trim();
+                if(!text) return;
+
+                const newTask = {
+                    text: text,
+                    completed: false,
+                    date: document.getElementById('dateInput').value || new Date().toISOString().split('T')[0],
+                    priority: document.getElementById('prioInput').value,
+                    tags: (text.match(/#\w+/g) || []).map(t => t.replace('#','')),
+                    subtasks: [],
+                    createdAt: Date.now()
+                };
+
+                if(id) {
+                    if(state.user) {
+                        await updateDoc(doc(db, 'tasks', id), { text, date: newTask.date, priority: newTask.priority, tags: newTask.tags });
+                    } else {
+                        const t = state.tasks.find(x => x.id === id);
+                        Object.assign(t, { text, date: newTask.date, priority: newTask.priority, tags: newTask.tags });
+                        saveLocal();
+                    }
+                    app.cancelEdit();
+                } else {
+                    if(state.user) {
+                        await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
+                    } else {
+                        newTask.id = 'local_' + Date.now();
+                        state.tasks.push(newTask);
+                        saveLocal();
+                    }
+                }
+                input.value = '';
+            },
+
+            deleteTask: async (id) => {
+                if(!confirm("Delete task?")) return;
+                if(state.user) await deleteDoc(doc(db, 'tasks', id));
+                else { state.tasks = state.tasks.filter(t => t.id !== id); saveLocal(); }
+            },
+
+            toggleTask: async (id) => {
+                const task = state.tasks.find(t => t.id === id);
+                const newState = !task.completed;
+                if(state.user) await updateDoc(doc(db, 'tasks', id), { completed: newState });
+                else { task.completed = newState; saveLocal(); }
+            },
             
-            const task = {
-                id: 't_' + Date.now(),
-                text: text,
-                completed: false,
-                date: document.getElementById('dateInput').value || new Date().toISOString().split('T')[0],
-                priority: document.getElementById('prioInput').value,
-                tags: (text.match(/#\w+/g) || []).map(t => t.replace('#','')),
-                createdAt: Date.now()
-            };
+            startEdit: (id) => {
+                const task = state.tasks.find(t => t.id === id);
+                document.getElementById('taskInput').value = task.text;
+                document.getElementById('dateInput').value = task.date;
+                document.getElementById('prioInput').value = task.priority;
+                document.getElementById('editTaskId').value = task.id;
+                document.getElementById('cancelEditBtn').style.display = 'block';
+                document.getElementById('addUpdateBtn').innerHTML = '<i class="fas fa-save"></i>';
+            },
 
-            if(state.user) {
-                await addDoc(collection(db, 'tasks'), { ...task, uid: state.user.uid });
-            } else {
-                state.tasks.push(task);
-                app.manualSave();
-                app.renderAll();
-            }
-            input.value = '';
-        },
+            cancelEdit: () => {
+                document.getElementById('taskInput').value = '';
+                document.getElementById('editTaskId').value = '';
+                document.getElementById('cancelEditBtn').style.display = 'none';
+                document.getElementById('addUpdateBtn').innerHTML = '<i class="fas fa-plus"></i>';
+            },
 
-        toggleTask: async (id) => {
-            const t = state.tasks.find(x => x.id === id);
-            if(state.user) {
-                // Find doc id logic omitted for brevity, assuming local sync handles UI
-                // In real app, need doc ID mapping. For this file, we update local + reload
-            }
-            t.completed = !t.completed;
-            app.manualSave();
-            app.renderAll();
-        },
-
-        deleteTask: (id) => {
-            if(!confirm("Delete?")) return;
-            state.tasks = state.tasks.filter(x => x.id !== id);
-            app.manualSave();
-            app.renderAll();
-        },
-
-        // === HABITS ===
-        addHabit: () => {
-            const input = document.getElementById('habitInput');
-            if(!input.value) return;
-            state.habits.push({
-                id: 'h_' + Date.now(),
-                title: input.value,
-                streak: 0,
-                lastDone: null
-            });
-            input.value = '';
-            app.manualSave();
-            app.renderHabits();
-        },
-
-        toggleHabit: (id) => {
-            const h = state.habits.find(x => x.id === id);
-            const today = new Date().toISOString().split('T')[0];
+            // ==================== HABITS ====================
+            addHabit: () => {
+                const input = document.getElementById('habitInput');
+                const title = input.value.trim();
+                if(!title) return;
+                const habit = { id: Date.now(), title, history: [] }; // history = array of date strings "YYYY-MM-DD"
+                state.habits.push(habit);
+                localStorage.setItem('habits', JSON.stringify(state.habits));
+                input.value = '';
+                renderHabits();
+            },
             
-            if (h.lastDone === today) {
-                h.lastDone = null;
-                h.streak = Math.max(0, h.streak - 1);
-            } else {
-                // Check if broken streak (missed yesterday) logic could be here
-                h.lastDone = today;
-                h.streak++;
+            toggleHabitDay: (id, offset) => {
+                const d = new Date(); d.setDate(d.getDate() - offset);
+                const dateStr = d.toISOString().split('T')[0];
+                const habit = state.habits.find(h => h.id == id);
+                
+                if(habit.history.includes(dateStr)) {
+                    habit.history = habit.history.filter(d => d !== dateStr);
+                } else {
+                    habit.history.push(dateStr);
+                }
+                localStorage.setItem('habits', JSON.stringify(state.habits));
+                renderHabits();
+                app.renderDashboard(); // Update streak in dashboard
+            },
+
+            deleteHabit: (id) => {
+                if(confirm("Delete this habit?")) {
+                    state.habits = state.habits.filter(h => h.id != id);
+                    localStorage.setItem('habits', JSON.stringify(state.habits));
+                    renderHabits();
+                }
+            },
+
+            // ==================== CORE UI ====================
+            switchTab: (id) => {
+                document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+                event.currentTarget.classList.add('active');
+                document.getElementById('pageTitle').textContent = id.charAt(0).toUpperCase() + id.slice(1);
+                
+                if(window.innerWidth <= 768) {
+                    document.getElementById('sidebar').classList.remove('open');
+                    document.getElementById('sidebarOverlay').style.display = 'none';
+                }
+
+                if(id === 'dashboard') app.renderDashboard();
+                if(id === 'calendar') renderCalendar();
+                if(id === 'focus') updateFocusDropdown();
+                if(id === 'habits') renderHabits();
+            },
+            toggleSidebar: () => {
+                document.getElementById('sidebar').classList.toggle('open');
+                const overlay = document.getElementById('sidebarOverlay');
+                overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
+            },
+            changeMonth: (offset) => {
+                state.currentDate.setMonth(state.currentDate.getMonth() + offset);
+                renderCalendar();
+            },
+            
+            // ==================== COMMUNITY ====================
+            joinGroup: (name) => {
+                document.getElementById('commBoard').style.display = 'none';
+                document.getElementById('groupChat').style.display = 'flex';
+                document.getElementById('chatTitle').textContent = name;
+                document.getElementById('chatMsgs').innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:12px; margin-top:10px;">Joined ${name}</div>`;
+            },
+            leaveGroup: () => {
+                document.getElementById('groupChat').style.display = 'none';
+                document.getElementById('commBoard').style.display = 'block';
+            },
+            sendMessage: () => {
+                const input = document.getElementById('chatInput');
+                if(!input.value.trim()) return;
+                const box = document.getElementById('chatMsgs');
+                box.insertAdjacentHTML('beforeend', `<div style="margin:5px 0; text-align:right;"><span style="background:var(--accent); color:white; padding:5px 10px; border-radius:10px;">${input.value}</span></div>`);
+                input.value = '';
+                // Sim response
+                setTimeout(() => box.insertAdjacentHTML('beforeend', `<div style="margin:5px 0;"><span style="background:var(--bg-card); padding:5px 10px; border-radius:10px; border:1px solid var(--border);">Keep it up!</span></div>`), 1000);
+            },
+            
+            // ==================== AUTH & IMPORT/EXPORT ====================
+            toggleAuth: () => { if(state.user) signOut(auth); else document.getElementById('authModal').style.display = 'flex'; },
+            login: async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display = 'none'; } catch(e){ alert(e.message); } },
+            register: async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display = 'none'; } catch(e){ alert(e.message); } },
+            
+            backupData: () => {
+                const data = { tasks: state.tasks, habits: state.habits, date: new Date().toISOString() };
+                const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = "taskpro_backup.json";
+                a.click();
+            },
+            restoreData: (input) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = JSON.parse(e.target.result);
+                    if(data.tasks) {
+                        state.tasks = [...state.tasks, ...data.tasks]; // Simple merge
+                        state.habits = data.habits || state.habits;
+                        saveLocal();
+                        alert("Restored!");
+                    }
+                };
+                reader.readAsText(input.files[0]);
             }
-            app.manualSave();
-            app.renderHabits();
-        },
+        };
 
-        // === RENDERERS ===
-        renderAll: () => {
-            app.renderTasks();
-            app.renderHabits();
-            app.renderCalendar();
-            app.renderLeaderboard();
-        },
+        // ==================== FOCUS MODE ====================
+        let focusInterval = null;
+        window.focusMode = {
+            timeLeft: 1500,
+            setDuration: (m) => {
+                focusMode.timeLeft = m * 60;
+                document.getElementById('timerDisplay').textContent = `${m}:00`;
+            },
+            start: () => {
+                if(focusInterval) return;
+                // Audio
+                const sound = document.getElementById('soundSelect').value;
+                const audio = document.getElementById('bgMusic');
+                if(sound === 'rain') audio.src = "https://actions.google.com/sounds/v1/weather/rain_heavy_loud.ogg";
+                if(sound === 'white') audio.src = "https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg"; // Using cafe as white noise proxy for stability
+                if(sound !== 'none') audio.play().catch(e => console.log("Interaction required"));
 
-        renderTasks: () => {
+                document.getElementById('timerCircle').classList.add('timer-active');
+                focusInterval = setInterval(() => {
+                    focusMode.timeLeft--;
+                    const m = Math.floor(focusMode.timeLeft / 60).toString().padStart(2,'0');
+                    const s = (focusMode.timeLeft % 60).toString().padStart(2,'0');
+                    document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+                    if(focusMode.timeLeft <= 0) {
+                        clearInterval(focusInterval);
+                        focusMode.reset();
+                        alert("Focus Session Complete!");
+                        // Mark task done?
+                        const taskId = document.getElementById('focusTaskSelect').value;
+                        if(taskId) app.toggleTask(taskId);
+                    }
+                }, 1000);
+            },
+            pause: () => {
+                clearInterval(focusInterval);
+                focusInterval = null;
+                document.getElementById('timerCircle').classList.remove('timer-active');
+                document.getElementById('bgMusic').pause();
+            },
+            reset: () => {
+                focusMode.pause();
+                focusMode.timeLeft = 1500;
+                document.getElementById('timerDisplay').textContent = "25:00";
+            }
+        };
+
+        // ==================== RENDERERS ====================
+        function renderTasks() {
             const list = document.getElementById('taskList');
-            const doneList = document.getElementById('completedList');
-            list.innerHTML = ''; doneList.innerHTML = '';
+            list.innerHTML = "";
+            document.getElementById('badge').textContent = state.tasks.filter(t => !t.completed).length;
 
-            const sorted = state.tasks.sort((a,b) => b.createdAt - a.createdAt);
-            
-            sorted.forEach(t => {
+            const filtered = state.tasks.filter(t => {
+                if(state.taskFilter === 'completed') return t.completed;
+                if(state.taskFilter === 'pending') return !t.completed;
+                return true;
+            });
+
+            filtered.forEach(task => {
+                const tags = (task.tags || []).map(t => `<span class="tag">#${t}</span>`).join('');
                 const html = `
-                    <div class="task-card priority-${t.priority}" style="opacity: ${t.completed ? 0.7 : 1}">
-                        <div style="display:flex; align-items:flex-start; gap:10px;">
-                            <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="app.toggleTask('${t.id}')" style="width:20px; height:20px; margin-top:3px;">
-                            <div style="flex:1;">
-                                <div style="font-weight:600; text-decoration:${t.completed?'line-through':''}">${t.text.replace(/#\w+/g,'')} 
-                                    ${t.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
+                    <div class="task-card priority-${task.priority}">
+                        <div class="task-header">
+                            <input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''} onchange="app.toggleTask('${task.id}')">
+                            <div class="task-content">
+                                <div class="task-title" style="text-decoration:${task.completed?'line-through':'none'}; opacity:${task.completed?0.6:1}">
+                                    ${task.text.replace(/#\w+/g, '')}
+                                    <div style="margin-top:4px;">${tags}</div>
                                 </div>
-                                <div style="font-size:11px; color:var(--text-muted); margin-top:5px;">
-                                    <i class="far fa-calendar"></i> ${t.date} • ${t.priority.toUpperCase()}
+                                <div style="font-size:11px; color:var(--text-muted);">
+                                    <i class="far fa-calendar"></i> ${task.date}
                                 </div>
                             </div>
-                            <button onclick="app.deleteTask('${t.id}')" style="background:none; border:none; color:var(--danger);"><i class="fas fa-trash"></i></button>
+                            <div style="display:flex; gap:5px;">
+                                <button class="btn btn-icon" onclick="app.startEdit('${task.id}')"><i class="fas fa-pencil-alt" style="font-size:12px;"></i></button>
+                                <button class="btn btn-icon btn-danger" onclick="app.deleteTask('${task.id}')"><i class="fas fa-trash" style="font-size:12px;"></i></button>
+                            </div>
                         </div>
-                    </div>
-                `;
-                if(t.completed) doneList.insertAdjacentHTML('beforeend', html);
-                else list.insertAdjacentHTML('beforeend', html);
+                    </div>`;
+                list.insertAdjacentHTML('beforeend', html);
             });
-        },
+        }
 
-        renderHabits: () => {
-            const grid = document.getElementById('habitList');
-            grid.innerHTML = '';
-            const today = new Date().toISOString().split('T')[0];
-
+        function renderHabits() {
+            const grid = document.getElementById('habitGrid');
+            grid.innerHTML = "";
             state.habits.forEach(h => {
-                const isDone = h.lastDone === today;
-                grid.innerHTML += `
-                    <div class="habit-card" style="border-color: ${isDone ? 'var(--success)' : 'var(--border)'}">
-                        <div>
-                            <div style="font-weight:600;">${h.title}</div>
-                            <div class="streak-flame"><i class="fas fa-fire"></i> ${h.streak} Day Streak</div>
-                        </div>
-                        <button class="btn ${isDone ? 'btn-primary' : 'btn-secondary'}" onclick="app.toggleHabit('${h.id}')">
-                            <i class="fas ${isDone ? 'fa-check' : 'fa-plus'}"></i>
-                        </button>
-                    </div>
-                `;
-            });
-        },
-
-        renderCalendar: () => {
-            const grid = document.getElementById('calGrid');
-            const d = state.currentDate;
-            const year = d.getFullYear();
-            const month = d.getMonth();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const firstDay = new Date(year, month, 1).getDay();
-
-            document.getElementById('calMonthYear').textContent = d.toLocaleString('default', {month:'long', year:'numeric'});
-            
-            grid.innerHTML = `
-                <div style="text-align:center; font-size:10px; opacity:0.7">Sun</div>
-                <div style="text-align:center; font-size:10px; opacity:0.7">Mon</div>
-                <div style="text-align:center; font-size:10px; opacity:0.7">Tue</div>
-                <div style="text-align:center; font-size:10px; opacity:0.7">Wed</div>
-                <div style="text-align:center; font-size:10px; opacity:0.7">Thu</div>
-                <div style="text-align:center; font-size:10px; opacity:0.7">Fri</div>
-                <div style="text-align:center; font-size:10px; opacity:0.7">Sat</div>
-            `;
-            
-            for(let i=0; i<firstDay; i++) grid.innerHTML += `<div></div>`;
-
-            for(let day=1; day<=daysInMonth; day++) {
-                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-                const dayTasks = state.tasks.filter(t => t.date === dateStr);
-                const hasTask = dayTasks.length > 0;
-                
-                // Mobile dot logic handled in CSS via .cal-cell.has-task
-                const dots = dayTasks.map(t => `<div class="cal-task-dot" style="text-decoration:${t.completed?'line-through':''}">${t.text}</div>`).join('');
-                
-                grid.innerHTML += `
-                    <div class="cal-cell ${hasTask ? 'has-task' : ''}" onclick="app.switchTab('tasks'); document.getElementById('taskInput').focus();">
-                        <div style="font-size:12px; font-weight:bold; margin-bottom:4px;">${day}</div>
-                        ${dots}
-                    </div>
-                `;
-            }
-        },
-
-        renderLeaderboard: () => {
-            const body = document.getElementById('leaderboardBody');
-            // Simulation mixed with real user if exists
-            const simUsers = [
-                {name: 'Sarah C.', score: 1240},
-                {name: 'Mike D.', score: 980},
-                {name: 'You', score: state.tasks.filter(t=>t.completed).length * 10}
-            ];
-            const sorted = simUsers.sort((a,b) => b.score - a.score);
-            body.innerHTML = sorted.map((u, i) => `
-                <tr style="border-bottom:1px solid var(--border)">
-                    <td style="padding:10px;">#${i+1}</td>
-                    <td>${u.name}</td>
-                    <td style="text-align:right;">${u.score} pts</td>
-                </tr>
-            `).join('');
-        },
-
-        // === DASHBOARD & ANALYTICS ===
-        filterDash: (range, btn) => {
-            if(btn) {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            }
-            
-            let filtered = state.tasks;
-            const now = new Date();
-            const todayStr = now.toISOString().split('T')[0];
-
-            if(range === 'today') filtered = state.tasks.filter(t => t.date === todayStr);
-            if(range === 'week') {
-                const weekAgo = new Date(now.setDate(now.getDate() - 7));
-                filtered = state.tasks.filter(t => new Date(t.date) >= weekAgo);
-            }
-            if(range === 'month') {
-                 filtered = state.tasks.filter(t => new Date(t.date).getMonth() === new Date().getMonth());
-            }
-
-            // Stats
-            document.getElementById('dashTotal').textContent = filtered.length;
-            document.getElementById('dashDone').textContent = filtered.filter(t=>t.completed).length;
-            document.getElementById('dashPending').textContent = filtered.filter(t=>!t.completed).length;
-
-            app.renderCharts(filtered);
-        },
-
-        renderCharts: (data) => {
-            // Main Chart
-            const ctx1 = document.getElementById('mainChart').getContext('2d');
-            if(state.charts.main) state.charts.main.destroy();
-            state.charts.main = new Chart(ctx1, {
-                type: 'bar',
-                data: {
-                    labels: ['Pending', 'Completed'],
-                    datasets: [{
-                        label: 'Tasks',
-                        data: [data.filter(t=>!t.completed).length, data.filter(t=>t.completed).length],
-                        backgroundColor: ['#f59e0b', '#10b981']
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-
-            // Tag Chart
-            const tags = {};
-            data.forEach(t => t.tags.forEach(tag => tags[tag] = (tags[tag] || 0) + 1));
-            const ctx2 = document.getElementById('tagChart').getContext('2d');
-            if(state.charts.tags) state.charts.tags.destroy();
-            state.charts.tags = new Chart(ctx2, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(tags),
-                    datasets: [{
-                        data: Object.values(tags),
-                        backgroundColor: ['#208084', '#ef4444', '#f59e0b', '#10b981', '#6366f1']
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
-            });
-        },
-
-        // === CHAT ===
-        sendMsg: async () => {
-            if(!state.user) { alert("Please Sign In to chat!"); app.toggleAuth(); return; }
-            const input = document.getElementById('chatInput');
-            if(!input.value.trim()) return;
-
-            await addDoc(collection(db, 'global_chat'), {
-                text: input.value,
-                uid: state.user.uid,
-                user: state.user.email,
-                createdAt: serverTimestamp()
-            });
-            input.value = '';
-        },
-
-        // === UTILS ===
-        changeMonth: (off) => { state.currentDate.setMonth(state.currentDate.getMonth() + off); app.renderCalendar(); },
-        toggleTheme: () => {
-            const html = document.documentElement;
-            html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-        },
-        toggleAuth: () => {
-            if(state.user) signOut(auth);
-            else document.getElementById('authModal').style.display = 'flex';
-        },
-        login: async () => {
-            try { await signInWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display = 'none'; } catch(e){ alert(e.message); }
-        },
-        register: async () => {
-            try { await createUserWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display = 'none'; } catch(e){ alert(e.message); }
-        },
-        
-        populateFocusDropdown: () => {
-            const sel = document.getElementById('focusTaskSelect');
-            sel.innerHTML = '<option value="">-- General Focus --</option>';
-            state.tasks.filter(t => !t.completed).forEach(t => {
-                sel.innerHTML += `<option value="${t.id}">${t.text}</option>`;
-            });
-        }
-    };
-
-    // === FOCUS MODE & AUDIO ===
-    window.focusMode = {
-        interval: null,
-        timeLeft: 1500,
-        start: () => {
-            if(focusMode.interval) return;
-            document.getElementById('timerCircle').classList.add('timer-active');
-            focusMode.interval = setInterval(() => {
-                focusMode.timeLeft--;
-                const m = Math.floor(focusMode.timeLeft/60).toString().padStart(2,'0');
-                const s = (focusMode.timeLeft%60).toString().padStart(2,'0');
-                document.getElementById('timerDisplay').textContent = `${m}:${s}`;
-                if(focusMode.timeLeft <= 0) {
-                    focusMode.reset();
-                    new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg').play();
-                    alert("Focus Session Complete!");
-                    // If task selected, mark done? (Optional, just logging for now)
+                let streak = 0;
+                // Calculate simple streak (consecutive days looking back)
+                for(let i=0; i<30; i++) {
+                    const d = new Date(); d.setDate(d.getDate() - i);
+                    if(h.history.includes(d.toISOString().split('T')[0])) streak++; else break;
                 }
-            }, 1000);
-        },
-        pause: () => {
-            clearInterval(focusMode.interval);
-            focusMode.interval = null;
-            document.getElementById('timerCircle').classList.remove('timer-active');
-            if(state.oscillator) { state.oscillator.stop(); state.oscillator = null; }
-        },
-        reset: () => {
-            focusMode.pause();
-            focusMode.timeLeft = 1500;
-            document.getElementById('timerDisplay').textContent = "25:00";
-        },
-        toggleNoise: (type) => {
-            if(state.oscillator) { state.oscillator.stop(); state.oscillator = null; return; }
-            // Simple Web Audio Noise Generation
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const bufferSize = ctx.sampleRate * 2;
-            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                const white = Math.random() * 2 - 1;
-                data[i] = (lastOut + (0.02 * white)) / 1.02;
-                lastOut = data[i];
-                data[i] *= 3.5; 
-            }
-            let lastOut = 0;
+
+                let daysHtml = '';
+                for(let i=4; i>=0; i--) {
+                    const d = new Date(); d.setDate(d.getDate() - i);
+                    const ds = d.toISOString().split('T')[0];
+                    const isDone = h.history.includes(ds);
+                    const dayLabel = d.toLocaleDateString('en-US', {weekday:'narrow'});
+                    daysHtml += `<div class="habit-day ${isDone?'done':''}" onclick="app.toggleHabitDay(${h.id}, ${i})">${dayLabel}</div>`;
+                }
+
+                grid.insertAdjacentHTML('beforeend', `
+                    <div class="habit-card">
+                        <div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <strong>${h.title}</strong>
+                                <i class="fas fa-times" style="cursor:pointer; opacity:0.5;" onclick="app.deleteHabit(${h.id})"></i>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:5px;">
+                                <i class="fas fa-fire streak-fire"></i> ${streak} day streak
+                            </div>
+                        </div>
+                        <div class="habit-days">${daysHtml}</div>
+                    </div>
+                `);
+            });
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calGrid');
+            grid.innerHTML = `<div class="cal-day-header">Sun</div><div class="cal-day-header">Mon</div><div class="cal-day-header">Tue</div><div class="cal-day-header">Wed</div><div class="cal-day-header">Thu</div><div class="cal-day-header">Fri</div><div class="cal-day-header">Sat</div>`;
             
-            const noise = ctx.createBufferSource();
-            noise.buffer = buffer;
-            noise.loop = true;
-            const gain = ctx.createGain();
-            gain.gain.value = 0.05;
-            noise.connect(gain);
-            gain.connect(ctx.destination);
-            noise.start();
-            state.oscillator = noise;
-        }
-    };
+            const year = state.currentDate.getFullYear();
+            const month = state.currentDate.getMonth();
+            document.getElementById('calMonthYear').textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayStr = new Date().toISOString().split('T')[0];
 
-    // Init Auth Listener
-    onAuthStateChanged(auth, user => {
-        state.user = user;
-        document.getElementById('authBtn').textContent = user ? "Sign Out" : "Sign In";
-        document.getElementById('syncText').textContent = user ? "Synced" : "Offline";
-        if(user) {
-            // Fetch real tasks
-             onSnapshot(query(collection(db, 'tasks'), where('uid','==',user.uid)), s => {
-                 state.tasks = s.docs.map(d => ({id:d.id, ...d.data()}));
-                 app.renderAll();
-             });
+            for(let i=0; i<firstDay; i++) grid.insertAdjacentHTML('beforeend', `<div></div>`);
+            
+            for(let d=1; d<=daysInMonth; d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const isToday = dateStr === todayStr;
+                const dayTasks = state.tasks.filter(t => t.date === dateStr);
+                
+                // Desktop Dots
+                const dots = dayTasks.map(t => `<div class="cal-task-dot ${t.completed?'done':''}" style="${t.completed?'text-decoration:line-through; opacity:0.5':''}">${t.text}</div>`).join('');
+                // Mobile Dot
+                const hasTask = dayTasks.length > 0 ? '<span class="mobile-dot"></span>' : '';
+                
+                const cell = document.createElement('div');
+                cell.className = `cal-cell ${isToday ? 'today' : ''}`;
+                cell.innerHTML = `<div class="cal-date">${d}</div>${dots}${hasTask}`;
+                cell.onclick = () => showMobileCalTasks(dateStr, dayTasks);
+                grid.appendChild(cell);
+            }
         }
-    });
 
-    // Start
-    app.init();
-</script>
+        function showMobileCalTasks(date, tasks) {
+            document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            const container = document.getElementById('mobileCalTasks');
+            if(tasks.length === 0) {
+                container.innerHTML = "No tasks for " + date;
+                return;
+            }
+            container.innerHTML = tasks.map(t => `
+                <div style="padding:8px 0; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+                    <div style="width:8px; height:8px; border-radius:50%; background:${t.completed?'var(--success)':'var(--warning)'}"></div>
+                    <span style="${t.completed?'text-decoration:line-through; opacity:0.6':''}">${t.text}</span>
+                </div>
+            `).join('');
+        }
+
+        function updateFocusDropdown() {
+            const select = document.getElementById('focusTaskSelect');
+            select.innerHTML = '<option value="">-- Select a Task --</option>';
+            state.tasks.filter(t => !t.completed).forEach(t => {
+                select.insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.text}</option>`);
+            });
+        }
+        
+        function saveLocal() {
+            localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+            renderTasks();
+            if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboard();
+        }
+
+        // ==================== INIT ====================
+        // Clock & Location
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clockDisplay').textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        }, 1000);
+        
+        // Mock Location
+        if("geolocation" in navigator) {
+            // Usually requires permission, fallback to timezone if blocked
+            document.getElementById('locationDisplay').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
+
+        // Leaderboard Mock
+        const leaders = [
+            {n:"Sarah C.", s:2400}, {n:"Mike R.", s:2100}, {n:"You", s:state.tasks.filter(t=>t.completed).length * 10}, {n:"Emma W.", s:850}
+        ];
+        document.getElementById('leaderboardBody').innerHTML = leaders.sort((a,b)=>b.s-a.s).map((u,i) => `
+            <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:10px;">#${i+1}</td>
+                <td>${u.n}</td>
+                <td>${u.s}</td>
+            </tr>
+        `).join('');
+
+        // Auth Listener
+        onAuthStateChanged(auth, (user) => {
+            if(user) {
+                state.user = user;
+                document.getElementById('userEmail').textContent = user.email.split('@')[0];
+                document.getElementById('authBtn').textContent = "Sign Out";
+                document.getElementById('syncDot').style.background = "var(--success)";
+                document.getElementById('syncText').textContent = "Synced";
+                const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
+                onSnapshot(q, (snap) => {
+                    state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    renderTasks();
+                    app.renderDashboard();
+                });
+            } else {
+                state.user = null;
+                document.getElementById('userEmail').textContent = "Guest";
+                document.getElementById('authBtn').textContent = "Sign In";
+                document.getElementById('syncDot').style.background = "var(--warning)";
+                document.getElementById('syncText').textContent = "Offline";
+                state.tasks = JSON.parse(localStorage.getItem('local_tasks')) || [];
+                renderTasks();
+            }
+        });
+
+        // Initialize Views
+        if(state.customDesign) document.getElementById('dynamic-theme-style').textContent = state.customDesign;
+        app.setTaskFilter('all');
+        document.getElementById('filterAll').style.background = 'var(--accent)';
+    </script>
 </body>
 </html>
