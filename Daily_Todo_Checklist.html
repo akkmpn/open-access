@@ -3,11 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v2.0</title>
+    <title>Enterprise TaskPro - v3.0 (Quantum)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style id="dynamic-theme-style">
+        /* This style block will be overwritten by the Quantum Design Engine */
+    </style>
+
     <style>
-        /* ==================== 1. CORE VARIABLES (Base) ==================== */
+        /* ==================== 1. CORE VARIABLES (Base Fallback) ==================== */
         :root {
             /* DEFAULT (ENTERPRISE) */
             --bg-body: #0f172a;
@@ -27,91 +33,16 @@
             --radius: 10px;
             --font-main: 'Inter', sans-serif;
             --border-width: 1px;
+            --sidebar-width: 260px;
         }
 
-        /* ==================== 4. WEB DESIGN ALGORITHMS (THEMES) ==================== */
-        
-        /* DESIGN 2: CYBERPUNK (Terminal/Neon) */
-        [data-design="cyberpunk"] {
-            --bg-body: #050505;
-            --bg-sidebar: #000000;
-            --bg-card: #111111;
-            --bg-input: #000000;
-            --accent: #00ff41;
-            --accent-hover: #00cc33;
-            --text-main: #00ff41;
-            --text-muted: #008f11;
-            --border: #00ff41;
-            --success: #00ff41;
-            --danger: #ff0055;
-            --warning: #efff00;
-            --radius: 0px;
-            --font-main: 'Courier New', monospace;
-            --shadow: 0 0 10px rgba(0, 255, 65, 0.2);
-        }
-        [data-design="cyberpunk"] .btn { text-transform: uppercase; letter-spacing: 1px; }
-
-        /* DESIGN 3: NEUBRUTALISM (Bold/Pop) */
-        [data-design="brutalist"] {
-            --bg-body: #e0e7ff; /* Light purple bg */
-            --bg-sidebar: #a5b4fc;
-            --bg-card: #ffffff;
-            --bg-input: #ffffff;
-            --accent: #4f46e5;
-            --text-main: #000000;
-            --text-muted: #444444;
-            --border: #000000;
-            --radius: 4px;
-            --shadow: 4px 4px 0px #000000;
-            --font-main: 'Arial Black', sans-serif;
-            --border-width: 2px;
-        }
-        [data-design="brutalist"] .btn, [data-design="brutalist"] .task-card { border: 2px solid black; }
-
-        /* DESIGN 4: MINIMALIST (Clean/Print) */
-        [data-design="minimal"] {
-            --bg-body: #ffffff;
-            --bg-sidebar: #f8f9fa;
-            --bg-card: #ffffff;
-            --bg-input: #f8f9fa;
-            --accent: #000000;
-            --accent-hover: #333333;
-            --text-main: #111111;
-            --text-muted: #888888;
-            --border: #eeeeee;
-            --shadow: none;
-            --radius: 0px;
-            --font-main: 'Georgia', serif;
-        }
-        [data-design="minimal"] .sidebar { border-right: 1px solid #eee; }
-
-        /* DESIGN 5: GLASSMORPHISM (Modern/Blur) */
-        [data-design="glass"] {
-            --bg-body: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --bg-sidebar: rgba(255, 255, 255, 0.1);
-            --bg-card: rgba(255, 255, 255, 0.15);
-            --bg-input: rgba(0, 0, 0, 0.2);
-            --bg-hover: rgba(255, 255, 255, 0.2);
-            --accent: #ffffff;
-            --text-main: #ffffff;
-            --text-muted: #e2e8f0;
-            --border: rgba(255, 255, 255, 0.2);
-            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            --radius: 16px;
-        }
-        [data-design="glass"] .sidebar, [data-design="glass"] .task-card, [data-design="glass"] .header {
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        }
-        [data-design="glass"] .btn-primary { background: white; color: #764ba2; }
-
-        /* LIGHT THEME OVERRIDES (Only applies to Default) */
-        [data-theme="light"][data-design="default"] {
+        /* LIGHT THEME OVERRIDES */
+        [data-theme="light"] {
             --bg-body: #f1f5f9;
             --bg-sidebar: #ffffff;
             --bg-card: #ffffff;
             --bg-input: #f8fafc;
             --bg-hover: #f1f5f9;
-            --accent: #0f766e;
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border: #e2e8f0;
@@ -126,12 +57,12 @@
             height: 100vh;
             overflow: hidden;
             display: flex;
-            transition: background 0.3s, color 0.3s, font-family 0.3s;
+            transition: background 0.3s, color 0.3s, font-family 0.3s, border-radius 0.3s;
         }
 
         /* ==================== SIDEBAR ==================== */
         .sidebar {
-            width: 260px;
+            width: var(--sidebar-width);
             background: var(--bg-sidebar);
             border-right: var(--border-width) solid var(--border);
             display: flex;
@@ -139,6 +70,7 @@
             padding: 20px;
             transition: transform 0.3s ease;
             z-index: 50;
+            flex-shrink: 0;
         }
 
         .logo {
@@ -165,16 +97,14 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: 500;
-            border: none;
+            border: var(--border-width) solid transparent;
             background: none;
             width: 100%;
             text-align: left;
             font-family: var(--font-main);
         }
         .nav-link:hover { background: var(--bg-hover); color: var(--text-main); }
-        .nav-link.active { background: var(--accent); color: white; box-shadow: var(--shadow); }
-        [data-design="brutalist"] .nav-link.active { color: white; border: 2px solid black; box-shadow: 2px 2px 0 black; }
-        [data-design="glass"] .nav-link.active { background: rgba(255,255,255,0.3); color: white; }
+        .nav-link.active { background: var(--accent); color: white; box-shadow: var(--shadow); border-color: var(--accent); }
 
         /* Mobile Overlay */
         .sidebar-overlay {
@@ -231,7 +161,7 @@
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
-            padding: 20px; /* Reduced padding for mobile */
+            padding: 20px;
             display: none;
             animation: fadeIn 0.3s ease;
         }
@@ -243,9 +173,9 @@
         
         /* Buttons */
         .btn {
-            padding: 10px 16px; /* Larger touch target */
+            padding: 10px 16px;
             border-radius: var(--radius);
-            border: none;
+            border: var(--border-width) solid transparent;
             font-weight: 600;
             cursor: pointer;
             transition: 0.2s;
@@ -254,9 +184,9 @@
             font-family: var(--font-main);
             box-shadow: var(--shadow);
         }
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-primary:hover { background: var(--accent-hover); opacity: 0.9; }
-        .btn-secondary { background: var(--bg-card); color: var(--text-main); border: var(--border-width) solid var(--border); }
+        .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+        .btn-primary:hover { opacity: 0.9; filter: brightness(110%); }
+        .btn-secondary { background: var(--bg-card); color: var(--text-main); border-color: var(--border); }
         .btn-secondary:hover { border-color: var(--text-muted); }
         .btn-icon { padding: 8px; border-radius: 50%; width: 36px; height: 36px; }
         .btn-danger { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
@@ -283,7 +213,7 @@
             flex: 1;
             min-width: 200px;
             outline: none;
-            font-size: 16px; /* Prevent zoom on iOS */
+            font-size: 16px; 
             font-family: var(--font-main);
         }
         .date-input, .select-input {
@@ -291,7 +221,7 @@
             border: var(--border-width) solid var(--border);
             color: var(--text-main);
             padding: 10px 12px;
-            border-radius: 6px;
+            border-radius: var(--radius);
             outline: none;
             font-size: 14px;
             font-family: var(--font-main);
@@ -375,28 +305,34 @@
             .event-card { flex-direction: row; justify-content: space-between; align-items: center; }
         }
 
-        /* CHAT INTERFACE */
-        .chat-container {
-            display: none; /* Hidden by default */
-            flex-direction: column;
-            height: 400px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--bg-body);
-            overflow: hidden;
-            margin-top: 20px;
+        /* === ENHANCED CHAT INTERFACE === */
+        .chat-layout {
+            display: flex; height: 500px;
+            background: var(--bg-body); border: 1px solid var(--border); border-radius: var(--radius);
+            overflow: hidden; margin-top: 20px;
         }
-        .chat-messages {
-            flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px;
+        .chat-main { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-input-area { padding: 10px; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; gap: 10px; }
+        
+        .chat-sidebar-panel { width: 200px; background: var(--bg-sidebar); padding: 10px; overflow-y: auto; display: none; }
+        @media(min-width: 768px) { .chat-sidebar-panel { display: block; } }
+
+        .participant-item {
+            display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: var(--radius);
+            margin-bottom: 5px; cursor: default;
         }
-        .chat-msg {
-            max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.4;
-        }
+        .participant-item:hover { background: var(--bg-hover); }
+        .p-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; }
+        .p-info { flex: 1; font-size: 12px; }
+        .p-status { font-size: 10px; color: var(--text-muted); }
+        .p-status.online { color: var(--success); }
+
+        .chat-msg { max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; word-wrap: break-word; }
         .chat-msg.them { background: var(--bg-card); align-self: flex-start; border-bottom-left-radius: 0; border: 1px solid var(--border); }
         .chat-msg.me { background: var(--accent); color: white; align-self: flex-end; border-bottom-right-radius: 0; }
-        .chat-input-area {
-            padding: 10px; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; gap: 10px;
-        }
+        .chat-msg-meta { font-size: 10px; opacity: 0.7; margin-top: 3px; display: block; text-align: right; }
+
 
         /* Focus Timer */
         .timer-circle {
@@ -420,7 +356,7 @@
         }
         .cal-day-header { text-align: center; font-size: 11px; color: var(--text-muted); padding-bottom: 5px; }
         .cal-cell {
-            background: var(--bg-card); border-radius: 6px; min-height: 80px; padding: 5px;
+            background: var(--bg-card); border-radius: var(--radius); min-height: 80px; padding: 5px;
             border: 1px solid var(--border); position: relative; overflow: hidden;
         }
         .cal-cell.today { border-color: var(--accent); background: rgba(32, 128, 132, 0.05); }
@@ -447,6 +383,8 @@
             .timer-circle { width: 180px; height: 180px; font-size: 36px; border-width: 6px; }
             .cal-cell { min-height: 60px; font-size: 10px; }
             .cal-task-dot { display: none; }
+            .chat-layout { height: 100%; flex-direction: column; }
+            .chat-sidebar-panel { width: 100%; height: 100px; border-bottom: 1px solid var(--border); display: block; }
         }
     </style>
 </head>
@@ -485,6 +423,10 @@
             <button class="nav-link" onclick="app.backupData()">
                 <i class="fas fa-download"></i> Backup Data
             </button>
+            <button class="nav-link" onclick="document.getElementById('importInput').click()">
+                <i class="fas fa-upload"></i> Restore Backup
+            </button>
+            <input type="file" id="importInput" style="display:none" onchange="app.restoreData(this)">
 
             <div class="nav-link" style="cursor: default; opacity: 0.7;">
                 <i class="fas fa-cloud"></i> <span id="syncText">Offline Mode</span>
@@ -503,8 +445,8 @@
             </div>
             
             <div class="header-actions">
-                <button class="icon-btn-header" onclick="app.cycleDesign()" title="Change Design Algo">
-                    <i class="fas fa-palette"></i>
+                <button class="btn btn-primary" style="font-size:11px; padding: 8px 12px;" onclick="app.generateRandomDesign()" title="Generate Unique Design">
+                    <i class="fas fa-magic"></i> New Design
                 </button>
 
                 <button class="icon-btn-header" onclick="app.toggleTheme()" title="Toggle Light/Dark">
@@ -613,7 +555,7 @@
                 
                 <div id="commBoard">
                     <div class="task-card">
-                        <h3 style="color:var(--accent); margin-bottom:5px;"><i class="fas fa-trophy"></i> Weekly Leaderboard</h3>
+                        <h3 style="color:var(--accent); margin-bottom:5px;"><i class="fas fa-trophy"></i> Global Leaderboard</h3>
                         <div class="leaderboard-container">
                             <table class="leaderboard-table">
                                 <thead><tr><th>Rank</th><th>User</th><th>Score</th></tr></thead>
@@ -634,21 +576,34 @@
                                 <div style="font-weight:bold; color:var(--text-main);">Productivity Sprint</div>
                                 <div style="font-size:12px; color:var(--text-muted);">Live Now • 250 Joined</div>
                             </div>
-                            <button class="btn btn-primary" style="font-size:12px;" onclick="app.joinGroup('Productivity Sprint')">Join Chat</button>
+                            <button class="btn btn-primary" style="font-size:12px;" onclick="app.joinGroup('Productivity Sprint')">Join Room</button>
                         </div>
                     </div>
                 </div>
 
-                <div id="groupChat" class="chat-container">
-                    <div style="padding:10px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--bg-card);">
-                        <strong id="chatTitle">Group Name</strong>
-                        <button class="btn btn-secondary btn-icon" style="width:24px; height:24px; font-size:12px;" onclick="app.leaveGroup()">✕</button>
-                    </div>
-                    <div class="chat-messages" id="chatMsgs">
+                <div id="groupChat" style="display:none; flex-direction:column; height: 100%;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div>
+                            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="app.leaveGroup()">← Back</button>
+                            <strong id="chatTitle" style="margin-left:10px; font-size:16px;">Group Name</strong>
                         </div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chatInput" class="main-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') app.sendMessage()">
-                        <button class="btn btn-primary" onclick="app.sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+
+                    <div class="chat-layout">
+                        <div class="chat-main">
+                            <div class="chat-messages" id="chatMsgs">
+                                </div>
+                            <div class="chat-input-area">
+                                <input type="text" id="chatInput" class="main-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') app.sendMessage()">
+                                <button class="btn btn-primary" onclick="app.sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="chat-sidebar-panel">
+                            <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">PARTICIPANTS (4)</div>
+                            <div id="chatParticipants">
+                                </div>
+                        </div>
                     </div>
                 </div>
 
@@ -660,6 +615,9 @@
     <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:none; align-items:center; justify-content:center; backdrop-filter: blur(5px);" id="authModal">
         <div style="background:var(--bg-sidebar); padding:30px; border-radius:16px; width:90%; max-width:400px; border:1px solid var(--border); text-align:center; position:relative;">
             <h2 style="margin-bottom:20px; color:var(--text-main);">Cloud Sync</h2>
+            <p style="color:var(--text-muted); font-size:12px; margin-bottom:20px;">
+                Securely save your tasks online forever. Retrieve them anytime, anywhere.
+            </p>
             <input type="email" id="authEmail" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:10px; border-radius:8px;" placeholder="Email">
             <input type="password" id="authPass" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:20px; border-radius:8px;" placeholder="Password">
             
@@ -674,7 +632,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // CONFIG
         const firebaseConfig = {
@@ -696,21 +654,53 @@
             history: JSON.parse(localStorage.getItem('taskHistory')) || ["Meeting", "Workout", "Study"],
             currentDate: new Date(),
             chart: null,
-            designIndex: 0
+            customDesign: localStorage.getItem('customDesignCSS') || null
         };
 
-        // DESIGN ALGORITHMS
-        const designs = ['default', 'cyberpunk', 'brutalist', 'minimal', 'glass'];
-
         window.app = {
-            // WEB DESIGN SWITCHER LOGIC
-            cycleDesign: () => {
-                state.designIndex = (state.designIndex + 1) % designs.length;
-                const newDesign = designs[state.designIndex];
-                document.documentElement.setAttribute('data-design', newDesign);
-                // Also save to local storage so it remembers
-                localStorage.setItem('webDesign', newDesign);
-                alert(`Switched to: ${newDesign.toUpperCase()} Design`);
+            // ==================== QUANTUM DESIGN ENGINE ====================
+            generateRandomDesign: () => {
+                // Randomizers
+                const hue = Math.floor(Math.random() * 360);
+                const sat = Math.floor(Math.random() * 40) + 20; // 20-60%
+                const lit = Math.floor(Math.random() * 15) + 5;  // 5-20% (Dark bg)
+                
+                const fonts = ["'Inter', sans-serif", "'Playfair Display', serif", "'Roboto Mono', monospace", "'Comic Neue', cursive"];
+                const selectedFont = fonts[Math.floor(Math.random() * fonts.length)];
+                
+                const radius = Math.floor(Math.random() * 30); // 0px to 30px
+                const borderWidth = Math.random() > 0.5 ? '1px' : '2px';
+                
+                // Color Logic
+                const bgBody = `hsl(${hue}, ${sat}%, ${lit}%)`;
+                const bgSidebar = `hsl(${hue}, ${sat}%, ${lit + 5}%)`;
+                const bgCard = `hsl(${hue}, ${sat}%, ${lit + 10}%)`;
+                const accent = `hsl(${(hue + 180) % 360}, 70%, 50%)`; // Complementary color
+
+                const css = `
+                    :root {
+                        --bg-body: ${bgBody};
+                        --bg-sidebar: ${bgSidebar};
+                        --bg-card: ${bgCard};
+                        --bg-input: ${bgSidebar};
+                        --bg-hover: rgba(255,255,255,0.1);
+                        --accent: ${accent};
+                        --accent-hover: white;
+                        --text-main: #ffffff;
+                        --text-muted: rgba(255,255,255,0.6);
+                        --border: rgba(255,255,255,0.15);
+                        --radius: ${radius}px;
+                        --font-main: ${selectedFont};
+                        --border-width: ${borderWidth};
+                        --shadow: 0 10px 25px rgba(0,0,0,0.3);
+                    }
+                    .btn, .nav-link, .task-card { transition: all 0.4s ease; }
+                `;
+
+                // Apply and Save
+                document.getElementById('dynamic-theme-style').textContent = css;
+                localStorage.setItem('customDesignCSS', css);
+                state.customDesign = css;
             },
 
             toggleTheme: () => {
@@ -719,16 +709,20 @@
                 if (html.getAttribute('data-theme') === 'dark') {
                     html.setAttribute('data-theme', 'light');
                     icon.className = 'fas fa-sun';
+                    // Disable custom dark design in light mode for readability
+                    document.getElementById('dynamic-theme-style').textContent = "";
                 } else {
                     html.setAttribute('data-theme', 'dark');
                     icon.className = 'fas fa-moon';
+                    // Re-enable custom design if exists
+                    if(state.customDesign) document.getElementById('dynamic-theme-style').textContent = state.customDesign;
                 }
             },
 
-            // BACKUP FEATURE LOGIC
+            // ==================== DATA IMPORT/EXPORT ====================
             backupData: () => {
                 const data = {
-                    date: new Date().toISOString(),
+                    meta: { version: "3.0", date: new Date().toISOString() },
                     tasks: state.tasks,
                     history: state.history,
                     user: state.user ? state.user.email : 'guest'
@@ -740,9 +734,72 @@
                 document.body.appendChild(downNode);
                 downNode.click();
                 downNode.remove();
-                alert('Backup downloaded successfully!');
             },
 
+            restoreData: (input) => {
+                const file = input.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (!data.tasks) throw new Error("Invalid backup file");
+
+                        const confirmRestore = confirm(`Found ${data.tasks.length} tasks. Merge them into your current list?`);
+                        if (!confirmRestore) return;
+
+                        // 1. Merge History
+                        if (data.history) {
+                            state.history = [...new Set([...state.history, ...data.history])];
+                            localStorage.setItem('taskHistory', JSON.stringify(state.history));
+                            renderSuggestions();
+                        }
+
+                        // 2. Process Tasks
+                        let newTasksCount = 0;
+                        
+                        // If user is logged in, upload to Firebase (Batched)
+                        if (state.user) {
+                            const batch = writeBatch(db); 
+                            // Note: Firestore batch limit is 500. For massive backups, would need chunking.
+                            // Here we simply add them one by one for simplicity in this file scope.
+                            for (const t of data.tasks) {
+                                // Create new clean task object without ID (let firestore gen ID)
+                                const cleanTask = {
+                                    text: t.text,
+                                    completed: t.completed || false,
+                                    date: t.date,
+                                    priority: t.priority || 'medium',
+                                    tags: t.tags || [],
+                                    subtasks: t.subtasks || [],
+                                    uid: state.user.uid,
+                                    createdAt: Date.now()
+                                };
+                                await addDoc(collection(db, 'tasks'), cleanTask);
+                                newTasksCount++;
+                            }
+                        } else {
+                            // Local Merge
+                            data.tasks.forEach(t => {
+                                // ensure unique ID for local
+                                t.id = 'restored_' + Date.now() + Math.random(); 
+                                state.tasks.push(t);
+                            });
+                            saveLocal();
+                            newTasksCount = data.tasks.length;
+                        }
+
+                        alert(`Successfully restored ${newTasksCount} tasks!`);
+                        input.value = ''; // Reset input
+                    } catch (err) {
+                        alert("Error parsing file: " + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            },
+
+            // ==================== CORE UI LOGIC ====================
             toggleSidebar: () => {
                 const sidebar = document.getElementById('sidebar');
                 const overlay = document.getElementById('sidebarOverlay');
@@ -788,15 +845,34 @@
                 if(id === 'calendar') renderCalendar();
             },
 
-            // GROUP CHAT LOGIC
+            // ==================== ENHANCED CHAT ====================
             joinGroup: (groupName) => {
                 document.getElementById('commBoard').style.display = 'none';
                 document.getElementById('groupChat').style.display = 'flex';
                 document.getElementById('chatTitle').textContent = groupName;
                 
-                // Simulate welcome message
+                // 1. Populate Participants (Simulation)
+                const participants = [
+                    { name: "You", status: "Online", rank: 3 },
+                    { name: "Sarah C.", status: "Focusing (25m)", rank: 1 },
+                    { name: "John W.", status: "Online", rank: 2 },
+                    { name: "Mike D.", status: "Away", rank: 12 }
+                ];
+                
+                const partHtml = participants.map(p => `
+                    <div class="participant-item">
+                        <div class="p-avatar">${p.name.charAt(0)}</div>
+                        <div class="p-info">
+                            <div style="font-weight:600">${p.name} <span style="font-size:9px; background:#333; padding:1px 4px; border-radius:4px;">#${p.rank}</span></div>
+                            <div class="p-status ${p.status.includes('Online') ? 'online' : ''}">${p.status}</div>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('chatParticipants').innerHTML = partHtml;
+
+                // 2. Welcome Msg
                 const box = document.getElementById('chatMsgs');
-                box.innerHTML = `<div class="chat-msg them">Welcome to the ${groupName} chat! Let's get productive.</div>`;
+                box.innerHTML = `<div class="chat-msg them">Welcome to ${groupName}! <span class="chat-msg-meta">System</span></div>`;
             },
 
             leaveGroup: () => {
@@ -810,19 +886,31 @@
                 if(!text) return;
                 
                 const box = document.getElementById('chatMsgs');
-                box.insertAdjacentHTML('beforeend', `<div class="chat-msg me">${text}</div>`);
+                const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                box.insertAdjacentHTML('beforeend', `
+                    <div class="chat-msg me">
+                        ${text}
+                        <span class="chat-msg-meta">${time}</span>
+                    </div>
+                `);
                 input.value = '';
                 box.scrollTop = box.scrollHeight;
 
                 // Simulate reply
                 setTimeout(() => {
-                    const replies = ["Keep it up!", "Nice work.", "Let's focus.", "Awesome progress!"];
+                    const replies = ["Keep pushing!", "Great idea.", "I'm focusing now.", "Has anyone seen the doc?"];
                     const random = replies[Math.floor(Math.random() * replies.length)];
-                    box.insertAdjacentHTML('beforeend', `<div class="chat-msg them">${random}</div>`);
+                    box.insertAdjacentHTML('beforeend', `
+                        <div class="chat-msg them">
+                            ${random}
+                            <span class="chat-msg-meta">Sarah C. • ${time}</span>
+                        </div>
+                    `);
                     box.scrollTop = box.scrollHeight;
                 }, 1500);
             },
 
+            // ==================== TASKS LOGIC ====================
             handleTaskSubmit: async () => {
                 const id = document.getElementById('editTaskId').value;
                 if(id) { await app.updateTask(id); } else { await app.addTask(); }
@@ -979,7 +1067,7 @@
             }
         };
 
-        // ==================== ENHANCED FOCUS MODE LOGIC ====================
+        // ==================== FOCUS MODE ====================
         let timerInterval = null;
         let timeLeft = 25 * 60;
         let sessions = 0;
@@ -993,10 +1081,9 @@
             start: () => {
                 if(timerInterval) return;
                 
-                // Play Sound
+                // Play Sound (using preview URLs)
                 const sound = document.getElementById('soundSelect').value;
                 const audio = document.getElementById('bgMusic');
-                // Note: Simulated URLs for demo, replace with real assets for production
                 if(sound === 'rain') audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-light-rain-loop-1253.mp3';
                 else if(sound === 'white') audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-white-noise-1254.mp3';
                 else if(sound === 'cafe') audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-restaurant-ambience-1255.mp3';
@@ -1036,8 +1123,7 @@
             document.getElementById('timerDisplay').textContent = `${m}:${s}`;
         }
 
-        // ==================== RENDERING ====================
-        
+        // ==================== RENDERERS ====================
         function renderTasks() {
             const list = document.getElementById('taskList');
             list.innerHTML = "";
@@ -1146,11 +1232,12 @@
                 data.push(state.tasks.filter(t => t.date === ds && t.completed).length);
             }
             if(state.chart) state.chart.destroy();
+            const style = getComputedStyle(document.body);
             state.chart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{ label: 'Completed', data: data, backgroundColor: '#208084', borderRadius: 4 }]
+                    datasets: [{ label: 'Completed', data: data, backgroundColor: style.getPropertyValue('--accent'), borderRadius: 4 }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
@@ -1166,6 +1253,7 @@
             if(document.getElementById('calendar').classList.contains('active')) renderCalendar();
         }
 
+        // ==================== AUTH & SYNC ====================
         onAuthStateChanged(auth, (user) => {
             if(user) {
                 state.user = user;
@@ -1174,6 +1262,8 @@
                 document.getElementById('syncDot').className = "connection-dot online";
                 document.getElementById('syncDot').style.background = "var(--success)";
                 document.getElementById('syncText').textContent = "Synced";
+                
+                // Firestore Real-time Listener (Scalable for years of data)
                 const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
                 onSnapshot(q, (snap) => {
                     state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -1195,11 +1285,9 @@
         document.getElementById('dateInput').valueAsDate = new Date();
         renderSuggestions();
 
-        // Restore design
-        const savedDesign = localStorage.getItem('webDesign');
-        if(savedDesign) {
-            document.documentElement.setAttribute('data-design', savedDesign);
-            state.designIndex = designs.indexOf(savedDesign);
+        // Restore Custom Design if it exists
+        if(state.customDesign) {
+            document.getElementById('dynamic-theme-style').textContent = state.customDesign;
         }
     </script>
 </body>
