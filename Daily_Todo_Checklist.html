@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v4.0 (Ultimate Fixed)</title>
+    <title>Enterprise TaskPro - v4.1 (Fixed & Secure)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -450,12 +450,14 @@
     <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:none; align-items:center; justify-content:center; backdrop-filter: blur(5px);" id="authModal">
         <div style="background:var(--bg-sidebar); padding:30px; border-radius:16px; width:90%; max-width:400px; border:1px solid var(--border); text-align:center; position:relative;">
             <h2 style="margin-bottom:20px; color:var(--text-main);">Cloud Sync</h2>
-            <input type="email" id="authEmail" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:10px; border-radius:8px;" placeholder="Email">
-            <input type="password" id="authPass" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:20px; border-radius:8px;" placeholder="Password">
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-primary" style="flex:1" onclick="app.login()">Login</button>
-                <button class="btn btn-secondary" style="flex:1" onclick="app.register()">Sign Up</button>
-            </div>
+            <form onsubmit="event.preventDefault(); app.login();">
+                <input type="email" id="authEmail" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:10px; border-radius:8px;" placeholder="Email" autocomplete="username">
+                <input type="password" id="authPass" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:20px; border-radius:8px;" placeholder="Password" autocomplete="current-password">
+                <div style="display:flex; gap:10px;">
+                    <button type="submit" class="btn btn-primary" style="flex:1">Login</button>
+                    <button type="button" class="btn btn-secondary" style="flex:1" onclick="app.register()">Sign Up</button>
+                </div>
+            </form>
             <button class="btn btn-icon" style="position:absolute; top:10px; right:10px; width:auto; height:auto; color:var(--text-muted);" onclick="document.getElementById('authModal').style.display='none'">✕</button>
         </div>
     </div>
@@ -701,33 +703,29 @@
                 document.getElementById('cancelEditBtn').style.display = 'inline-block';
             },
 
-updateTask: async (id) => {
-    const text = document.getElementById('taskInput').value;
-    const date = document.getElementById('dateInput').value;
-    const priority = document.getElementById('prioInput').value;
-    const tags = (text.match(/#\w+/g) || []).map(t => t.replace('#',''));
-    
-    const oldTask = state.tasks.find(t => t.id === id);
-    const subtasks = oldTask ? (oldTask.subtasks || []) : [];
-    const isLocal = id.toString().startsWith('local_') || id.toString().startsWith('t_');
+            updateTask: async (id) => {
+                const text = document.getElementById('taskInput').value;
+                const date = document.getElementById('dateInput').value;
+                const priority = document.getElementById('prioInput').value;
+                const tags = (text.match(/#\w+/g) || []).map(t => t.replace('#',''));
+                
+                // Preserve subtasks - BUG FIX
+                const oldTask = state.tasks.find(t => t.id === id);
+                const subtasks = oldTask ? (oldTask.subtasks || []) : [];
 
-    if(state.user && !isLocal) {
-        try {
-            await updateDoc(doc(db, 'tasks', id), { text, date, priority, tags, subtasks });
-        } catch (e) {
-            console.error("Cloud update failed, updating locally", e);
-        }
-    } else {
-        const taskIndex = state.tasks.findIndex(t => t.id === id);
-        if(taskIndex !== -1) {
-            state.tasks[taskIndex] = { ...state.tasks[taskIndex], text, date, priority, tags };
-            localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
-            app.saveLifetime();
-        }
-    }
-    app.cancelEdit();
-    renderTasks();
-},
+                if(state.user) {
+                    await updateDoc(doc(db, 'tasks', id), { text, date, priority, tags, subtasks });
+                } else {
+                    // Update Local
+                    const taskIndex = state.tasks.findIndex(t => t.id === id);
+                    if(taskIndex !== -1) {
+                        state.tasks[taskIndex] = { ...state.tasks[taskIndex], text, date, priority, tags };
+                        app.saveLifetime();
+                    }
+                }
+                app.cancelEdit();
+                renderTasks(); // Refresh UI
+            },
 
             cancelEdit: () => {
                 document.getElementById('taskInput').value = '';
@@ -745,30 +743,15 @@ updateTask: async (id) => {
                 else { task.completed = newVal; app.saveLifetime(); renderTasks(); }
             },
 
-deleteTask: async (id) => {
-    if(!confirm("Permanently delete?")) return;
-    
-    // Check if the task is local (IDs starting with 'local_' or 't_')
-    const isLocal = id.toString().startsWith('local_') || id.toString().startsWith('t_');
-
-    if(state.user && !isLocal) {
-        // Only call Firebase if it's a real cloud task
-        try {
-            await deleteDoc(doc(db, 'tasks', id));
-        } catch (e) {
-            console.error("Cloud delete failed:", e);
-            // Fallback: Remove it locally if cloud fails
-            state.tasks = state.tasks.filter(t => t.id !== id);
-            renderTasks();
-        }
-    } else {
-        // Directly remove local tasks from state and localStorage
-        state.tasks = state.tasks.filter(t => t.id !== id);
-        localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
-        app.saveLifetime();
-        renderTasks();
-    }
-},
+            deleteTask: async (id) => {
+                if(!confirm("Permanently delete?")) return;
+                if(state.user) await deleteDoc(doc(db, 'tasks', id));
+                else {
+                    state.tasks = state.tasks.filter(t => t.id !== id);
+                    app.saveLifetime();
+                    renderTasks();
+                }
+            },
 
             addSubtask: async (parentId) => {
                 const input = document.getElementById(`sub-input-${parentId}`);
