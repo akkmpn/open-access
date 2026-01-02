@@ -741,15 +741,31 @@
                 else { task.completed = newVal; app.saveLifetime(); renderTasks(); }
             },
 
-            deleteTask: async (id) => {
-                if(!confirm("Permanently delete?")) return;
-                if(state.user) await deleteDoc(doc(db, 'tasks', id));
-                else {
-                    state.tasks = state.tasks.filter(t => t.id !== id);
-                    app.saveLifetime();
-                    renderTasks();
-                }
-            },
+deleteTask: async (id) => {
+    if(!confirm("Permanently delete?")) return;
+
+    // Check if it's a local task (they start with 'local_')
+    if(id.toString().startsWith('local_')) {
+        state.tasks = state.tasks.filter(t => t.id !== id);
+        localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+        renderTasks();
+        return;
+    }
+
+    // If logged in and it's a cloud task
+    if(state.user) {
+        try {
+            await deleteDoc(doc(db, 'tasks', id));
+        } catch (e) {
+            console.error("Cloud delete failed, trying local fallback", e);
+        }
+    } else {
+        // Fallback for any other stuck tasks
+        state.tasks = state.tasks.filter(t => t.id !== id);
+        app.saveLifetime();
+        renderTasks();
+    }
+},
 
             addSubtask: async (parentId) => {
                 const input = document.getElementById(`sub-input-${parentId}`);
