@@ -204,7 +204,6 @@
             .input-group { flex-direction: column; align-items: stretch; }
             .date-input, .select-input, .btn { width: 100%; }
             .timer-circle { width: 180px; height: 180px; font-size: 36px; border-width: 6px; }
-            /* Mobile Calendar Fix: Hide dots in grid, show list below */
             .cal-cell { min-height: 50px; }
             .cal-task-dot { display: none; }
             .cal-mobile-list { display: block; }
@@ -367,20 +366,17 @@
         <div id="focus" class="view-container">
             <div style="text-align:center; max-width:500px; margin:0 auto;">
                 <h2 style="color:var(--text-main);">Deep Work</h2>
-                
                 <div style="margin: 20px 0;">
                     <select id="focusTaskSelect" class="select-input" style="width:100%; max-width:300px;">
                         <option value="">-- Select a Task to Focus On --</option>
                     </select>
                 </div>
-
                 <div style="display:flex; justify-content:center; gap:8px; margin-bottom:15px; flex-wrap:wrap;">
                     <button class="btn btn-secondary" onclick="focusMode.setDuration(25)">25m</button>
                     <button class="btn btn-secondary" onclick="focusMode.setDuration(5)">5m</button>
                     <button class="btn btn-secondary" onclick="focusMode.setDuration(15)">15m</button>
                     <input type="number" id="customTime" class="select-input" placeholder="Min" style="width:60px;" onchange="focusMode.setDuration(this.value)">
                 </div>
-
                 <div style="margin-bottom:10px;">
                     <select id="soundSelect" class="select-input" style="width:auto;">
                         <option value="none">No Sound</option>
@@ -389,11 +385,9 @@
                         <option value="cafe">Cafe</option>
                     </select>
                 </div>
-
                 <div class="timer-circle" id="timerCircle">
                     <span id="timerDisplay">25:00</span>
                 </div>
-
                 <div style="display:flex; justify-content:center; gap:10px; align-items:center; flex-wrap:wrap;">
                     <button class="btn btn-primary" onclick="focusMode.start()" style="min-width:100px;">Start</button>
                     <button class="btn btn-secondary" onclick="focusMode.pause()">Pause</button>
@@ -413,18 +407,7 @@
                                 </table>
                         </div>
                     </div>
-                    <div class="task-card" style="margin-top:20px;">
-                        <h3 style="color:var(--warning); margin-bottom:15px;"><i class="fas fa-calendar-star"></i> Real Groups</h3>
-                        <div class="event-card">
-                            <div>
-                                <div style="font-weight:bold; color:var(--text-main);">Productivity Squad</div>
-                                <div style="font-size:12px; color:var(--text-muted);">250 Members • Global</div>
-                            </div>
-                            <button class="btn btn-primary" style="font-size:12px;" onclick="app.joinGroup('Productivity Squad')">Enter Chat</button>
-                        </div>
-                    </div>
                 </div>
-
                 <div id="groupChat" style="display:none; flex-direction:column; height: 100%;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                         <div>
@@ -448,7 +431,6 @@
                 </div>
             </div>
         </div>
-
     </main>
 
     <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:none; align-items:center; justify-content:center; backdrop-filter: blur(5px);" id="authModal">
@@ -496,12 +478,11 @@
             currentDate: new Date(),
             charts: {},
             customDesign: localStorage.getItem('customDesignCSS') || null,
-            taskFilter: 'active', // active or completed
+            taskFilter: 'active',
             weather: { temp: '--', condition: 'Unknown' }
         };
 
         window.app = {
-            // ==================== SYSTEM & WEATHER ====================
             init: () => {
                 app.updateClock();
                 setInterval(app.updateClock, 1000 * 60);
@@ -509,7 +490,6 @@
                 document.getElementById('dateInput').valueAsDate = new Date();
                 if(state.customDesign) document.getElementById('dynamic-theme-style').textContent = state.customDesign;
                 
-                // SYNC: Listen for storage changes (multi-tab support)
                 window.addEventListener('storage', (e) => {
                     if (e.key === 'local_tasks' && !state.user) {
                         state.tasks = JSON.parse(e.newValue || "[]");
@@ -547,17 +527,7 @@
                 const lit = Math.floor(Math.random() * 15) + 5;
                 const fonts = ["'Inter', sans-serif", "'Playfair Display', serif", "'Roboto Mono', monospace", "'Comic Neue', cursive"];
                 const font = fonts[Math.floor(Math.random() * fonts.length)];
-                
-                const css = `
-                    :root {
-                        --bg-body: hsl(${hue}, ${sat}%, ${lit}%);
-                        --bg-sidebar: hsl(${hue}, ${sat}%, ${lit + 5}%);
-                        --bg-card: hsl(${hue}, ${sat}%, ${lit + 10}%);
-                        --bg-input: hsl(${hue}, ${sat}%, ${lit + 5}%);
-                        --accent: hsl(${(hue + 180) % 360}, 70%, 50%);
-                        --font-main: ${font};
-                    }
-                `;
+                const css = `:root { --bg-body: hsl(${hue}, ${sat}%, ${lit}%); --bg-sidebar: hsl(${hue}, ${sat}%, ${lit + 5}%); --bg-card: hsl(${hue}, ${sat}%, ${lit + 10}%); --bg-input: hsl(${hue}, ${sat}%, ${lit + 5}%); --accent: hsl(${(hue + 180) % 360}, 70%, 50%); --font-main: ${font}; }`;
                 document.getElementById('dynamic-theme-style').textContent = css;
                 localStorage.setItem('customDesignCSS', css);
                 state.customDesign = css;
@@ -577,64 +547,47 @@
                 }
             },
 
-            // ==================== DATA & RESET ====================
-            // FIXED: Added silent parameter to avoid alerts on every interaction
+            // ==================== CLOUD SYNC & DATA ====================
             saveLifetime: async (showNotification = false) => {
                 localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
                 if (showNotification) {
-                    if(state.user) { alert("Syncing to cloud..."); }
-                    else { alert("Local data secured."); }
+                    if(state.user) { 
+                        // If user is logged in, we inform them cloud sync is automatic via Firebase
+                        alert("Cloud Sync is active. All changes are being saved to your account."); 
+                    } else { 
+                        alert("Local data secured. Sign in to enable Cloud Sync."); 
+                    }
                 }
             },
 
-            // NEW: COMPLETE DATA WIPE FEATURE
             resetAllData: async () => {
-                // Double Confirmation for safety
                 if(!confirm("⚠️ DANGER ZONE ⚠️\n\nThis will permanently DELETE ALL tasks, history, and statistics.\n\nAre you sure?")) return;
                 if(!confirm("Last chance: This cannot be undone. Confirm full data wipe?")) return;
 
-                // 1. Reset Internal State
                 state.tasks = [];
                 state.history = ["Meeting", "Workout", "Study"]; 
                 state.charts = {};
-
-                // 2. Wipe Local Storage (Works for Offline)
                 localStorage.removeItem('local_tasks');
                 localStorage.setItem('taskHistory', JSON.stringify(state.history));
 
-                // 3. Wipe Online Data (If logged in)
                 if(state.user) {
                     try {
                         const q = query(collection(db, 'tasks'), where('uid', '==', state.user.uid));
                         const snapshot = await getDocs(q);
                         const batch = writeBatch(db);
-                        
-                        snapshot.docs.forEach(doc => {
-                            batch.delete(doc.ref);
-                        });
-                        
+                        snapshot.docs.forEach(doc => { batch.delete(doc.ref); });
                         await batch.commit();
                         alert("Cloud data wiped successfully.");
-                    } catch (e) {
-                        console.error("Wipe failed", e);
-                        alert("Error wiping cloud data: " + e.message);
-                    }
-                } else {
-                    alert("Local data wiped successfully.");
-                }
+                    } catch (e) { alert("Error wiping cloud data: " + e.message); }
+                } else { alert("Local data wiped successfully."); }
 
-                // 4. Re-render UI
                 renderTasks();
                 renderSuggestions();
                 if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
             },
 
             backupData: () => {
-                const data = {
-                    meta: { version: "4.3", date: new Date().toISOString() },
-                    tasks: state.tasks,
-                    history: state.history
-                };
+                const data = { meta: { version: "4.3", date: new Date().toISOString() }, tasks: state.tasks, history: state.history };
                 const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -643,25 +596,38 @@
                 a.click();
             },
 
+            // FIXED: Restore data now uploads to Cloud if user is signed in
             restoreData: (input) => {
                 const file = input.files[0];
                 if (!file) return;
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = async (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
-                        if(data.tasks) {
-                            state.tasks = [...state.tasks, ...data.tasks]; 
-                            app.saveLifetime(true);
+                        if(data.tasks && Array.isArray(data.tasks)) {
+                            // If online, perform batch upload
+                            if(state.user) {
+                                alert("Restoring to cloud... please wait.");
+                                const batch = writeBatch(db);
+                                data.tasks.forEach(t => {
+                                    // Strip old IDs to avoid conflicts and ensure new unique Firestore IDs
+                                    const { id, ...taskData } = t;
+                                    const newDocRef = doc(collection(db, 'tasks'));
+                                    batch.set(newDocRef, { ...taskData, uid: state.user.uid });
+                                });
+                                await batch.commit();
+                                alert("Cloud restore successful!");
+                            } else {
+                                state.tasks = [...state.tasks, ...data.tasks]; 
+                                app.saveLifetime(true);
+                                renderTasks();
+                            }
                         }
-                        renderTasks();
-                        alert("Checkpoint restored successfully!");
-                    } catch(err) { alert("Invalid File"); }
+                    } catch(err) { alert("Invalid File Format"); console.error(err); }
                 };
                 reader.readAsText(file);
             },
 
-            // ==================== UI NAVIGATION ====================
             toggleSidebar: () => {
                 document.getElementById('sidebar').classList.toggle('open');
                 const overlay = document.getElementById('sidebarOverlay');
@@ -682,7 +648,6 @@
                 if(id === 'focus') app.loadFocusTasks();
             },
 
-            // ==================== AUTH ====================
             toggleAuth: () => { if(state.user) signOut(auth); else document.getElementById('authModal').style.display = 'flex'; },
             login: async () => {
                 try { await signInWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display='none'; } catch(e){alert(e.message);}
@@ -691,7 +656,6 @@
                 try { await createUserWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display='none'; } catch(e){alert(e.message);}
             },
 
-            // ==================== TASKS LOGIC ====================
             setTaskFilter: (filter) => {
                 state.taskFilter = filter;
                 document.getElementById('filterActive').className = filter === 'active' ? 'btn btn-primary' : 'btn btn-secondary';
@@ -729,12 +693,12 @@
                 if(state.user) {
                     await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
                 } else {
-                    newTask.id = 'local_' + Date.now() + Math.random().toString(36).substr(2, 9);
+                    newTask.id = 'local_' + Date.now();
                     state.tasks.push(newTask);
-                    app.saveLifetime(false); // Silent save
+                    app.saveLifetime(false);
+                    renderTasks();
                 }
                 if(!title) input.value = '';
-                renderTasks();
             },
 
             startEdit: (id) => {
@@ -744,7 +708,6 @@
                 document.getElementById('dateInput').value = task.date;
                 document.getElementById('prioInput').value = task.priority;
                 document.getElementById('editTaskId').value = task.id;
-                
                 const btn = document.getElementById('addUpdateBtn');
                 btn.innerHTML = 'Update';
                 btn.classList.replace('btn-primary', 'btn-secondary');
@@ -763,14 +726,10 @@
                 if(state.user) {
                     await updateDoc(doc(db, 'tasks', id), { text, date, priority, tags, subtasks });
                 } else {
-                    const taskIndex = state.tasks.findIndex(t => t.id === id);
-                    if(taskIndex !== -1) {
-                        state.tasks[taskIndex] = { ...state.tasks[taskIndex], text, date, priority, tags };
-                        app.saveLifetime(false); // Silent save
-                    }
+                    const idx = state.tasks.findIndex(t => t.id === id);
+                    if(idx !== -1) { state.tasks[idx] = { ...state.tasks[idx], text, date, priority, tags }; app.saveLifetime(false); renderTasks(); }
                 }
                 app.cancelEdit();
-                renderTasks();
             },
 
             cancelEdit: () => {
@@ -786,22 +745,13 @@
                 const task = state.tasks.find(t => t.id === id);
                 const newVal = !task.completed;
                 if(state.user) await updateDoc(doc(db, 'tasks', id), { completed: newVal });
-                else { 
-                    task.completed = newVal; 
-                    app.saveLifetime(false); 
-                    renderTasks(); 
-                }
+                else { task.completed = newVal; app.saveLifetime(false); renderTasks(); }
             },
 
             deleteTask: async (id) => {
                 if(!confirm("Permanently delete?")) return;
-                if(state.user) {
-                    await deleteDoc(doc(db, 'tasks', id));
-                } else {
-                    state.tasks = state.tasks.filter(t => t.id !== id);
-                    app.saveLifetime(false); // Silent save
-                    renderTasks();
-                }
+                if(state.user) await deleteDoc(doc(db, 'tasks', id));
+                else { state.tasks = state.tasks.filter(t => t.id !== id); app.saveLifetime(false); renderTasks(); }
             },
 
             addSubtask: async (parentId) => {
@@ -810,38 +760,24 @@
                 const task = state.tasks.find(t => t.id === parentId);
                 const newSub = { id: Date.now(), text: input.value.trim(), completed: false };
                 const subtasks = [...(task.subtasks||[]), newSub];
-                
                 if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
-                else { 
-                    task.subtasks = subtasks; 
-                    app.saveLifetime(false); 
-                    renderTasks(); 
-                }
+                else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
             },
             
             toggleSubtask: async (parentId, subId) => {
                 const task = state.tasks.find(t => t.id === parentId);
                 const subtasks = task.subtasks.map(s => s.id == subId ? {...s, completed: !s.completed} : s);
-                if(state.user) { await updateDoc(doc(db, 'tasks', parentId), { subtasks }); } 
-                else { 
-                    task.subtasks = subtasks; 
-                    app.saveLifetime(false); 
-                    renderTasks(); 
-                }
+                if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
+                else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
             },
 
             deleteSubtask: async (parentId, subId) => {
                 const task = state.tasks.find(t => t.id === parentId);
                 const subtasks = task.subtasks.filter(s => s.id != subId);
-                if(state.user) { await updateDoc(doc(db, 'tasks', parentId), { subtasks }); } 
-                else { 
-                    task.subtasks = subtasks; 
-                    app.saveLifetime(false); 
-                    renderTasks(); 
-                }
+                if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
+                else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
             },
 
-            // ==================== CALENDAR ====================
             changeMonth: (offset) => {
                 state.currentDate.setMonth(state.currentDate.getMonth() + offset);
                 renderCalendar();
@@ -849,48 +785,26 @@
             selectDate: (dateStr) => {
                 document.getElementById('calSelectedDate').textContent = new Date(dateStr).toDateString();
                 const tasks = state.tasks.filter(t => t.date === dateStr);
-                const html = tasks.length ? tasks.map(t => 
-                    `<div style="padding:10px; background:var(--bg-body); margin-bottom:5px; border-radius:5px; border-left:3px solid var(--accent);">
-                        ${t.text} ${t.completed?'(Done)':''}
-                    </div>`).join('') : '<div style="color:var(--text-muted)">No tasks.</div>';
+                const html = tasks.length ? tasks.map(t => `<div style="padding:10px; background:var(--bg-body); margin-bottom:5px; border-radius:5px; border-left:3px solid var(--accent);">${t.text} ${t.completed?'(Done)':''}</div>`).join('') : '<div style="color:var(--text-muted)">No tasks.</div>';
                 document.getElementById('calSelectedTasks').innerHTML = html;
-                
                 document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
                 const cell = document.querySelector(`.cal-cell[data-date="${dateStr}"]`);
                 if(cell) cell.classList.add('selected');
             },
 
-            // ==================== COMMUNITY & GROUPS ====================
             loadCommunity: async () => {
                 const board = document.getElementById('leaderboardTable');
                 if(!state.user) {
-                    board.innerHTML = `
-                        <tr><th>Rank</th><th>User</th><th>Score</th></tr>
-                        <tr><td><span class="rank-badge rank-1">1</span></td><td>Sarah C.</td><td>1,250</td></tr>
-                        <tr><td><span class="rank-badge rank-2">2</span></td><td>John W.</td><td>1,100</td></tr>
-                        <tr><td><span class="rank-badge rank-3">3</span></td><td>You</td><td>${state.tasks.filter(t=>t.completed).length * 10}</td></tr>
-                    `;
+                    board.innerHTML = `<tr><th>Rank</th><th>User</th><th>Score</th></tr><tr><td><span class="rank-badge rank-1">1</span></td><td>Sarah C.</td><td>1,250</td></tr><tr><td><span class="rank-badge rank-2">2</span></td><td>John W.</td><td>1,100</td></tr><tr><td><span class="rank-badge rank-3">3</span></td><td>You</td><td>${state.tasks.filter(t=>t.completed).length * 10}</td></tr>`;
                 } else {
-                    board.innerHTML = `<tr><th>Rank</th><th>User</th><th>Score</th></tr>
-                        <tr><td>#1</td><td>${state.user.email.split('@')[0]}</td><td>${state.tasks.filter(t=>t.completed).length * 10}</td></tr>`;
+                    board.innerHTML = `<tr><th>Rank</th><th>User</th><th>Score</th></tr><tr><td>#1</td><td>${state.user.email.split('@')[0]}</td><td>${state.tasks.filter(t=>t.completed).length * 10}</td></tr>`;
                 }
-            },
-            joinGroup: (name) => {
-                document.getElementById('commBoard').style.display = 'none';
-                document.getElementById('groupChat').style.display = 'flex';
-                document.getElementById('chatTitle').textContent = name;
-                app.sendMessage(true);
-            },
-            leaveGroup: () => {
-                document.getElementById('groupChat').style.display = 'none';
-                document.getElementById('commBoard').style.display = 'block';
             },
             sendMessage: (isSys = false) => {
                 const box = document.getElementById('chatMsgs');
                 const input = document.getElementById('chatInput');
                 const txt = isSys ? "Welcome to the group!" : input.value;
                 if(!txt) return;
-                
                 const div = document.createElement('div');
                 div.className = isSys ? 'chat-msg them' : 'chat-msg me';
                 div.textContent = txt;
@@ -899,31 +813,22 @@
                 box.scrollTop = box.scrollHeight;
             },
 
-            // ==================== DASHBOARD & ANALYTICS ====================
             renderDashboardCharts: () => {
                 const timeFilter = document.getElementById('dashFilterTime').value;
                 const tagFilter = document.getElementById('dashFilterTag').value;
-
                 let filtered = state.tasks;
                 const now = new Date();
-                
                 if (timeFilter !== 'all') {
                     filtered = filtered.filter(t => {
                         const d = new Date(t.date);
                         if(timeFilter === 'daily') return d.toDateString() === now.toDateString();
-                        if(timeFilter === 'weekly') {
-                            const ago = new Date(); ago.setDate(now.getDate() - 7);
-                            return d >= ago && d <= now;
-                        }
+                        if(timeFilter === 'weekly') { const ago = new Date(); ago.setDate(now.getDate() - 7); return d >= ago && d <= now; }
                         if(timeFilter === 'monthly') return d.getMonth() === now.getMonth();
                         if(timeFilter === 'yearly') return d.getFullYear() === now.getFullYear();
                         return true;
                     });
                 }
-
-                if (tagFilter !== 'all') {
-                    filtered = filtered.filter(t => (t.tags||[]).includes(tagFilter));
-                }
+                if (tagFilter !== 'all') filtered = filtered.filter(t => (t.tags||[]).includes(tagFilter));
 
                 document.getElementById('dashTotal').textContent = filtered.length;
                 const done = filtered.filter(t => t.completed).length;
@@ -942,7 +847,6 @@
 
                 const ctx1 = document.getElementById('mainChart').getContext('2d');
                 if(state.charts.main) state.charts.main.destroy();
-                
                 const labels = [], dataPoints = [];
                 for(let i=6; i>=0; i--) {
                     const d = new Date(); d.setDate(d.getDate() - i);
@@ -950,45 +854,24 @@
                     labels.push(k.slice(5));
                     dataPoints.push(state.tasks.filter(t => t.date === k && t.completed).length);
                 }
-
                 state.charts.main = new Chart(ctx1, {
                     type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{ 
-                            label: 'Completed', 
-                            data: dataPoints, 
-                            borderColor: getComputedStyle(document.body).getPropertyValue('--accent'),
-                            tension: 0.4 
-                        }]
-                    },
+                    data: { labels: labels, datasets: [{ label: 'Completed', data: dataPoints, borderColor: getComputedStyle(document.body).getPropertyValue('--accent'), tension: 0.4 }] },
                     options: { maintainAspectRatio: false, plugins: { legend: {display:false} } }
                 });
 
                 const ctx2 = document.getElementById('tagChart').getContext('2d');
                 if(state.charts.tags) state.charts.tags.destroy();
-                
                 const tagCounts = {};
                 filtered.forEach(t => (t.tags||[]).forEach(tag => tagCounts[tag] = (tagCounts[tag]||0)+1));
-                
                 state.charts.tags = new Chart(ctx2, {
                     type: 'doughnut',
-                    data: {
-                        labels: Object.keys(tagCounts),
-                        datasets: [{
-                            data: Object.values(tagCounts),
-                            backgroundColor: ['#208084', '#10b981', '#f59e0b', '#ef4444', '#6366f1']
-                        }]
-                    },
+                    data: { labels: Object.keys(tagCounts), datasets: [{ data: Object.values(tagCounts), backgroundColor: ['#208084', '#10b981', '#f59e0b', '#ef4444', '#6366f1'] }] },
                     options: { maintainAspectRatio: false }
                 });
             },
 
-            // ==================== POMODORO INTEGRATION ====================
-            focusOnTask: (id) => {
-                app.switchTab('focus');
-                document.getElementById('focusTaskSelect').value = id;
-            },
+            focusOnTask: (id) => { app.switchTab('focus'); document.getElementById('focusTaskSelect').value = id; },
             loadFocusTasks: () => {
                 const sel = document.getElementById('focusTaskSelect');
                 sel.innerHTML = '<option value="">-- Select Task --</option>';
@@ -1000,102 +883,45 @@
             }
         };
 
-        // ==================== FOCUS TIMER ====================
+        // FOCUS TIMER
         let focusInterval;
         let timeLeft = 25 * 60;
         let currentAudio = null;
-
         window.focusMode = {
-            setDuration: (m) => {
-                timeLeft = m * 60;
-                updateTimer();
-                focusMode.pause();
-            },
+            setDuration: (m) => { timeLeft = m * 60; updateTimer(); focusMode.pause(); },
             start: () => {
                 if(focusInterval) return;
-                
                 const s = document.getElementById('soundSelect').value;
                 if(currentAudio) currentAudio.pause();
                 if(s === 'rain') currentAudio = document.getElementById('audioRain');
                 else if(s === 'white') currentAudio = document.getElementById('audioWhite');
                 else if(s === 'cafe') currentAudio = document.getElementById('audioCafe');
-                
-                if(currentAudio) currentAudio.play().catch(e=>console.log("Audio needs interaction"));
-
+                if(currentAudio) currentAudio.play().catch(e=>console.log("Audio interaction needed"));
                 document.getElementById('timerCircle').classList.add('timer-active');
                 focusInterval = setInterval(() => {
-                    timeLeft--;
-                    updateTimer();
-                    if(timeLeft <= 0) {
-                        clearInterval(focusInterval);
-                        focusMode.reset();
-                        alert("Focus Session Complete!");
-                        const tid = document.getElementById('focusTaskSelect').value;
-                        if(tid) app.toggleTask(tid);
-                    }
+                    timeLeft--; updateTimer();
+                    if(timeLeft <= 0) { clearInterval(focusInterval); focusMode.reset(); alert("Focus Session Complete!"); const tid = document.getElementById('focusTaskSelect').value; if(tid) app.toggleTask(tid); }
                 }, 1000);
             },
-            pause: () => {
-                clearInterval(focusInterval);
-                focusInterval = null;
-                document.getElementById('timerCircle').classList.remove('timer-active');
-                if(currentAudio) currentAudio.pause();
-            },
-            reset: () => {
-                focusMode.pause();
-                timeLeft = 25 * 60;
-                updateTimer();
-            }
+            pause: () => { clearInterval(focusInterval); focusInterval = null; document.getElementById('timerCircle').classList.remove('timer-active'); if(currentAudio) currentAudio.pause(); },
+            reset: () => { focusMode.pause(); timeLeft = 25 * 60; updateTimer(); }
         };
-
         function updateTimer() {
             const m = Math.floor(timeLeft / 60).toString().padStart(2,'0');
             const s = (timeLeft % 60).toString().padStart(2,'0');
             document.getElementById('timerDisplay').textContent = `${m}:${s}`;
         }
 
-        // ==================== RENDERING HELPERS ====================
+        // RENDERING HELPERS
         function renderTasks() {
             const list = document.getElementById('taskList');
             list.innerHTML = "";
             const filter = state.taskFilter; 
-
             const visibleTasks = state.tasks.filter(t => filter === 'completed' ? t.completed : !t.completed);
-
             visibleTasks.forEach(task => {
-                const subsHtml = (task.subtasks||[]).map(s => `
-                    <div class="subtask-row">
-                        <input type="checkbox" ${s.completed ? 'checked' : ''} onchange="app.toggleSubtask('${task.id}', '${s.id}')">
-                        <span style="text-decoration:${s.completed?'line-through':'none'}; opacity:${s.completed?0.5:1}; flex:1; color:var(--text-muted);">${s.text}</span>
-                        <button class="btn btn-icon btn-danger" style="width:20px;height:20px;padding:0;font-size:10px;" onclick="app.deleteSubtask('${task.id}', '${s.id}')"><i class="fas fa-times"></i></button>
-                    </div>
-                `).join('');
-                
+                const subsHtml = (task.subtasks||[]).map(s => `<div class="subtask-row"><input type="checkbox" ${s.completed ? 'checked' : ''} onchange="app.toggleSubtask('${task.id}', '${s.id}')"><span style="text-decoration:${s.completed?'line-through':'none'}; opacity:${s.completed?0.5:1}; flex:1; color:var(--text-muted);">${s.text}</span><button class="btn btn-icon btn-danger" style="width:20px;height:20px;padding:0;font-size:10px;" onclick="app.deleteSubtask('${task.id}', '${s.id}')"><i class="fas fa-times"></i></button></div>`).join('');
                 const tagsHtml = (task.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
-
-                const html = `
-                    <div class="task-card priority-${task.priority}">
-                        <div class="task-header">
-                            <input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''} onchange="app.toggleTask('${task.id}')">
-                            <div class="task-content">
-                                <div class="task-title" style="text-decoration: ${task.completed ? 'line-through' : 'none'}">
-                                    ${task.text.replace(/#\w+/g,'')} ${tagsHtml}
-                                </div>
-                                <div class="task-meta"><i class="far fa-calendar"></i> ${task.date} • ${task.priority.toUpperCase()}</div>
-                            </div>
-                            <div style="display:flex;gap:5px;">
-                                <button class="btn btn-icon" title="Focus on this" onclick="app.focusOnTask('${task.id}')"><i class="fas fa-stopwatch"></i></button>
-                                <button class="btn btn-icon" onclick="app.startEdit('${task.id}')"><i class="fas fa-pencil"></i></button>
-                                <button class="btn btn-icon btn-danger" onclick="app.deleteTask('${task.id}')"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                        <div class="subtasks">
-                            ${subsHtml}
-                            <div class="subtask-row">
-                                <input id="sub-input-${task.id}" placeholder="+ Subtask" style="background:transparent;border:none;color:var(--text-muted);width:100%;outline:none;font-size:13px;" onkeydown="if(event.key==='Enter') app.addSubtask('${task.id}')">
-                            </div>
-                        </div>
-                    </div>`;
+                const html = `<div class="task-card priority-${task.priority}"><div class="task-header"><input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''} onchange="app.toggleTask('${task.id}')"><div class="task-content"><div class="task-title" style="text-decoration: ${task.completed ? 'line-through' : 'none'}">${task.text.replace(/#\w+/g,'')} ${tagsHtml}</div><div class="task-meta"><i class="far fa-calendar"></i> ${task.date} • ${task.priority.toUpperCase()}</div></div><div style="display:flex;gap:5px;"><button class="btn btn-icon" onclick="app.focusOnTask('${task.id}')"><i class="fas fa-stopwatch"></i></button><button class="btn btn-icon" onclick="app.startEdit('${task.id}')"><i class="fas fa-pencil"></i></button><button class="btn btn-icon btn-danger" onclick="app.deleteTask('${task.id}')"><i class="fas fa-trash"></i></button></div></div><div class="subtasks">${subsHtml}<div class="subtask-row"><input id="sub-input-${task.id}" placeholder="+ Subtask" style="background:transparent;border:none;color:var(--text-muted);width:100%;outline:none;font-size:13px;" onkeydown="if(event.key==='Enter') app.addSubtask('${task.id}')"></div></div></div>`;
                 list.insertAdjacentHTML('beforeend', html);
             });
             if(visibleTasks.length === 0) list.innerHTML = `<div style="text-align:center;color:var(--text-muted);margin-top:20px;">No ${filter} tasks found.</div>`;
@@ -1104,54 +930,33 @@
         function renderCalendar() {
             const grid = document.getElementById('calGrid');
             grid.innerHTML = `<div class="cal-day-header">Sun</div><div class="cal-day-header">Mon</div><div class="cal-day-header">Tue</div><div class="cal-day-header">Wed</div><div class="cal-day-header">Thu</div><div class="cal-day-header">Fri</div><div class="cal-day-header">Sat</div>`;
-            
             const year = state.currentDate.getFullYear();
             const month = state.currentDate.getMonth();
             document.getElementById('calMonthYear').textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
-            
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-
             for(let i=0; i<firstDay; i++) grid.insertAdjacentHTML('beforeend', `<div></div>`);
-            
             for(let d=1; d<=daysInMonth; d++) {
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const isToday = dateStr === new Date().toISOString().split('T')[0];
                 const dayTasks = state.tasks.filter(t => t.date === dateStr);
                 const dots = dayTasks.map(t => `<div class="cal-task-dot ${t.completed?'done':''}">${t.text}</div>`).join('');
-                
-                grid.insertAdjacentHTML('beforeend', `
-                    <div class="cal-cell ${isToday ? 'today' : ''}" data-date="${dateStr}" onclick="app.selectDate('${dateStr}')">
-                        <div class="cal-date">${d}</div>
-                        ${dots}
-                        <div style="display:flex; gap:2px; justify-content:center; margin-top:auto;">
-                           ${dayTasks.length > 0 ? `<div style="width:4px; height:4px; border-radius:50%; background:var(--accent); display:none;" class="mobile-dot"></div>` : ''} 
-                        </div>
-                    </div>
-                `);
+                grid.insertAdjacentHTML('beforeend', `<div class="cal-cell ${isToday ? 'today' : ''}" data-date="${dateStr}" onclick="app.selectDate('${dateStr}')"><div class="cal-date">${d}</div>${dots}</div>`);
             }
         }
 
         function renderSuggestions() {
-            document.getElementById('suggestionsBox').innerHTML = state.history.map(h => 
-                `<div class="suggestion-chip" onclick="app.addTask('${h}')">${h} <span onclick="event.stopPropagation();app.removeSuggestion('${h}')">×</span></div>`
-            ).join('');
+            document.getElementById('suggestionsBox').innerHTML = state.history.map(h => `<div class="suggestion-chip" onclick="app.addTask('${h}')">${h} <span onclick="event.stopPropagation();app.removeSuggestion('${h}')">×</span></div>`).join('');
         }
-        
-        window.app.removeSuggestion = (t) => {
-            state.history = state.history.filter(h => h !== t);
-            localStorage.setItem('taskHistory', JSON.stringify(state.history));
-            renderSuggestions();
-        };
+        window.app.removeSuggestion = (t) => { state.history = state.history.filter(h => h !== t); localStorage.setItem('taskHistory', JSON.stringify(state.history)); renderSuggestions(); };
 
-        // ==================== AUTH LISTENER ====================
+        // AUTH LISTENER
         onAuthStateChanged(auth, (user) => {
             if(user) {
                 state.user = user;
                 document.getElementById('authBtn').textContent = "Sign Out";
                 document.getElementById('syncDot').style.background = "var(--success)";
                 document.getElementById('syncText').textContent = "Cloud Active";
-                
                 const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
                 onSnapshot(q, (snap) => {
                     state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -1169,10 +974,8 @@
             }
         });
 
-        // Initialize
         app.init();
         renderSuggestions();
-
     </script>
 </body>
 </html>
