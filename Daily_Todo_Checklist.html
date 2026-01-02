@@ -567,15 +567,14 @@
             },
 
             // ==================== DATA & SYNC ====================
-            saveLifetime: async () => {
-                // 1. Local Save
-                localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
-                
-                // 2. Cloud Save (if user)
-                if(state.user) {
-                    alert("Syncing to cloud...");
+saveLifetime: () => {
+                // Only save to local_tasks if the user is NOT signed in
+                if (!state.user) {
+                    localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
                 }
-                alert("Data secured.");
+                // Save other settings like theme/design regardless
+                localStorage.setItem('taskHistory', JSON.stringify(state.history));
+                if(state.customDesign) localStorage.setItem('customDesign', state.customDesign);
             },
 
             backupData: () => {
@@ -1111,31 +1110,36 @@ deleteTask: async (id) => {
 
         // ==================== AUTH LISTENER ====================
 onAuthStateChanged(auth, (user) => {
-    if(user) {
-        state.user = user;
-        document.getElementById('authBtn').textContent = "Sign Out";
-        document.getElementById('syncDot').style.background = "var(--success)";
-        document.getElementById('syncText').textContent = "Cloud Active";
-        
-        const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
-        onSnapshot(q, (snap) => {
-            // Merge Cloud tasks with any unsynced local tasks if desired, 
-            // or just show Cloud:
-            state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            renderTasks();
+            if(user) {
+                state.user = user;
+                document.getElementById('authBtn').textContent = "Sign Out";
+                document.getElementById('syncDot').style.background = "var(--success)";
+                document.getElementById('syncText').textContent = "Synced";
+                
+                // CRITICAL FIX: Clear local state so local ghosts don't merge with Cloud
+                state.tasks = []; 
+
+                const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
+                onSnapshot(q, (snap) => {
+                    // Update state with Cloud data ONLY
+                    state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    renderTasks();
+                    
+                    // Do NOT call app.saveLifetime() here! 
+                    // Calling it here is what was causing the reappearing bug.
+                    
+                    if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
+                    if(document.getElementById('calendar').classList.contains('active')) renderCalendar();
+                });
+            } else {
+                state.user = null;
+                document.getElementById('authBtn').textContent = "Sign In";
+                document.getElementById('syncDot').style.background = "var(--warning)";
+                document.getElementById('syncText').textContent = "Offline";
+                state.tasks = JSON.parse(localStorage.getItem('local_tasks')) || [];
+                renderTasks();
+            }
         });
-    } else {
-        state.user = null;
-        document.getElementById('authBtn').textContent = "Sign In";
-        document.getElementById('syncDot').style.background = "var(--warning)";
-        document.getElementById('syncText').textContent = "Offline";
-        
-        // FIX: Ensure local tasks are retrieved properly
-        const saved = localStorage.getItem('local_tasks');
-        state.tasks = saved ? JSON.parse(saved) : [];
-        renderTasks();
-    }
-});
 
         // Initialize
         app.init();
