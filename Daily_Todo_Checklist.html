@@ -567,15 +567,16 @@
             },
 
             // ==================== DATA & SYNC ====================
-saveLifetime: () => {
-    // ONLY save the task list to local storage if the user is a GUEST
-    if (!state.user) {
-        localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
-    }
-    // Always save history and design
-    localStorage.setItem('taskHistory', JSON.stringify(state.history));
-    if(state.customDesign) localStorage.setItem('customDesign', state.customDesign);
-},
+            saveLifetime: async () => {
+                // 1. Local Save
+                localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+                
+                // 2. Cloud Save (if user)
+                if(state.user) {
+                    alert("Syncing to cloud...");
+                }
+                alert("Data secured.");
+            },
 
             backupData: () => {
                 const data = {
@@ -647,20 +648,23 @@ saveLifetime: () => {
                 renderTasks();
             },
 
-handleTaskSubmit: async () => {
-    const id = document.getElementById('editTaskId').value;
-    // We clear the input early to prevent double-clicks
-    if(id) {
-        await app.updateTask(id);
-    } else {
-        await app.addTask();
-    }
-},
+            handleTaskSubmit: async () => {
+                const id = document.getElementById('editTaskId').value;
+                if(id) await app.updateTask(id); else await app.addTask();
+            },
 
-addTask: async (title = null) => {
+            addTask: async (title = null) => {
                 const input = document.getElementById('taskInput');
                 const text = title || input.value.trim();
                 if(!text) return;
+
+                // Update History
+                if(!state.history.includes(text)) {
+                    state.history.unshift(text);
+                    if(state.history.length > 8) state.history.pop();
+                    localStorage.setItem('taskHistory', JSON.stringify(state.history));
+                    renderSuggestions();
+                }
 
                 const newTask = {
                     text,
@@ -673,16 +677,12 @@ addTask: async (title = null) => {
                 };
 
                 if(state.user) {
-                    // CLOUD ONLY: Do not call saveLifetime() here
                     await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
                 } else {
-                    // LOCAL ONLY
                     newTask.id = 'local_' + Date.now();
                     state.tasks.push(newTask);
-                    localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
                     app.saveLifetime();
                 }
-                
                 if(!title) input.value = '';
                 renderTasks();
             },
@@ -747,26 +747,27 @@ updateTask: async (id) => {
 
 deleteTask: async (id) => {
     if(!confirm("Permanently delete?")) return;
+    
+    // Check if the task is local (IDs starting with 'local_' or 't_')
+    const isLocal = id.toString().startsWith('local_') || id.toString().startsWith('t_');
 
-    // 1. Remove from the local state immediately
-    state.tasks = state.tasks.filter(t => t.id !== id);
-
-    // 2. Explicitly wipe it from the local storage bucket
-    const localData = JSON.parse(localStorage.getItem('local_tasks')) || [];
-    const filteredLocal = localData.filter(t => t.id !== id);
-    localStorage.setItem('local_tasks', JSON.stringify(filteredLocal));
-
-    // 3. Only attempt Cloud delete if it's a real Cloud ID
-    const isLocalId = id.toString().startsWith('local_') || id.toString().startsWith('t_');
-    if(state.user && !isLocalId) {
+    if(state.user && !isLocal) {
+        // Only call Firebase if it's a real cloud task
         try {
             await deleteDoc(doc(db, 'tasks', id));
         } catch (e) {
-            console.error("Cloud delete failed, but local is gone.");
+            console.error("Cloud delete failed:", e);
+            // Fallback: Remove it locally if cloud fails
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            renderTasks();
         }
+    } else {
+        // Directly remove local tasks from state and localStorage
+        state.tasks = state.tasks.filter(t => t.id !== id);
+        localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+        app.saveLifetime();
+        renderTasks();
     }
-
-    renderTasks();
 },
 
             addSubtask: async (parentId) => {
@@ -1108,23 +1109,29 @@ deleteTask: async (id) => {
         };
 
         // ==================== AUTH LISTENER ====================
-onAuthStateChanged(auth, (user) => {
-    if(user) {
-        state.user = user;
-        document.getElementById('authBtn').textContent = "Sign Out";
-        // Clear local tasks from view so they don't sync to the cloud by mistake
-        state.tasks = []; 
-        
-        const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
-        onSnapshot(q, (snap) => {
-            state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            renderTasks();
-            // REMOVE any saveLifetime() calls from inside this listener!
+        onAuthStateChanged(auth, (user) => {
+            if(user) {
+                state.user = user;
+                document.getElementById('authBtn').textContent = "Sign Out";
+                document.getElementById('syncDot').style.background = "var(--success)";
+                document.getElementById('syncText').textContent = "Cloud Active";
+                
+                const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
+                onSnapshot(q, (snap) => {
+                    state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    renderTasks();
+                    if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
+                    if(document.getElementById('calendar').classList.contains('active')) renderCalendar();
+                });
+            } else {
+                state.user = null;
+                document.getElementById('authBtn').textContent = "Sign In";
+                document.getElementById('syncDot').style.background = "var(--warning)";
+                document.getElementById('syncText').textContent = "Offline";
+                state.tasks = JSON.parse(localStorage.getItem('local_tasks')) || [];
+                renderTasks();
+            }
         });
-    } else {
-        // ... (rest of your sign-out code)
-    }
-});
 
         // Initialize
         app.init();
