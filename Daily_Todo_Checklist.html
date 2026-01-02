@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v4.4 (Live Community)</title>
+    <title>Enterprise TaskPro - v4.5 (Forgot Password Added)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -219,7 +219,7 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="fas fa-bolt"></i> TaskPro 4.4
+            <i class="fas fa-bolt"></i> TaskPro 4.5
             <button class="btn btn-icon" style="margin-left:auto; background:transparent; display:none;" onclick="app.toggleSidebar()" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
         </div>
         
@@ -440,6 +440,11 @@
             <form onsubmit="event.preventDefault(); app.login();">
                 <input type="email" id="authEmail" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:10px; border-radius:8px;" placeholder="Email" autocomplete="username">
                 <input type="password" id="authPass" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:20px; border-radius:8px;" placeholder="Password" autocomplete="current-password">
+                
+                <div style="margin-bottom: 20px; text-align: right;">
+                    <a href="#" onclick="app.forgotPassword()" style="color: var(--accent); font-size: 13px; text-decoration: none;">Forgot Password?</a>
+                </div>
+
                 <div style="display:flex; gap:10px;">
                     <button type="submit" class="btn btn-primary" style="flex:1">Login</button>
                     <button type="button" class="btn btn-secondary" style="flex:1" onclick="app.register()">Sign Up</button>
@@ -455,7 +460,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, writeBatch, orderBy, limit, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // FIREBASE CONFIG
@@ -654,11 +659,27 @@
             },
 
             toggleAuth: () => { if(state.user) signOut(auth); else document.getElementById('authModal').style.display = 'flex'; },
+            
             login: async () => {
                 try { await signInWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display='none'; } catch(e){alert(e.message);}
             },
+            
             register: async () => {
                 try { await createUserWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display='none'; } catch(e){alert(e.message);}
+            },
+
+            forgotPassword: async () => {
+                const email = document.getElementById('authEmail').value;
+                if(!email) {
+                    alert("Please enter your email address in the box first.");
+                    return;
+                }
+                try {
+                    await sendPasswordResetEmail(auth, email);
+                    alert("Password reset email sent! Check your inbox.");
+                } catch(e) {
+                    alert("Error: " + e.message);
+                }
             },
 
             setTaskFilter: (filter) => {
