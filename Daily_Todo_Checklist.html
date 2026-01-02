@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v4.5 (Forgot Password Added)</title>
+    <title>Enterprise TaskPro - v4.6 (Streak Feature)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -24,6 +24,7 @@
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
+            --streak-fire: #f97316; /* Orange for Streak Fire */
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             --radius: 12px;
             --font-main: 'Inter', sans-serif;
@@ -219,7 +220,7 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="fas fa-bolt"></i> TaskPro 4.5
+            <i class="fas fa-bolt"></i> TaskPro 4.6
             <button class="btn btn-icon" style="margin-left:auto; background:transparent; display:none;" onclick="app.toggleSidebar()" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
         </div>
         
@@ -309,6 +310,15 @@
                 <div class="task-card" style="text-align:center; padding: 20px 10px;">
                     <div style="font-size:28px; font-weight:700; color:var(--warning);" id="dashPending">0</div>
                     <div style="color:var(--text-muted); font-size:11px; margin-top:5px;">PENDING</div>
+                </div>
+                
+                <div class="task-card" style="text-align:center; padding: 20px 10px;">
+                    <div style="font-size:28px; font-weight:700; color:var(--streak-fire); display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <span id="streakCount">0</span>
+                        <i class="fas fa-fire" id="streakIcon" style="font-size:20px; opacity:0.3; transition:0.3s;"></i>
+                    </div>
+                    <div style="color:var(--text-muted); font-size:11px; margin-top:5px;">CURRENT STREAK</div>
+                    <div style="font-size:9px; color:var(--text-muted); margin-top:3px;">(Consecutive Days All Done)</div>
                 </div>
             </div>
 
@@ -883,11 +893,73 @@
                 box.scrollTop = box.scrollHeight;
             },
 
+            // --- STREAK LOGIC ---
+            calculateStreak: () => {
+                let streak = 0;
+                let today = new Date();
+                today.setHours(0,0,0,0);
+                
+                // Helper to get formatted date string matching task date input
+                const getIsoDate = (d) => {
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+
+                // Check Today
+                const todayStr = getIsoDate(today);
+                const tasksToday = state.tasks.filter(t => t.date === todayStr);
+                
+                // If today has tasks and ALL are completed, streak counts for today
+                if (tasksToday.length > 0 && tasksToday.every(t => t.completed)) {
+                    streak++;
+                }
+
+                // Check Previous Days
+                let checkDate = new Date(today);
+                checkDate.setDate(checkDate.getDate() - 1); // Start from yesterday
+
+                while (true) {
+                    const dateStr = getIsoDate(checkDate);
+                    const tasksOnDate = state.tasks.filter(t => t.date === dateStr);
+                    
+                    if (tasksOnDate.length === 0) {
+                        // Strict Streak: If a day has NO tasks, streak breaks? 
+                        // Or do we skip it? Let's treat "no tasks" as a break for stricter productivity.
+                        break; 
+                    }
+
+                    if (tasksOnDate.every(t => t.completed)) {
+                        streak++;
+                        checkDate.setDate(checkDate.getDate() - 1);
+                    } else {
+                        break; // Streak broken
+                    }
+                }
+                return streak;
+            },
+
             renderDashboardCharts: () => {
                 const timeFilter = document.getElementById('dashFilterTime').value;
                 const tagFilter = document.getElementById('dashFilterTag').value;
                 let filtered = state.tasks;
                 const now = new Date();
+                
+                // --- STREAK RENDER ---
+                const currentStreak = app.calculateStreak();
+                document.getElementById('streakCount').textContent = currentStreak;
+                const streakIcon = document.getElementById('streakIcon');
+                if(currentStreak > 0) {
+                    streakIcon.style.opacity = '1';
+                    streakIcon.style.color = '#f97316';
+                    streakIcon.classList.add('fa-beat');
+                } else {
+                    streakIcon.style.opacity = '0.3';
+                    streakIcon.style.color = 'var(--text-muted)';
+                    streakIcon.classList.remove('fa-beat');
+                }
+
                 if (timeFilter !== 'all') {
                     filtered = filtered.filter(t => {
                         const d = new Date(t.date);
