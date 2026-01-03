@@ -1,10 +1,12 @@
 {
   "name": "Enterprise TaskPro",
   "short_name": "TaskPro",
+  "description": "A professional real-time task manager with focus sessions and community features.",
   "start_url": "Daily_Todo_Checklist.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#208084",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png",
