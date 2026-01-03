@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v7.2 (Sync & Glow)</title>
+    <title>Enterprise TaskPro - v7.3 (Audio & Logic Fixes)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -188,7 +188,7 @@
         .timer-time { font-size: 48px; font-weight: 700; line-height: 1; }
         .timer-label { font-size: 14px; text-transform: uppercase; color: var(--text-muted); margin-top: 5px; letter-spacing: 1px;}
         
-        /* UPDATED: Visual Glows for Modes */
+        /* Visual Glows */
         .timer-active.focus-mode { 
             border-color: var(--accent); 
             box-shadow: 0 0 40px rgba(32, 128, 132, 0.5), inset 0 0 15px rgba(32, 128, 132, 0.2); 
@@ -259,7 +259,7 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="fas fa-bolt"></i> TaskPro 7.2
+            <i class="fas fa-bolt"></i> TaskPro 7.3
             <button class="btn btn-icon" style="margin-left:auto; background:transparent; display:none;" onclick="app.toggleSidebar()" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
         </div>
         
@@ -460,9 +460,12 @@
                             <option value="beats">Deep Focus (Beats)</option>
                             <option value="wind">Pink Noise</option>
                             <option value="white">White Noise</option>
-                            <option value="brown">Brown Noise (Deep)</option>
+                            <option value="brown">Brown Noise</option>
                             <option value="rain">Heavy Rain</option>
-                            <option value="forest">Forest Ambience</option>
+                            <option value="forest">Forest (Birds)</option>
+                            <option value="night">Night (Crickets)</option>
+                            <option value="ocean">Ocean Waves</option>
+                            <option value="fan">Fan</option>
                         </select>
                     </div>
                 </div>
@@ -480,7 +483,7 @@
                         <i class="fas fa-pause"></i> Pause
                     </button>
                     
-                    <button class="btn btn-secondary btn-danger" onclick="focusMode.reset()">Stop</button>
+                    <button class="btn btn-secondary btn-danger" onclick="focusMode.stop()">Stop</button>
                 </div>
 
                 <div class="idle-tracker">
@@ -558,7 +561,6 @@
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, writeBatch, orderBy, limit, getDocs, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyCoCFw0hezldX3t33AYa1ytddYMuQCWliM",
             authDomain: "daily-todo-1e4ad.firebaseapp.com",
@@ -702,7 +704,6 @@
                             score: 0,
                             lastActive: Date.now()
                         });
-                        // Reset timer doc
                         await setDoc(doc(db, 'timers', state.user.uid), {
                             status: 'idle', idleSeconds: 0, updatedAt: Date.now()
                         });
@@ -1226,7 +1227,7 @@
         };
 
         // =======================================================
-        //  FIX 1 & 2: ROBUST AUDIO ENGINE & RELIABLE TIMER & SYNC
+        //  FIX 1 & 2 & 3: AUDIO ENGINE & RELIABLE TIMER & SYNC
         // =======================================================
 
         const AudioEngine = {
@@ -1290,30 +1291,56 @@
                 const t = AudioEngine.ctx.currentTime;
                 
                 AudioEngine.gainNode = AudioEngine.ctx.createGain();
-                AudioEngine.gainNode.gain.setValueAtTime(0.15, t);
+                AudioEngine.gainNode.gain.setValueAtTime(0.1, t);
                 AudioEngine.gainNode.connect(AudioEngine.ctx.destination);
 
-                if (['white', 'wind', 'rain', 'brown'].includes(type)) {
+                // NOISE BASED
+                if (['white', 'wind', 'rain', 'brown', 'ocean', 'fan'].includes(type)) {
                     const noise = AudioEngine.ctx.createBufferSource();
                     noise.buffer = AudioEngine.createNoiseBuffer();
                     noise.loop = true;
                     
                     let finalNode = noise;
 
-                    // Filters
-                    if (type === 'wind' || type === 'rain') { // Pink-ish
+                    if (type === 'wind' || type === 'rain') { 
                         const filter = AudioEngine.ctx.createBiquadFilter();
                         filter.type = 'lowpass';
                         filter.frequency.value = type === 'wind' ? 400 : 800; 
                         noise.connect(filter);
                         finalNode = filter;
                     } 
-                    if (type === 'brown') { // Brown Noise Approx
+                    if (type === 'brown') {
                          const filter = AudioEngine.ctx.createBiquadFilter();
                          filter.type = 'lowpass';
                          filter.frequency.value = 150;
                          noise.connect(filter);
                          finalNode = filter;
+                    }
+                    if (type === 'ocean') {
+                        const filter = AudioEngine.ctx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.Q.value = 1;
+                        noise.connect(filter);
+                        // LFO for waves
+                        const lfo = AudioEngine.ctx.createOscillator();
+                        lfo.type = 'sine';
+                        lfo.frequency.value = 0.1; 
+                        const lfoGain = AudioEngine.ctx.createGain();
+                        lfoGain.gain.value = 300;
+                        lfo.connect(lfoGain);
+                        lfoGain.connect(filter.frequency);
+                        filter.frequency.setValueAtTime(400, t);
+                        lfo.start();
+                        AudioEngine.activeNodes.push(lfo);
+                        finalNode = filter;
+                    }
+                    if (type === 'fan') {
+                        const filter = AudioEngine.ctx.createBiquadFilter();
+                        filter.type = 'bandpass';
+                        filter.frequency.value = 150;
+                        filter.Q.value = 2;
+                        noise.connect(filter);
+                        finalNode = filter;
                     }
 
                     finalNode.connect(AudioEngine.gainNode);
@@ -1333,31 +1360,58 @@
                 }
 
                 if (type === 'forest') {
-                    // Simple synthesized forest ambience (chirps)
-                    const lfo = AudioEngine.ctx.createOscillator();
-                    lfo.frequency.value = 2; // mod speed
-                    const gain = AudioEngine.ctx.createGain();
-                    gain.gain.value = 500;
-                    lfo.connect(gain);
-                    
-                    const osc = AudioEngine.ctx.createOscillator();
-                    osc.type = 'sine';
-                    osc.frequency.value = 1500;
-                    gain.connect(osc.frequency);
-                    
-                    osc.connect(AudioEngine.gainNode);
-                    
-                    // Modulate volume heavily to simulate intermittent chirps
-                    const chirpEnv = AudioEngine.ctx.createOscillator();
-                    chirpEnv.frequency.value = 0.8;
-                    const chirpGain = AudioEngine.ctx.createGain();
-                    chirpGain.gain.value = 1;
-                    chirpEnv.connect(chirpGain.gain);
-                    osc.connect(chirpGain);
-                    chirpGain.connect(AudioEngine.gainNode);
+                    // Improved Forest: Pink Noise (Leaves) + Random Chirps
+                    const noise = AudioEngine.ctx.createBufferSource();
+                    noise.buffer = AudioEngine.createNoiseBuffer();
+                    noise.loop = true;
+                    const filter = AudioEngine.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 500;
+                    noise.connect(filter);
+                    const noiseGain = AudioEngine.ctx.createGain();
+                    noiseGain.gain.value = 0.3;
+                    filter.connect(noiseGain);
+                    noiseGain.connect(AudioEngine.gainNode);
+                    noise.start();
+                    AudioEngine.activeNodes.push(noise);
 
-                    lfo.start(); osc.start(); chirpEnv.start();
-                    AudioEngine.activeNodes.push(lfo, osc, chirpEnv);
+                    // Random Bird Chirps
+                    const playChirp = () => {
+                        if(AudioEngine.activeNodes.length === 0) return; // Stopped
+                        const osc = AudioEngine.ctx.createOscillator();
+                        const g = AudioEngine.ctx.createGain();
+                        osc.frequency.setValueAtTime(1500 + Math.random()*1000, AudioEngine.ctx.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(1000 + Math.random()*500, AudioEngine.ctx.currentTime + 0.1);
+                        g.gain.setValueAtTime(0, AudioEngine.ctx.currentTime);
+                        g.gain.linearRampToValueAtTime(0.1, AudioEngine.ctx.currentTime + 0.05);
+                        g.gain.linearRampToValueAtTime(0, AudioEngine.ctx.currentTime + 0.2);
+                        osc.connect(g);
+                        g.connect(AudioEngine.gainNode);
+                        osc.start(); osc.stop(AudioEngine.ctx.currentTime + 0.2);
+                        setTimeout(playChirp, 1000 + Math.random() * 4000);
+                    };
+                    playChirp();
+                }
+
+                if (type === 'night') {
+                    // Crickets: High freq Osc with amplitude modulation
+                    const car = AudioEngine.ctx.createOscillator();
+                    car.frequency.value = 4500;
+                    const mod = AudioEngine.ctx.createOscillator();
+                    mod.type = 'square';
+                    mod.frequency.value = 10;
+                    const modGain = AudioEngine.ctx.createGain();
+                    modGain.gain.value = 1000;
+                    
+                    const masterG = AudioEngine.ctx.createGain();
+                    masterG.gain.value = 0.05;
+                    
+                    mod.connect(masterG.gain);
+                    car.connect(masterG);
+                    masterG.connect(AudioEngine.gainNode);
+                    
+                    car.start(); mod.start();
+                    AudioEngine.activeNodes.push(car, mod);
                 }
             },
 
@@ -1371,11 +1425,11 @@
         window.focusMode = {
             timerInterval: null,
             status: 'idle', // 'idle', 'running', 'paused', 'break'
+            pausedType: null, // to track if we paused 'focus' or 'break'
             endTime: 0,
             remainingAtPause: 0,
             totalDuration: 0,
             
-            // Sync logic
             syncTimerState: async () => {
                 if(!state.user) return;
                 const data = {
@@ -1383,6 +1437,7 @@
                     endTime: focusMode.endTime,
                     remainingAtPause: focusMode.remainingAtPause,
                     totalDuration: focusMode.totalDuration,
+                    pausedType: focusMode.pausedType || null,
                     updatedAt: Date.now()
                 };
                 try {
@@ -1391,16 +1446,18 @@
             },
 
             start: (type) => {
-                // If starting fresh
-                if (focusMode.status === 'idle' || focusMode.status !== type) {
+                // FIXED: Check if we are resuming the correct type
+                if (focusMode.status === 'paused' && focusMode.pausedType === type) {
+                    focusMode.endTime = Date.now() + focusMode.remainingAtPause;
+                    focusMode.status = type;
+                    focusMode.pausedType = null;
+                } else {
+                    // Start fresh
                     let mins = parseInt(document.getElementById(type === 'focus' ? 'focusDuration' : 'breakDuration').value) || 25;
                     focusMode.totalDuration = mins * 60 * 1000;
                     focusMode.endTime = Date.now() + focusMode.totalDuration;
-                    focusMode.status = type; // 'focus' or 'break'
-                } else if (focusMode.status === 'paused') {
-                    // Resuming
-                    focusMode.endTime = Date.now() + focusMode.remainingAtPause;
                     focusMode.status = type;
+                    focusMode.pausedType = null;
                 }
 
                 focusMode.updateUI(true);
@@ -1415,14 +1472,14 @@
                 if(focusMode.status === 'idle') return;
 
                 if (focusMode.status === 'paused') {
-                    // Resume logic handled in start, but we need to know previous mode
-                    // For simplicity, resume based on UI class
-                    const isBreak = document.getElementById('timerCircle').classList.contains('break-mode');
-                    focusMode.start(isBreak ? 'break' : 'focus');
+                    // Resume based on what was paused
+                    const resumeType = focusMode.pausedType || 'focus';
+                    focusMode.start(resumeType);
                 } else {
                     // Pause
                     const now = Date.now();
                     focusMode.remainingAtPause = Math.max(0, focusMode.endTime - now);
+                    focusMode.pausedType = focusMode.status; // Remember what we paused
                     focusMode.status = 'paused';
                     
                     focusMode.updateUI(false);
@@ -1432,12 +1489,25 @@
                 }
             },
 
+            stop: () => {
+                // Feature: Ask to complete task on manual stop
+                const taskId = document.getElementById('focusTaskSelect').value;
+                if(taskId) {
+                    const task = state.tasks.find(t => t.id === taskId);
+                    if(task && !task.completed) {
+                        if(confirm(`Timer stopped. Mark '${task.text}' as completed?`)) {
+                            app.toggleTask(taskId);
+                        }
+                    }
+                }
+                focusMode.reset();
+            },
+
             complete: () => {
                 clearInterval(focusMode.timerInterval);
                 AudioEngine.stopBackground();
                 AudioEngine.playBeep('end');
                 
-                // Auto-complete task if in focus mode
                 if (focusMode.status === 'focus') {
                     const tid = document.getElementById('focusTaskSelect').value;
                     if(tid) app.toggleTask(tid);
@@ -1454,10 +1524,10 @@
             reset: () => {
                 clearInterval(focusMode.timerInterval);
                 focusMode.status = 'idle';
+                focusMode.pausedType = null;
                 AudioEngine.stopBackground();
                 focusMode.updateUI(false);
                 
-                // Reset display
                 let mins = parseInt(document.getElementById('focusDuration').value) || 25;
                 const m = mins.toString().padStart(2,'0');
                 document.getElementById('timerDisplay').textContent = `${m}:00`;
@@ -1487,7 +1557,7 @@
                 const btnFocus = document.getElementById('btnStartFocus');
                 const btnBreak = document.getElementById('btnStartBreak');
 
-                circle.className = 'timer-circle'; // reset
+                circle.className = 'timer-circle'; 
                 
                 if (focusMode.status === 'focus') circle.classList.add('focus-mode', 'timer-active');
                 if (focusMode.status === 'break') circle.classList.add('break-mode', 'timer-active');
@@ -1515,22 +1585,18 @@
             }
         };
 
-        // IDLE TRACKER & SYNC
+        // IDLE TRACKER
         let lastIdleSync = Date.now();
 
         setInterval(() => {
-            // Run idle if Mode is IDLE OR PAUSED
             if(focusMode.status === 'idle' || focusMode.status === 'paused') {
                 state.idleSeconds++;
-                
                 const hrs = Math.floor(state.idleSeconds / 3600).toString().padStart(2,'0');
                 const mins = Math.floor((state.idleSeconds % 3600) / 60).toString().padStart(2,'0');
                 const secs = (state.idleSeconds % 60).toString().padStart(2,'0');
                 document.getElementById('idleDisplay').textContent = `${hrs}:${mins}:${secs}`;
-                
                 localStorage.setItem('localIdleSeconds', state.idleSeconds);
 
-                // Sync Idle to Cloud every 10 seconds if user exists
                 if(state.user && Date.now() - lastIdleSync > 10000) {
                     setDoc(doc(db, 'timers', state.user.uid), { 
                         idleSeconds: state.idleSeconds 
@@ -1540,7 +1606,7 @@
             }
         }, 1000);
 
-        // AUTH LISTENER & SYNC INITIALIZATION
+        // SYNC LISTENER
         onAuthStateChanged(auth, (user) => {
             if(user) {
                 state.user = user;
@@ -1548,7 +1614,6 @@
                 document.getElementById('syncDot').style.background = "var(--success)";
                 document.getElementById('syncText').textContent = "Cloud Active";
                 
-                // Tasks Sync
                 const qTasks = query(collection(db, 'tasks'), where('uid', '==', user.uid));
                 onSnapshot(qTasks, (snap) => {
                     state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -1558,42 +1623,32 @@
                     app.syncLeaderboard();
                 });
 
-                // Notes Sync
                 const qNotes = query(collection(db, 'notes'), where('uid', '==', user.uid));
                 onSnapshot(qNotes, (snap) => {
                     state.notes = snap.docs.map(d => ({id: d.id, ...d.data()}));
                     if(document.getElementById('notes').classList.contains('active')) app.renderNotes();
                 });
                 
-                // Timer & Idle Sync Listener
                 onSnapshot(doc(db, 'timers', user.uid), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
-                        
-                        // Sync Idle Time (Max of local or cloud to prevent overwrite by older device)
-                        if(data.idleSeconds > state.idleSeconds) {
-                            state.idleSeconds = data.idleSeconds;
-                        }
+                        if(data.idleSeconds > state.idleSeconds) state.idleSeconds = data.idleSeconds;
 
-                        // Sync Timer State
                         if(data.status && data.updatedAt > (focusMode.lastLocalUpdate || 0)) {
-                             // Only update if remote change is newer (we need logic to avoid loops)
-                             // For simplicity: accept remote truth if we aren't the one who just wrote it
-                             // In this simple version, we'll just check if status differs significantly
                              if (data.status !== focusMode.status || Math.abs(data.endTime - focusMode.endTime) > 2000) {
                                  focusMode.status = data.status;
                                  focusMode.endTime = data.endTime;
                                  focusMode.remainingAtPause = data.remainingAtPause;
                                  focusMode.totalDuration = data.totalDuration;
+                                 focusMode.pausedType = data.pausedType;
                                  
-                                 // Update UI based on remote state
                                  focusMode.updateUI(data.status === 'focus' || data.status === 'break');
                                  if(data.status === 'focus' || data.status === 'break') {
                                      focusMode.runLoop();
                                  } else {
                                      clearInterval(focusMode.timerInterval);
                                      if(data.status === 'idle') {
-                                         document.getElementById('timerDisplay').textContent = "00:00"; // Or ready state
+                                         document.getElementById('timerDisplay').textContent = "00:00";
                                      } else if (data.status === 'paused') {
                                          const diff = data.remainingAtPause;
                                          const m = Math.floor(diff / 60000).toString().padStart(2,'0');
@@ -1618,7 +1673,7 @@
             }
         });
 
-        // RENDERING HELPERS
+        // RENDERING
         function renderTasks() {
             const list = document.getElementById('taskList');
             list.innerHTML = "";
