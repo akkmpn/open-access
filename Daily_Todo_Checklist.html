@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v7.0 (Pomodoro & Audio Engine)</title>
+    <title>Enterprise TaskPro - v7.0 (Pomodoro & Idle)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* ==================== CORE VARIABLES ==================== */
+        /* ==================== 1. CORE VARIABLES ==================== */
         :root {
             --bg-body: #0f172a;
             --bg-sidebar: #1e293b;
@@ -31,12 +31,6 @@
             --font-main: 'Inter', sans-serif;
             --border-width: 1px;
             --sidebar-width: 260px;
-            
-            /* Pomodoro Specific Colors */
-            --mode-focus: #208084;
-            --mode-short: #10b981;
-            --mode-long: #8b5cf6;
-            --mode-idle: #64748b;
         }
 
         [data-theme="light"] {
@@ -182,102 +176,99 @@
         /* Mobile List for Calendar */
         .cal-mobile-list { margin-top: 20px; padding: 15px; background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); display: none; }
         
-        /* ==================== FOCUS POMODORO ==================== */
-        .timer-container {
-            text-align: center;
-            max-width: 500px;
-            margin: 0 auto;
-            position: relative;
+        /* Focus Timer */
+        .timer-container { text-align:center; max-width:500px; margin:0 auto; }
+        .timer-circle { 
+            width: 240px; height: 240px; border-radius: 50%; border: 8px solid var(--bg-card); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            margin: 20px auto; position: relative; 
+            background: radial-gradient(circle, var(--bg-sidebar) 0%, var(--bg-body) 100%); 
+            box-shadow: var(--shadow); color: var(--text-main); transition: 0.3s; 
+        }
+        .timer-time { font-size: 48px; font-weight: 700; line-height: 1; }
+        .timer-label { font-size: 14px; text-transform: uppercase; color: var(--text-muted); margin-top: 5px; letter-spacing: 1px;}
+        
+        .timer-active.focus-mode { border-color: var(--accent); box-shadow: 0 0 30px rgba(32, 128, 132, 0.4); }
+        .timer-active.break-mode { border-color: var(--success); box-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
+
+        .idle-tracker {
+            margin-top: 30px; padding: 15px; border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
         }
 
-        .mode-badges {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+        /* Leaderboard */
+        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 300px; }
+        .leaderboard-table th { text-align: left; padding: 10px; color: var(--text-muted); font-size: 12px; border-bottom: 1px solid var(--border); }
+        .leaderboard-table td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .rank-badge { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; margin-right: 10px; }
+        .rank-1 { background: #fbbf24; color: #78350f; } .rank-2 { background: #94a3b8; color: #0f172a; } .rank-3 { background: #b45309; color: #fffbeb; }
 
-        .mode-badge {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
+        /* ==================== REIMAGINED NOTES ==================== */
+        .note-card {
             background: var(--bg-card);
-            color: var(--text-muted);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .mode-badge.active {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-            transform: scale(1.05);
-            box-shadow: 0 0 10px var(--accent);
-        }
-
-        .timer-circle {
-            width: 240px;
-            height: 240px;
-            border-radius: 50%;
-            border: 8px solid var(--bg-card);
+            border: var(--border-width) solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin: 30px auto;
-            position: relative;
-            background: radial-gradient(circle, var(--bg-sidebar) 0%, var(--bg-body) 100%);
-            box-shadow: var(--shadow);
-            color: var(--text-main);
-            transition: border-color 0.5s, box-shadow 0.5s;
         }
-
-        .timer-time {
-            font-size: 52px;
-            font-weight: 800;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -1px;
-        }
-
-        .timer-status {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-top: 5px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Dynamic Colors for Timer */
-        .timer-circle[data-mode="focus"] { border-color: var(--mode-focus); }
-        .timer-circle[data-mode="short"] { border-color: var(--mode-short); }
-        .timer-circle[data-mode="long"] { border-color: var(--mode-long); }
-        .timer-circle[data-mode="idle"] { border-color: var(--mode-idle); }
-
-        .timer-circle.running {
-            box-shadow: 0 0 30px currentColor;
-        }
-
-        .volume-control {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        /* Notes & Chat */
-        .note-card { background: var(--bg-card); border: var(--border-width) solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 15px; position: relative; box-shadow: var(--shadow); transition: transform 0.2s ease; display: flex; flex-direction: column; }
-        .note-header-actions { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px; }
-        .note-action-btn { background: var(--bg-body); border: 1px solid var(--border); color: var(--text-muted); width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
-        .note-action-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--bg-hover); }
-        .note-content { font-family: 'Playfair Display', serif; font-size: 18px; line-height: 1.6; color: var(--text-main); white-space: pre-wrap; flex: 1; }
-        .note-date { font-family: var(--font-main); font-size: 11px; color: var(--text-muted); margin-top: 15px; text-align: right; border-top: 1px solid var(--border); padding-top: 10px; }
         
+        .note-header-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .note-action-btn {
+            background: var(--bg-body);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            width: 30px; 
+            height: 30px; 
+            border-radius: 8px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .note-action-btn:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: var(--bg-hover);
+        }
+
+        .note-action-btn.delete-btn:hover {
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .note-content {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            line-height: 1.6;
+            color: var(--text-main);
+            white-space: pre-wrap;
+            flex: 1;
+        }
+        
+        .note-date {
+            font-family: var(--font-main);
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 15px;
+            text-align: right;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+        }
+
+        /* Chat */
         .chat-layout { display: flex; height: 500px; background: var(--bg-body); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 20px; }
         .chat-main { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
         .chat-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
@@ -287,13 +278,6 @@
         .chat-msg { max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; word-wrap: break-word; }
         .chat-msg.them { background: var(--bg-card); align-self: flex-start; border-bottom-left-radius: 0; border: 1px solid var(--border); }
         .chat-msg.me { background: var(--accent); color: white; align-self: flex-end; border-bottom-right-radius: 0; }
-        
-        /* Leaderboard */
-        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 300px; }
-        .leaderboard-table th { text-align: left; padding: 10px; color: var(--text-muted); font-size: 12px; border-bottom: 1px solid var(--border); }
-        .leaderboard-table td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 14px; }
-        .rank-badge { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; margin-right: 10px; }
-        .rank-1 { background: #fbbf24; color: #78350f; } .rank-2 { background: #94a3b8; color: #0f172a; } .rank-3 { background: #b45309; color: #fffbeb; }
 
         @media (max-width: 768px) {
             .sidebar { position: fixed; top: 0; left: 0; bottom: 0; transform: translateX(-100%); box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
@@ -331,7 +315,7 @@
             </button>
             <button class="nav-link" onclick="app.switchTab('notes')"><i class="fas fa-sticky-note"></i> My Notes</button>
             <button class="nav-link" onclick="app.switchTab('calendar')"><i class="far fa-calendar-alt"></i> Calendar</button>
-            <button class="nav-link" onclick="app.switchTab('focus')"><i class="fas fa-stopwatch"></i> Pomodoro Focus</button>
+            <button class="nav-link" onclick="app.switchTab('focus')"><i class="fas fa-stopwatch"></i> Pomodoro & Idle</button>
             <button class="nav-link" onclick="app.switchTab('community')"><i class="fas fa-users"></i> Community</button>
         </nav>
 
@@ -418,6 +402,7 @@
                         <i class="fas fa-fire" id="streakIcon" style="font-size:20px; opacity:0.3; transition:0.3s;"></i>
                     </div>
                     <div style="color:var(--text-muted); font-size:11px; margin-top:5px;">DAILY STREAK</div>
+                    <div style="font-size:9px; color:var(--text-muted); margin-top:3px;">(Consecutive Days)</div>
                 </div>
 
                 <div class="task-card" style="text-align:center; padding: 20px 10px; border-left-color: var(--streak-target);">
@@ -430,6 +415,7 @@
                             <option value="">Select Task...</option>
                         </select>
                     </div>
+                    <div style="font-size:9px; color:var(--text-muted); margin-top:5px;">TASK SPECIFIC STREAK</div>
                 </div>
             </div>
 
@@ -472,8 +458,9 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <div>
                     <h2 style="color:var(--text-main);">My Notes & Quotes</h2>
-                    <p style="color:var(--text-muted); font-size:13px;">Safe storage for your thoughts.</p>
+                    <p style="color:var(--text-muted); font-size:13px;">Online Storage. Your thoughts, safe in the cloud.</p>
                 </div>
+                <div style="font-size:30px; color:var(--accent); opacity:0.5;"><i class="fas fa-feather-alt"></i></div>
             </div>
             
             <div class="input-group" style="align-items:flex-start;">
@@ -502,42 +489,55 @@
 
         <div id="focus" class="view-container">
             <div class="timer-container">
-                <h2 style="margin-bottom: 20px; color:var(--text-main);">Pomodoro Focus</h2>
+                <h2 style="color:var(--text-main); margin-bottom: 20px;">Pomodoro & Idle Tracker</h2>
                 
-                <div class="mode-badges">
-                    <button class="mode-badge active" id="btn-focus" onclick="focusEngine.setMode('focus')">Focus (25m)</button>
-                    <button class="mode-badge" id="btn-short" onclick="focusEngine.setMode('short')">Short Break (5m)</button>
-                    <button class="mode-badge" id="btn-long" onclick="focusEngine.setMode('long')">Long Break (15m)</button>
-                </div>
-
-                <div class="timer-circle" id="timerCircle" data-mode="idle">
-                    <div class="timer-time" id="timerDisplay">25:00</div>
-                    <div class="timer-status" id="timerStatus">Idle</div>
-                </div>
-
-                <div style="margin: 20px 0;">
+                <div style="margin-bottom: 20px;">
+                    <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:5px;">Link to Task (Optional)</label>
                     <select id="focusTaskSelect" class="select-input" style="width:100%; max-width:300px;">
-                        <option value="">-- Select Task (Optional) --</option>
+                        <option value="">-- No specific task --</option>
                     </select>
                 </div>
 
-                <div class="volume-control">
-                    <i class="fas fa-volume-up"></i>
-                    <select id="soundType" class="select-input" style="width:120px; padding: 5px;">
-                        <option value="none">No Sound</option>
-                        <option value="white">White Noise</option>
-                        <option value="brown">Rain (Brown)</option>
-                        <option value="binaural">Focus Beats</option>
-                    </select>
-                    <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.5" onchange="focusEngine.updateVolume(this.value)">
+                <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                    <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
+                        <span style="font-size:11px; color:var(--text-muted);">Focus (min)</span>
+                        <input type="number" id="focusDuration" class="select-input" value="25" style="width:80px; text-align:center;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
+                        <span style="font-size:11px; color:var(--text-muted);">Break (min)</span>
+                        <input type="number" id="breakDuration" class="select-input" value="5" style="width:80px; text-align:center;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
+                        <span style="font-size:11px; color:var(--text-muted);">Sound</span>
+                        <select id="soundSelect" class="select-input" style="width:100px;">
+                            <option value="none">Silent</option>
+                            <option value="beats">Beats</option>
+                            <option value="wind">Wind</option>
+                            <option value="white">White Noise</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div style="display:flex; justify-content:center; gap:15px; margin-top:20px;">
-                    <button class="btn btn-primary" style="min-width: 100px; font-size:16px;" onclick="focusEngine.toggleStart()" id="timerActionBtn">Start Focus</button>
-                    <button class="btn btn-secondary" onclick="focusEngine.reset()">Reset</button>
+                <div class="timer-circle" id="timerCircle">
+                    <span id="timerDisplay" class="timer-time">25:00</span>
+                    <span id="timerLabel" class="timer-label">Ready</span>
                 </div>
-                
-                <p style="margin-top:20px; font-size:11px; color:var(--text-muted);"><i class="fas fa-info-circle"></i> Enables Notifications & Vibration on mobile.</p>
+
+                <div style="display:flex; justify-content:center; gap:15px; margin-bottom:30px;">
+                    <button class="btn btn-primary" onclick="focusMode.start('focus')" style="min-width:100px;">Start Focus</button>
+                    <button class="btn btn-secondary" onclick="focusMode.start('break')" style="border-color:var(--success); color:var(--success);">Start Break</button>
+                    <button class="btn btn-secondary btn-danger" onclick="focusMode.reset()">Stop</button>
+                </div>
+
+                <div class="idle-tracker">
+                    <div style="text-align:left;">
+                        <h4 style="color:var(--text-main); font-size:15px;"><i class="fas fa-hourglass-half"></i> Idle Time</h4>
+                        <p style="color:var(--text-muted); font-size:11px;">Time spent online without timer running</p>
+                    </div>
+                    <div style="font-family:'Roboto Mono', monospace; font-size:24px; color:var(--warning);" id="idleDisplay">
+                        00:00:00
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -546,6 +546,7 @@
                 <div id="commBoard">
                     <div class="task-card">
                         <h3 style="color:var(--accent); margin-bottom:5px;"><i class="fas fa-trophy"></i> Live Leaderboard</h3>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Points are awarded for every completed task.</p>
                         <div class="leaderboard-container">
                             <table class="leaderboard-table" id="leaderboardTable">
                                 <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Sign in to view live rankings.</td></tr>
@@ -584,9 +585,11 @@
             <form onsubmit="event.preventDefault(); app.login();">
                 <input type="email" id="authEmail" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:10px; border-radius:8px;" placeholder="Email" autocomplete="username">
                 <input type="password" id="authPass" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:20px; border-radius:8px;" placeholder="Password" autocomplete="current-password">
+                
                 <div style="margin-bottom: 20px; text-align: right;">
                     <a href="#" onclick="app.forgotPassword()" style="color: var(--accent); font-size: 13px; text-decoration: none;">Forgot Password?</a>
                 </div>
+
                 <div style="display:flex; gap:10px;">
                     <button type="submit" class="btn btn-primary" style="flex:1">Login</button>
                     <button type="button" class="btn btn-secondary" style="flex:1" onclick="app.register()">Sign Up</button>
@@ -595,6 +598,10 @@
             <button class="btn btn-icon" style="position:absolute; top:10px; right:10px; width:auto; height:auto; color:var(--text-muted);" onclick="document.getElementById('authModal').style.display='none'">✕</button>
         </div>
     </div>
+
+    <audio id="audioBeats" loop src="https://assets.mixkit.co/music/preview/mixkit-chill-lofi-777.mp3"></audio>
+    <audio id="audioWhite" loop src="https://assets.mixkit.co/sfx/preview/mixkit-white-noise-1254.mp3"></audio>
+    <audio id="audioWind" loop src="https://assets.mixkit.co/sfx/preview/mixkit-light-rain-loop-1253.mp3"></audio>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -624,221 +631,10 @@
             charts: {},
             customDesign: localStorage.getItem('customDesignCSS') || null,
             taskFilter: 'active',
-            subStreakTask: localStorage.getItem('subStreakTask') || ''
+            weather: { temp: '--', condition: 'Unknown' },
+            subStreakTask: localStorage.getItem('subStreakTask') || '',
+            idleSeconds: 0
         };
-
-        // --- AUDIO ENGINE (Web Audio API) ---
-        // Generates sound programmatically so it ALWAYS works without external files
-        const audioSys = {
-            ctx: null,
-            noiseNode: null,
-            gainNode: null,
-            
-            init: () => {
-                if (!audioSys.ctx) {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    audioSys.ctx = new AudioContext();
-                }
-                if (audioSys.ctx.state === 'suspended') audioSys.ctx.resume();
-            },
-
-            playBeep: () => {
-                audioSys.init();
-                const osc = audioSys.ctx.createOscillator();
-                const gain = audioSys.ctx.createGain();
-                osc.connect(gain);
-                gain.connect(audioSys.ctx.destination);
-                
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, audioSys.ctx.currentTime); // A5
-                gain.gain.setValueAtTime(0.1, audioSys.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.00001, audioSys.ctx.currentTime + 0.5);
-                
-                osc.start();
-                osc.stop(audioSys.ctx.currentTime + 0.5);
-            },
-
-            playNoise: (type, volume) => {
-                audioSys.stopNoise();
-                audioSys.init();
-                
-                const bufferSize = 2 * audioSys.ctx.sampleRate;
-                const buffer = audioSys.ctx.createBuffer(1, bufferSize, audioSys.ctx.sampleRate);
-                const output = buffer.getChannelData(0);
-
-                for (let i = 0; i < bufferSize; i++) {
-                    if(type === 'white') {
-                        output[i] = Math.random() * 2 - 1;
-                    } else if (type === 'brown') {
-                        const white = Math.random() * 2 - 1;
-                        output[i] = (lastOut + (0.02 * white)) / 1.02;
-                        lastOut = output[i];
-                        output[i] *= 3.5; 
-                    } else if (type === 'binaural') {
-                        // Simple sine for binaural approximation
-                        output[i] = Math.sin(i * 0.01);
-                    }
-                }
-                // Helper for Brown noise
-                var lastOut = 0;
-
-                audioSys.noiseNode = audioSys.ctx.createBufferSource();
-                audioSys.noiseNode.buffer = buffer;
-                audioSys.noiseNode.loop = true;
-                
-                audioSys.gainNode = audioSys.ctx.createGain();
-                audioSys.gainNode.gain.value = volume * 0.1; // Normalize volume
-                
-                audioSys.noiseNode.connect(audioSys.gainNode);
-                audioSys.gainNode.connect(audioSys.ctx.destination);
-                audioSys.noiseNode.start();
-            },
-
-            updateVolume: (val) => {
-                if(audioSys.gainNode) audioSys.gainNode.gain.value = val * 0.1;
-            },
-
-            stopNoise: () => {
-                if (audioSys.noiseNode) {
-                    audioSys.noiseNode.stop();
-                    audioSys.noiseNode.disconnect();
-                    audioSys.noiseNode = null;
-                }
-            }
-        };
-
-        // --- FOCUS ENGINE (Pomodoro) ---
-        window.focusEngine = {
-            interval: null,
-            mode: 'focus', // focus, short, long
-            timeLeft: 25 * 60,
-            isRunning: false,
-            
-            init: () => {
-                // Request Notification Permission on load if possible
-                if("Notification" in window && Notification.permission !== "granted") {
-                    Notification.requestPermission();
-                }
-            },
-
-            setMode: (mode) => {
-                focusEngine.reset();
-                focusEngine.mode = mode;
-                
-                document.querySelectorAll('.mode-badge').forEach(b => b.classList.remove('active'));
-                document.getElementById(`btn-${mode}`).classList.add('active');
-                
-                const mins = mode === 'focus' ? 25 : (mode === 'short' ? 5 : 15);
-                focusEngine.timeLeft = mins * 60;
-                
-                const circle = document.getElementById('timerCircle');
-                circle.dataset.mode = mode;
-                document.getElementById('timerActionBtn').textContent = "Start " + (mode === 'focus' ? "Focus" : "Break");
-                
-                focusEngine.updateDisplay();
-                focusEngine.updateStatus("Idle");
-            },
-
-            toggleStart: () => {
-                if(focusEngine.isRunning) {
-                    focusEngine.pause();
-                } else {
-                    focusEngine.start();
-                }
-            },
-
-            start: () => {
-                if(focusEngine.isRunning) return;
-                
-                // Audio check
-                const sType = document.getElementById('soundType').value;
-                const vol = document.getElementById('volumeSlider').value;
-                if(sType !== 'none') audioSys.playNoise(sType, vol);
-
-                focusEngine.isRunning = true;
-                document.getElementById('timerCircle').classList.add('running');
-                document.getElementById('timerActionBtn').textContent = "Pause";
-                document.getElementById('timerActionBtn').classList.replace('btn-primary', 'btn-secondary');
-                
-                focusEngine.updateStatus("Running");
-
-                focusEngine.interval = setInterval(() => {
-                    focusEngine.timeLeft--;
-                    focusEngine.updateDisplay();
-                    
-                    if(focusEngine.timeLeft <= 0) {
-                        focusEngine.complete();
-                    }
-                }, 1000);
-            },
-
-            pause: () => {
-                clearInterval(focusEngine.interval);
-                focusEngine.isRunning = false;
-                audioSys.stopNoise();
-                document.getElementById('timerCircle').classList.remove('running');
-                document.getElementById('timerActionBtn').textContent = "Resume";
-                document.getElementById('timerActionBtn').classList.replace('btn-secondary', 'btn-primary');
-                focusEngine.updateStatus("Paused");
-            },
-
-            reset: () => {
-                focusEngine.pause();
-                const mins = focusEngine.mode === 'focus' ? 25 : (focusEngine.mode === 'short' ? 5 : 15);
-                focusEngine.timeLeft = mins * 60;
-                focusEngine.updateDisplay();
-                document.getElementById('timerActionBtn').textContent = "Start " + (focusEngine.mode === 'focus' ? "Focus" : "Break");
-                
-                // Force IDLE state visual
-                const circle = document.getElementById('timerCircle');
-                circle.dataset.mode = 'idle'; 
-                focusEngine.updateStatus("Idle");
-                setTimeout(() => { circle.dataset.mode = focusEngine.mode; }, 100); // quick flash
-            },
-
-            complete: () => {
-                focusEngine.pause();
-                audioSys.playBeep();
-                
-                // Vibration (Mobile)
-                if("vibrate" in navigator) navigator.vibrate([200, 100, 200, 100, 500]);
-                
-                // Notification (Desktop/Mobile)
-                if("Notification" in window && Notification.permission === "granted") {
-                    new Notification("Timer Complete!", {
-                        body: focusEngine.mode === 'focus' ? "Focus session done. Take a break!" : "Break over. Back to work!",
-                        icon: "https://cdn-icons-png.flaticon.com/512/2098/2098542.png"
-                    });
-                }
-                
-                alert("Timer Complete!");
-                
-                // Complete task if selected
-                const tid = document.getElementById('focusTaskSelect').value;
-                if(tid && focusEngine.mode === 'focus') {
-                    if(confirm("Mark selected task as done?")) app.toggleTask(tid);
-                }
-            },
-
-            updateDisplay: () => {
-                const m = Math.floor(focusEngine.timeLeft / 60).toString().padStart(2,'0');
-                const s = (focusEngine.timeLeft % 60).toString().padStart(2,'0');
-                document.getElementById('timerDisplay').textContent = `${m}:${s}`;
-                document.title = `${m}:${s} - TaskPro`;
-            },
-            
-            updateStatus: (status) => {
-                document.getElementById('timerStatus').textContent = status;
-                // If Idle, ensure badge reflects it visually
-                if(status === 'Idle') document.getElementById('timerCircle').style.borderColor = "var(--mode-idle)";
-                else document.getElementById('timerCircle').style.borderColor = ""; // Revert to CSS var
-            },
-            
-            updateVolume: (val) => {
-                audioSys.updateVolume(val);
-            }
-        };
-
 
         window.app = {
             init: () => {
@@ -848,13 +644,12 @@
                 document.getElementById('dateInput').valueAsDate = new Date();
                 if(state.customDesign) document.getElementById('dynamic-theme-style').textContent = state.customDesign;
                 
-                focusEngine.init(); // Init Notification permissions
-
+                // If offline, load local notes immediately
                 if(!state.user) {
                     state.notes = JSON.parse(localStorage.getItem('local_notes')) || [];
                     app.renderNotes();
                 }
-                
+
                 window.addEventListener('storage', (e) => {
                     if (e.key === 'local_tasks' && !state.user) {
                         state.tasks = JSON.parse(e.newValue || "[]");
@@ -862,11 +657,17 @@
                         if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
                     }
                 });
+
+                // Request notification permission early
+                if("Notification" in window && Notification.permission !== 'granted') {
+                    Notification.requestPermission();
+                }
             },
 
             updateClock: () => {
                 const now = new Date();
-                document.getElementById('clockDisplay').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('clockDisplay').textContent = time;
             },
 
             fetchWeather: () => {
@@ -876,9 +677,12 @@
                             const { latitude, longitude } = pos.coords;
                             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
                             const data = await res.json();
-                            document.getElementById('weatherDisplay').innerHTML = `<i class="fas fa-cloud-sun"></i> <span>${Math.round(data.current_weather.temperature)}${data.current_weather_units.temperature}</span>`;
-                        } catch (e) { console.error(e); }
-                    }, () => document.getElementById('weatherDisplay').innerHTML = `<span>Loc. Denied</span>`);
+                            const temp = Math.round(data.current_weather.temperature);
+                            document.getElementById('weatherDisplay').innerHTML = `<i class="fas fa-cloud-sun"></i> <span>${temp}${data.current_weather_units.temperature}</span>`;
+                        } catch (e) { console.error("Weather Error", e); }
+                    }, () => {
+                        document.getElementById('weatherDisplay').innerHTML = `<span>Loc. Denied</span>`;
+                    });
                 }
             },
 
@@ -886,10 +690,12 @@
                 const hue = Math.floor(Math.random() * 360);
                 const sat = Math.floor(Math.random() * 40) + 20;
                 const lit = Math.floor(Math.random() * 15) + 5;
-                const font = ["'Inter', sans-serif", "'Playfair Display', serif", "'Roboto Mono', monospace"][Math.floor(Math.random() * 3)];
+                const fonts = ["'Inter', sans-serif", "'Playfair Display', serif", "'Roboto Mono', monospace", "'Comic Neue', cursive"];
+                const font = fonts[Math.floor(Math.random() * fonts.length)];
                 const css = `:root { --bg-body: hsl(${hue}, ${sat}%, ${lit}%); --bg-sidebar: hsl(${hue}, ${sat}%, ${lit + 5}%); --bg-card: hsl(${hue}, ${sat}%, ${lit + 10}%); --bg-input: hsl(${hue}, ${sat}%, ${lit + 5}%); --accent: hsl(${(hue + 180) % 360}, 70%, 50%); --font-main: ${font}; }`;
                 document.getElementById('dynamic-theme-style').textContent = css;
                 localStorage.setItem('customDesignCSS', css);
+                state.customDesign = css;
             },
 
             toggleTheme: () => {
@@ -906,31 +712,67 @@
                 }
             },
 
-            // DATA & SYNC
-            saveLifetime: async (notify) => {
+            // ==================== CLOUD SYNC & DATA ====================
+            saveLifetime: async (showNotification = false) => {
                 localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
                 localStorage.setItem('local_notes', JSON.stringify(state.notes));
-                if (notify) alert(state.user ? "Synced to Cloud." : "Saved Locally.");
+                if (showNotification) {
+                    if(state.user) { 
+                        alert("Cloud Sync is active. All changes are being saved to your account."); 
+                    } else { 
+                        alert("Local data secured. Sign in to enable Cloud Sync."); 
+                    }
+                }
             },
 
             resetAllData: async () => {
-                if(!confirm("DANGER: Wipe all data? This cannot be undone.")) return;
-                state.tasks = []; state.notes = []; state.history = ["Meeting", "Workout"];
-                localStorage.removeItem('local_tasks'); localStorage.removeItem('local_notes');
+                if(!confirm("⚠️ DANGER ZONE ⚠️\n\nThis will permanently DELETE ALL tasks, history, notes, and statistics.\n\nAre you sure?")) return;
+                if(!confirm("Last chance: This cannot be undone. Confirm full data wipe?")) return;
+
+                state.tasks = [];
+                state.notes = [];
+                state.history = ["Meeting", "Workout", "Study"]; 
+                state.charts = {};
+                localStorage.removeItem('local_tasks');
+                localStorage.removeItem('local_notes');
+                localStorage.setItem('taskHistory', JSON.stringify(state.history));
+
                 if(state.user) {
-                     // In a real app, delete collection docs here
-                     alert("Cloud wipe requires admin in this demo. Local data cleared.");
-                } else {
-                    alert("Local data wiped.");
-                }
-                renderTasks(); app.renderNotes(); if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
+                    try {
+                        const batch = writeBatch(db);
+                        const qTasks = query(collection(db, 'tasks'), where('uid', '==', state.user.uid));
+                        const snapTasks = await getDocs(qTasks);
+                        snapTasks.docs.forEach(doc => { batch.delete(doc.ref); });
+
+                        const qNotes = query(collection(db, 'notes'), where('uid', '==', state.user.uid));
+                        const snapNotes = await getDocs(qNotes);
+                        snapNotes.docs.forEach(doc => { batch.delete(doc.ref); });
+
+                        await batch.commit();
+                        
+                         await setDoc(doc(db, 'leaderboard', state.user.uid), {
+                            username: state.user.email.split('@')[0],
+                            score: 0,
+                            lastActive: Date.now()
+                        });
+
+                        alert("Cloud data wiped successfully.");
+                    } catch (e) { alert("Error wiping cloud data: " + e.message); }
+                } else { alert("Local data wiped successfully."); }
+
+                renderTasks();
+                app.renderNotes();
+                renderSuggestions();
+                if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
             },
 
             backupData: () => {
-                const data = { tasks: state.tasks, notes: state.notes, history: state.history };
+                const data = { meta: { version: "5.0", date: new Date().toISOString() }, tasks: state.tasks, notes: state.notes, history: state.history };
+                const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+                const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type: "application/json"}));
-                a.download = "TaskPro_Backup.json";
+                a.href = url;
+                a.download = "TaskPro_Checkpoint_" + Date.now() + ".json";
                 a.click();
             },
 
@@ -938,16 +780,36 @@
                 const file = input.files[0];
                 if (!file) return;
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = async (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
-                        if(data.tasks) {
-                            state.tasks = [...state.tasks, ...data.tasks];
-                            if(data.notes) state.notes = [...state.notes, ...data.notes];
-                            app.saveLifetime(true);
-                            renderTasks(); app.renderNotes();
+                        if(data.tasks && Array.isArray(data.tasks)) {
+                            if(state.user) {
+                                alert("Restoring to cloud... please wait.");
+                                const batch = writeBatch(db);
+                                data.tasks.forEach(t => {
+                                    const { id, ...taskData } = t;
+                                    const newDocRef = doc(collection(db, 'tasks'));
+                                    batch.set(newDocRef, { ...taskData, uid: state.user.uid });
+                                });
+                                if(data.notes) {
+                                    data.notes.forEach(n => {
+                                        const { id, ...noteData } = n;
+                                        const newNoteRef = doc(collection(db, 'notes'));
+                                        batch.set(newNoteRef, { ...noteData, uid: state.user.uid });
+                                    });
+                                }
+                                await batch.commit();
+                                alert("Cloud restore successful!");
+                            } else {
+                                state.tasks = [...state.tasks, ...data.tasks];
+                                if(data.notes) state.notes = [...state.notes, ...data.notes];
+                                app.saveLifetime(true);
+                                renderTasks();
+                                app.renderNotes();
+                            }
                         }
-                    } catch(err) { alert("Invalid File"); }
+                    } catch(err) { alert("Invalid File Format"); console.error(err); }
                 };
                 reader.readAsText(file);
             },
@@ -964,6 +826,7 @@
                 document.getElementById(id).classList.add('active');
                 event.currentTarget.classList.add('active');
                 document.getElementById('pageTitle').textContent = (id === 'notes' ? "My Notes" : id.charAt(0).toUpperCase() + id.slice(1));
+                
                 if(window.innerWidth <= 768) app.toggleSidebar();
                 if(id === 'dashboard') app.renderDashboardCharts();
                 if(id === 'calendar') renderCalendar();
@@ -972,180 +835,669 @@
                 if(id === 'notes') app.renderNotes();
             },
 
-            // AUTH
             toggleAuth: () => { if(state.user) signOut(auth); else document.getElementById('authModal').style.display = 'flex'; },
-            login: async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display='none'; } catch(e){alert(e.message);} },
-            register: async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display='none'; } catch(e){alert(e.message);} },
-            forgotPassword: async () => { try { await sendPasswordResetEmail(auth, document.getElementById('authEmail').value); alert("Reset email sent."); } catch(e){alert(e.message);} },
+            
+            login: async () => {
+                try { await signInWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display='none'; } catch(e){alert(e.message);}
+            },
+            
+            register: async () => {
+                try { await createUserWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display='none'; } catch(e){alert(e.message);}
+            },
 
-            // TASKS
+            forgotPassword: async () => {
+                const email = document.getElementById('authEmail').value;
+                if(!email) { alert("Please enter your email address in the box first."); return; }
+                try { await sendPasswordResetEmail(auth, email); alert("Password reset email sent! Check your inbox."); } catch(e) { alert("Error: " + e.message); }
+            },
+
             setTaskFilter: (filter) => {
                 state.taskFilter = filter;
                 document.getElementById('filterActive').className = filter === 'active' ? 'btn btn-primary' : 'btn btn-secondary';
                 document.getElementById('filterCompleted').className = filter === 'completed' ? 'btn btn-primary' : 'btn btn-secondary';
                 renderTasks();
             },
-            
-            handleTaskSubmit: async () => { const id = document.getElementById('editTaskId').value; if(id) await app.updateTask(id); else await app.addTask(); },
-            
+
+            handleTaskSubmit: async () => {
+                const id = document.getElementById('editTaskId').value;
+                if(id) await app.updateTask(id); else await app.addTask();
+            },
+
             addTask: async (title = null) => {
                 const input = document.getElementById('taskInput');
                 const text = title || input.value.trim();
                 if(!text) return;
-                
+
                 if(!state.history.includes(text)) {
-                    state.history.unshift(text); if(state.history.length > 8) state.history.pop();
-                    localStorage.setItem('taskHistory', JSON.stringify(state.history)); renderSuggestions();
+                    state.history.unshift(text);
+                    if(state.history.length > 8) state.history.pop();
+                    localStorage.setItem('taskHistory', JSON.stringify(state.history));
+                    renderSuggestions();
                 }
 
-                const newTask = { text, completed: false, date: document.getElementById('dateInput').value, priority: document.getElementById('prioInput').value, tags: (text.match(/#\w+/g) || []).map(t => t.replace('#','')), subtasks: [], createdAt: Date.now() };
+                const newTask = {
+                    text,
+                    completed: false,
+                    date: document.getElementById('dateInput').value,
+                    priority: document.getElementById('prioInput').value,
+                    tags: (text.match(/#\w+/g) || []).map(t => t.replace('#','')),
+                    subtasks: [],
+                    createdAt: Date.now()
+                };
 
-                if(state.user) await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
-                else { newTask.id = 'local_' + Date.now(); state.tasks.push(newTask); app.saveLifetime(false); renderTasks(); }
+                if(state.user) {
+                    await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
+                } else {
+                    newTask.id = 'local_' + Date.now();
+                    state.tasks.push(newTask);
+                    app.saveLifetime(false);
+                    renderTasks();
+                }
                 if(!title) input.value = '';
             },
-            
+
             startEdit: (id) => {
                 const task = state.tasks.find(t => t.id === id);
                 if(!task) return;
-                document.getElementById('taskInput').value = task.text; document.getElementById('dateInput').value = task.date; document.getElementById('prioInput').value = task.priority; document.getElementById('editTaskId').value = task.id;
-                document.getElementById('addUpdateBtn').textContent = 'Update'; document.getElementById('cancelEditBtn').style.display = 'inline-block';
+                document.getElementById('taskInput').value = task.text;
+                document.getElementById('dateInput').value = task.date;
+                document.getElementById('prioInput').value = task.priority;
+                document.getElementById('editTaskId').value = task.id;
+                const btn = document.getElementById('addUpdateBtn');
+                btn.innerHTML = 'Update';
+                btn.classList.replace('btn-primary', 'btn-secondary');
+                document.getElementById('cancelEditBtn').style.display = 'inline-block';
             },
-            
+
             updateTask: async (id) => {
                 const text = document.getElementById('taskInput').value;
-                const old = state.tasks.find(t => t.id === id);
-                if(state.user) await updateDoc(doc(db, 'tasks', id), { text, date: document.getElementById('dateInput').value, priority: document.getElementById('prioInput').value });
-                else { if(old) { Object.assign(old, { text, date: document.getElementById('dateInput').value, priority: document.getElementById('prioInput').value }); app.saveLifetime(false); renderTasks(); } }
+                const date = document.getElementById('dateInput').value;
+                const priority = document.getElementById('prioInput').value;
+                const tags = (text.match(/#\w+/g) || []).map(t => t.replace('#',''));
+                
+                const oldTask = state.tasks.find(t => t.id === id);
+                const subtasks = oldTask ? (oldTask.subtasks || []) : [];
+
+                if(state.user) {
+                    await updateDoc(doc(db, 'tasks', id), { text, date, priority, tags, subtasks });
+                } else {
+                    const idx = state.tasks.findIndex(t => t.id === id);
+                    if(idx !== -1) { state.tasks[idx] = { ...state.tasks[idx], text, date, priority, tags }; app.saveLifetime(false); renderTasks(); }
+                }
                 app.cancelEdit();
             },
-            
-            cancelEdit: () => { document.getElementById('taskInput').value=''; document.getElementById('editTaskId').value=''; document.getElementById('addUpdateBtn').innerHTML='<i class="fas fa-plus"></i> Add'; document.getElementById('cancelEditBtn').style.display='none'; },
-            
+
+            cancelEdit: () => {
+                document.getElementById('taskInput').value = '';
+                document.getElementById('editTaskId').value = '';
+                const btn = document.getElementById('addUpdateBtn');
+                btn.innerHTML = '<i class="fas fa-plus"></i> Add';
+                btn.classList.replace('btn-secondary', 'btn-primary');
+                document.getElementById('cancelEditBtn').style.display = 'none';
+            },
+
             toggleTask: async (id) => {
                 const task = state.tasks.find(t => t.id === id);
-                if(state.user) await updateDoc(doc(db, 'tasks', id), { completed: !task.completed });
-                else { task.completed = !task.completed; app.saveLifetime(false); renderTasks(); }
+                const newVal = !task.completed;
+                if(state.user) await updateDoc(doc(db, 'tasks', id), { completed: newVal });
+                else { task.completed = newVal; app.saveLifetime(false); renderTasks(); }
+            },
+
+            deleteTask: async (id) => {
+                if(!confirm("Permanently delete?")) return;
+                if(state.user) await deleteDoc(doc(db, 'tasks', id));
+                else { state.tasks = state.tasks.filter(t => t.id !== id); app.saveLifetime(false); renderTasks(); }
+            },
+
+            addSubtask: async (parentId) => {
+                const input = document.getElementById(`sub-input-${parentId}`);
+                if(!input.value.trim()) return;
+                const task = state.tasks.find(t => t.id === parentId);
+                const newSub = { id: Date.now(), text: input.value.trim(), completed: false };
+                const subtasks = [...(task.subtasks||[]), newSub];
+                if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
+                else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
             },
             
-            deleteTask: async (id) => { if(confirm("Delete?")) { if(state.user) await deleteDoc(doc(db, 'tasks', id)); else { state.tasks = state.tasks.filter(t=>t.id!==id); app.saveLifetime(false); renderTasks(); } } },
-
-            // NOTES
-            addNote: async () => {
-                const content = document.getElementById('noteInput').value.trim();
-                if(!content) return;
-                const note = { content, createdAt: Date.now() };
-                if(state.user) await addDoc(collection(db, 'notes'), {...note, uid: state.user.uid});
-                else { note.id = 'n'+Date.now(); state.notes.unshift(note); localStorage.setItem('local_notes', JSON.stringify(state.notes)); app.renderNotes(); }
-                document.getElementById('noteInput').value='';
+            toggleSubtask: async (parentId, subId) => {
+                const task = state.tasks.find(t => t.id === parentId);
+                const subtasks = task.subtasks.map(s => s.id == subId ? {...s, completed: !s.completed} : s);
+                if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
+                else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
             },
-            deleteNote: async (id) => { if(confirm("Delete note?")) { if(state.user) await deleteDoc(doc(db,'notes',id)); else { state.notes = state.notes.filter(n=>n.id!==id); localStorage.setItem('local_notes', JSON.stringify(state.notes)); app.renderNotes(); } } },
+
+            deleteSubtask: async (parentId, subId) => {
+                const task = state.tasks.find(t => t.id === parentId);
+                const subtasks = task.subtasks.filter(s => s.id != subId);
+                if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
+                else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
+            },
+
+            // --- NOTES START ---
+            addNote: async () => {
+                const input = document.getElementById('noteInput');
+                const content = input.value.trim();
+                if(!content) return;
+                
+                const newNote = { content, createdAt: Date.now() };
+
+                if(state.user) {
+                    try {
+                        await addDoc(collection(db, 'notes'), { ...newNote, uid: state.user.uid });
+                        input.value = '';
+                    } catch(e) {
+                        alert("Error saving note: " + e.message);
+                    }
+                } else {
+                    newNote.id = 'local_note_' + Date.now();
+                    state.notes.unshift(newNote);
+                    localStorage.setItem('local_notes', JSON.stringify(state.notes));
+                    app.renderNotes();
+                    input.value = '';
+                }
+            },
+
+            deleteNote: async (id) => {
+                if(!confirm("Permanently delete this note?")) return;
+                if(state.user) {
+                    await deleteDoc(doc(db, 'notes', id));
+                } else {
+                    state.notes = state.notes.filter(n => n.id !== id);
+                    localStorage.setItem('local_notes', JSON.stringify(state.notes));
+                    app.renderNotes();
+                }
+            },
+
+            enableEditNote: (id) => {
+                const note = state.notes.find(n => n.id === id);
+                if(!note) return;
+                const card = document.getElementById(`note-card-${id}`);
+                const contentDiv = card.querySelector('.note-content');
+                const currentText = note.content;
+                contentDiv.innerHTML = `<textarea id="edit-note-input-${id}" class="main-input" style="width:100%; min-height:100px; background:var(--bg-body); border:1px solid var(--accent); resize:vertical;">${currentText}</textarea>`;
+                const actionsDiv = card.querySelector('.note-header-actions');
+                actionsDiv.innerHTML = `<button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="app.saveEditedNote('${id}')">Save</button><button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="app.renderNotes()">Cancel</button>`;
+            },
+
+            saveEditedNote: async (id) => {
+                const input = document.getElementById(`edit-note-input-${id}`);
+                const newContent = input.value.trim();
+                if(!newContent) return;
+
+                if(state.user) {
+                    await updateDoc(doc(db, 'notes', id), { content: newContent });
+                } else {
+                    const idx = state.notes.findIndex(n => n.id === id);
+                    if(idx !== -1) {
+                        state.notes[idx].content = newContent;
+                        localStorage.setItem('local_notes', JSON.stringify(state.notes));
+                        app.renderNotes();
+                    }
+                }
+            },
+
             renderNotes: () => {
                 const list = document.getElementById('notesList');
                 if(!list) return;
-                const sorted = [...state.notes].sort((a,b) => b.createdAt - a.createdAt);
-                if(sorted.length===0) list.innerHTML = `<div style="text-align:center;color:var(--text-muted);">No notes yet.</div>`;
-                else list.innerHTML = sorted.map(n => `<div class="note-card"><div class="note-header-actions"><button class="note-action-btn delete-btn" onclick="app.deleteNote('${n.id}')"><i class="fas fa-trash"></i></button></div><div class="note-content">${n.content}</div><div class="note-date">${new Date(n.createdAt).toLocaleDateString()}</div></div>`).join('');
+                const sortedNotes = [...state.notes].sort((a,b) => b.createdAt - a.createdAt);
+                if(sortedNotes.length === 0) {
+                    list.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin-top:30px;"><i class="fas fa-pencil-alt" style="font-size:24px; margin-bottom:10px;"></i><br>No notes yet. Save your first thought!</div>`;
+                    return;
+                }
+                list.innerHTML = sortedNotes.map(note => {
+                    const dateObj = new Date(note.createdAt);
+                    const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                    return `
+                    <div class="note-card" id="note-card-${note.id}">
+                        <div class="note-header-actions">
+                            <button class="note-action-btn" onclick="app.enableEditNote('${note.id}')" title="Edit"><i class="fas fa-pencil"></i></button>
+                            <button class="note-action-btn delete-btn" onclick="app.deleteNote('${note.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                        <div class="note-content">${note.content}</div>
+                        <div class="note-date">${dateStr}</div>
+                    </div>`;
+                }).join('');
+            },
+            // --- NOTES END ---
+
+            changeMonth: (offset) => {
+                state.currentDate.setMonth(state.currentDate.getMonth() + offset);
+                renderCalendar();
+            },
+            selectDate: (dateStr) => {
+                document.getElementById('calSelectedDate').textContent = new Date(dateStr).toDateString();
+                const tasks = state.tasks.filter(t => t.date === dateStr);
+                const html = tasks.length ? tasks.map(t => `<div style="padding:10px; background:var(--bg-body); margin-bottom:5px; border-radius:5px; border-left:3px solid var(--accent);">${t.text} ${t.completed?'(Done)':''}</div>`).join('') : '<div style="color:var(--text-muted)">No tasks.</div>';
+                document.getElementById('calSelectedTasks').innerHTML = html;
+                document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
+                const cell = document.querySelector(`.cal-cell[data-date="${dateStr}"]`);
+                if(cell) cell.classList.add('selected');
             },
 
-            // CALENDAR
-            changeMonth: (o) => { state.currentDate.setMonth(state.currentDate.getMonth()+o); renderCalendar(); },
-            selectDate: (d) => {
-                document.getElementById('calSelectedDate').textContent = new Date(d).toDateString();
-                const ts = state.tasks.filter(t => t.date === d);
-                document.getElementById('calSelectedTasks').innerHTML = ts.length ? ts.map(t=>`<div style="padding:10px;background:var(--bg-body);margin-bottom:5px;">${t.text}</div>`).join('') : '<div style="color:var(--text-muted)">No tasks.</div>';
-            },
-
-            // COMMUNITY
+            // --- COMMUNITY & LEADERBOARD LOGIC ---
             syncLeaderboard: async () => {
-                if(!state.user) return;
-                const score = state.tasks.filter(t=>t.completed).length * 10;
-                await setDoc(doc(db,'leaderboard',state.user.uid), { username: state.user.email.split('@')[0], score, lastActive: Date.now() });
-            },
-            loadCommunity: async () => {
-                const table = document.getElementById('leaderboardTable');
+                if (!state.user) return;
+                const completedCount = state.tasks.filter(t => t.completed).length;
+                const score = completedCount * 10;
+                const username = state.user.email.split('@')[0];
                 try {
-                    const q = query(collection(db,'leaderboard'), orderBy('score','desc'), limit(10));
-                    const snap = await getDocs(q);
-                    let html = `<thead><tr><th>Rank</th><th>User</th><th>Score</th></tr></thead><tbody>`;
-                    let r=1;
-                    snap.forEach(d => { const da=d.data(); html+=`<tr><td>#${r++}</td><td>${da.username}</td><td>${da.score}</td></tr>`; });
-                    html+='</tbody>'; table.innerHTML = html;
-                } catch(e) { table.innerHTML=`<tr><td colspan="3">Sign in to view.</td></tr>`; }
-            },
-            sendMessage: () => {
-                const inp = document.getElementById('chatInput');
-                if(!inp.value) return;
-                const d = document.createElement('div'); d.className='chat-msg me'; d.textContent=inp.value;
-                document.getElementById('chatMsgs').appendChild(d); inp.value='';
+                    await setDoc(doc(db, 'leaderboard', state.user.uid), { username: username, score: score, lastActive: Date.now() });
+                } catch (e) { console.error("Leaderboard Sync Error:", e); }
             },
 
-            // DASHBOARD
-            getStreak: () => { return state.tasks.filter(t=>t.completed).length; }, // Simple Count for now
+            loadCommunity: async () => {
+                const boardTable = document.getElementById('leaderboardTable');
+                boardTable.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">Loading live scores...</td></tr>`;
+
+                try {
+                    const q = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), limit(20));
+                    const snapshot = await getDocs(q);
+                    
+                    let html = `<thead><tr><th style="width:60px">Rank</th><th>User</th><th style="text-align:right">Score</th></tr></thead><tbody>`;
+                    let rank = 1;
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const isMe = state.user && doc.id === state.user.uid;
+                        
+                        let rankDisplay = `<span style="opacity:0.5">#${rank}</span>`;
+                        if (rank === 1) rankDisplay = `<span class="rank-badge rank-1">1</span>`;
+                        if (rank === 2) rankDisplay = `<span class="rank-badge rank-2">2</span>`;
+                        if (rank === 3) rankDisplay = `<span class="rank-badge rank-3">3</span>`;
+                        const rowStyle = isMe ? `background: rgba(32, 128, 132, 0.15); font-weight:bold; border-left: 3px solid var(--accent);` : ``;
+                        html += `<tr style="${rowStyle}"><td>${rankDisplay}</td><td>${data.username} ${isMe ? '(You)' : ''}</td><td style="text-align:right; font-family:monospace; font-size:15px;">${data.score}</td></tr>`;
+                        rank++;
+                    });
+
+                    if (snapshot.empty) html += `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">No players yet.</td></tr>`;
+                    html += `</tbody>`;
+                    boardTable.innerHTML = html;
+                } catch (e) {
+                    console.error(e);
+                    boardTable.innerHTML = `<tr><td colspan="3" style="color:var(--danger); text-align:center;">Could not load leaderboard.<br>Sign in required.</td></tr>`;
+                }
+            },
+
+            sendMessage: (isSys = false) => {
+                const box = document.getElementById('chatMsgs');
+                const input = document.getElementById('chatInput');
+                const txt = isSys ? "Welcome to the group!" : input.value;
+                if(!txt) return;
+                const div = document.createElement('div');
+                div.className = isSys ? 'chat-msg them' : 'chat-msg me';
+                div.textContent = txt;
+                box.appendChild(div);
+                input.value = '';
+                box.scrollTop = box.scrollHeight;
+            },
+
+            // --- STREAK CALCULATORS ---
+            getStreak: (filterName = null) => {
+                let streak = 0;
+                let today = new Date();
+                today.setHours(0,0,0,0);
+                
+                const getIsoDate = (d) => {
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+
+                const cleanText = (txt) => txt.replace(/#\w+/g, '').trim();
+
+                if(!filterName) {
+                    const todayStr = getIsoDate(today);
+                    const tasksToday = state.tasks.filter(t => t.date === todayStr);
+                    if (tasksToday.length > 0 && tasksToday.every(t => t.completed)) streak++;
+                    
+                    let checkDate = new Date(today);
+                    checkDate.setDate(checkDate.getDate() - 1);
+                    while (true) {
+                        const dateStr = getIsoDate(checkDate);
+                        const tasksOnDate = state.tasks.filter(t => t.date === dateStr);
+                        if (tasksOnDate.length === 0) break;
+                        if (tasksOnDate.every(t => t.completed)) {
+                            streak++;
+                            checkDate.setDate(checkDate.getDate() - 1);
+                        } else break;
+                    }
+                    return streak;
+                } else {
+                    const todayStr = getIsoDate(today);
+                    const doneToday = state.tasks.some(t => t.date === todayStr && cleanText(t.text) === filterName && t.completed);
+                    if(doneToday) streak++;
+
+                    let checkDate = new Date(today);
+                    checkDate.setDate(checkDate.getDate() - 1);
+                    while(true) {
+                        const dateStr = getIsoDate(checkDate);
+                        const doneOnDate = state.tasks.some(t => t.date === dateStr && cleanText(t.text) === filterName && t.completed);
+                        if (doneOnDate) { streak++; checkDate.setDate(checkDate.getDate() - 1); } else { break; }
+                    }
+                    return streak;
+                }
+            },
+
             updateSubStreak: () => {
-                const val = document.getElementById('subStreakSelect').value;
+                const select = document.getElementById('subStreakSelect');
+                const val = select.value;
+                state.subStreakTask = val;
                 localStorage.setItem('subStreakTask', val);
-                const count = val ? state.tasks.filter(t=>t.completed && t.text.includes(val)).length : 0;
+                const count = val ? app.getStreak(val) : 0;
                 document.getElementById('subStreakCount').textContent = count;
             },
+
             renderDashboardCharts: () => {
-                document.getElementById('dashTotal').textContent = state.tasks.length;
-                document.getElementById('dashDone').textContent = state.tasks.filter(t=>t.completed).length;
-                document.getElementById('streakCount').textContent = state.tasks.filter(t=>t.completed).length; // Simplified streak
+                const timeFilter = document.getElementById('dashFilterTime').value;
+                const tagFilter = document.getElementById('dashFilterTag').value;
+                let filtered = state.tasks;
+                const now = new Date();
                 
-                // Charts
+                const currentStreak = app.getStreak(null);
+                document.getElementById('streakCount').textContent = currentStreak;
+                const streakIcon = document.getElementById('streakIcon');
+                if(currentStreak > 0) {
+                    streakIcon.style.opacity = '1'; streakIcon.style.color = '#f97316'; streakIcon.classList.add('fa-beat');
+                } else {
+                    streakIcon.style.opacity = '0.3'; streakIcon.style.color = 'var(--text-muted)'; streakIcon.classList.remove('fa-beat');
+                }
+
+                const subSelect = document.getElementById('subStreakSelect');
+                const cleanText = (txt) => txt.replace(/#\w+/g, '').trim();
+                const allTaskNames = new Set([...state.history, ...state.tasks.map(t => cleanText(t.text))]);
+                
+                while(subSelect.options.length > 1) { subSelect.remove(1); }
+                allTaskNames.forEach(name => {
+                    if(!name) return;
+                    const opt = document.createElement('option');
+                    opt.value = name; opt.textContent = name;
+                    if(name === state.subStreakTask) opt.selected = true;
+                    subSelect.appendChild(opt);
+                });
+                app.updateSubStreak();
+
+                if (timeFilter !== 'all') {
+                    filtered = filtered.filter(t => {
+                        const d = new Date(t.date);
+                        if(timeFilter === 'daily') return d.toDateString() === now.toDateString();
+                        if(timeFilter === 'weekly') { const ago = new Date(); ago.setDate(now.getDate() - 7); return d >= ago && d <= now; }
+                        if(timeFilter === 'monthly') return d.getMonth() === now.getMonth();
+                        if(timeFilter === 'yearly') return d.getFullYear() === now.getFullYear();
+                        return true;
+                    });
+                }
+                if (tagFilter !== 'all') filtered = filtered.filter(t => (t.tags||[]).includes(tagFilter));
+
+                document.getElementById('dashTotal').textContent = filtered.length;
+                const done = filtered.filter(t => t.completed).length;
+                document.getElementById('dashDone').textContent = done;
+                document.getElementById('dashPending').textContent = filtered.length - done;
+
+                const allTags = [...new Set(state.tasks.flatMap(t => t.tags || []))];
+                const tagSelect = document.getElementById('dashFilterTag');
+                if(tagSelect.options.length === 1) { 
+                    allTags.forEach(tag => {
+                        const opt = document.createElement('option'); opt.value = tag; opt.textContent = '#' + tag; tagSelect.appendChild(opt);
+                    });
+                }
+
                 const ctx1 = document.getElementById('mainChart').getContext('2d');
                 if(state.charts.main) state.charts.main.destroy();
-                state.charts.main = new Chart(ctx1, { type: 'line', data: { labels: ['M','T','W','T','F','S','S'], datasets: [{label:'Tasks', data:[2,4,3,5,2,3,4], borderColor:'#208084'}] } });
-                
+                const labels = [], dataPoints = [];
+                for(let i=6; i>=0; i--) {
+                    const d = new Date(); d.setDate(d.getDate() - i);
+                    const k = d.toISOString().split('T')[0];
+                    labels.push(k.slice(5));
+                    dataPoints.push(state.tasks.filter(t => t.date === k && t.completed).length);
+                }
+                state.charts.main = new Chart(ctx1, {
+                    type: 'line',
+                    data: { labels: labels, datasets: [{ label: 'Completed', data: dataPoints, borderColor: getComputedStyle(document.body).getPropertyValue('--accent'), tension: 0.4 }] },
+                    options: { maintainAspectRatio: false, plugins: { legend: {display:false} } }
+                });
+
                 const ctx2 = document.getElementById('tagChart').getContext('2d');
                 if(state.charts.tags) state.charts.tags.destroy();
-                state.charts.tags = new Chart(ctx2, { type: 'doughnut', data: { labels: ['Work','Life'], datasets: [{data:[10,5], backgroundColor:['#208084','#f59e0b']}] } });
-            },
-            
-            loadFocusTasks: () => {
-                const sel = document.getElementById('focusTaskSelect');
-                sel.innerHTML = '<option value="">-- Select Task --</option>';
-                state.tasks.filter(t => !t.completed).forEach(t => {
-                    const opt = document.createElement('option'); opt.value = t.id; opt.textContent = t.text; sel.appendChild(opt);
+                const tagCounts = {};
+                filtered.forEach(t => (t.tags||[]).forEach(tag => tagCounts[tag] = (tagCounts[tag]||0)+1));
+                state.charts.tags = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: { labels: Object.keys(tagCounts), datasets: [{ data: Object.values(tagCounts), backgroundColor: ['#208084', '#10b981', '#f59e0b', '#ef4444', '#6366f1'] }] },
+                    options: { maintainAspectRatio: false }
                 });
             },
+
             focusOnTask: (id) => { app.switchTab('focus'); document.getElementById('focusTaskSelect').value = id; },
+            loadFocusTasks: () => {
+                const sel = document.getElementById('focusTaskSelect');
+                const currentVal = sel.value;
+                sel.innerHTML = '<option value="">-- No specific task --</option>';
+                state.tasks.filter(t => !t.completed).forEach(t => {
+                    const opt = document.createElement('option'); opt.value = t.id; opt.textContent = t.text;
+                    if(t.id === currentVal) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+            }
         };
 
-        // HELPERS
-        function renderTasks() {
-            const list = document.getElementById('taskList'); list.innerHTML = "";
-            state.tasks.filter(t => state.taskFilter==='completed'?t.completed:!t.completed).forEach(t => {
-                list.insertAdjacentHTML('beforeend', `<div class="task-card priority-${t.priority}"><div class="task-header"><input type="checkbox" class="checkbox" ${t.completed?'checked':''} onchange="app.toggleTask('${t.id}')"><div class="task-content"><div class="task-title" style="text-decoration:${t.completed?'line-through':'none'}">${t.text}</div><div class="task-meta">${t.date}</div></div><button class="btn btn-icon" onclick="app.focusOnTask('${t.id}')"><i class="fas fa-stopwatch"></i></button><button class="btn btn-icon" onclick="app.startEdit('${t.id}')"><i class="fas fa-pencil"></i></button><button class="btn btn-icon btn-danger" onclick="app.deleteTask('${t.id}')"><i class="fas fa-trash"></i></button></div></div>`);
-            });
-            if(list.innerHTML==="") list.innerHTML = `<div style="text-align:center;color:var(--text-muted);">No tasks.</div>`;
+        // =======================================================
+        // IMPROVED POMODORO & IDLE LOGIC
+        // =======================================================
+        
+        let focusInterval = null;
+        let timeLeft = 0;
+        let currentMode = 'idle'; // 'focus', 'break', 'idle'
+        let currentAudio = null;
+
+        // 1. SOUND SYSTEM (WEB AUDIO API - Reliable Beeps)
+        const playTone = (type) => {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                const now = ctx.currentTime;
+                
+                if (type === 'start') {
+                    // Single high pitch beep for Start
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, now); // A5
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                } else if (type === 'end') {
+                    // Double tone for End
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    gain.gain.setValueAtTime(0.2, now);
+                    
+                    osc.start(now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.2); // E5
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.6);
+                    osc.stop(now + 0.6);
+                }
+            } catch (e) { console.log("AudioContext blocked or failed", e); }
+        };
+
+        window.focusMode = {
+            start: (type) => {
+                if(focusInterval) clearInterval(focusInterval);
+                
+                // Get Duration based on type
+                let minutes = 25;
+                if(type === 'focus') minutes = parseInt(document.getElementById('focusDuration').value) || 25;
+                if(type === 'break') minutes = parseInt(document.getElementById('breakDuration').value) || 5;
+
+                timeLeft = minutes * 60;
+                currentMode = type;
+                
+                // UI Updates
+                const circle = document.getElementById('timerCircle');
+                circle.classList.remove('focus-mode', 'break-mode');
+                circle.classList.add(type === 'focus' ? 'focus-mode' : 'break-mode');
+                document.getElementById('timerLabel').textContent = type === 'focus' ? "Focusing..." : "On Break";
+
+                // Audio - Start Tone
+                playTone('start');
+
+                // Audio - Background Loop
+                const s = document.getElementById('soundSelect').value;
+                if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+                if(s === 'beats') currentAudio = document.getElementById('audioBeats');
+                else if(s === 'white') currentAudio = document.getElementById('audioWhite');
+                else if(s === 'wind') currentAudio = document.getElementById('audioWind');
+                
+                if(currentAudio && s !== 'none') {
+                    currentAudio.volume = 0.5;
+                    currentAudio.play().catch(e => console.log("User interaction required for audio"));
+                }
+
+                // Notifications & Vibration
+                if("vibrate" in navigator) navigator.vibrate(200);
+                if(Notification.permission === 'granted') {
+                    new Notification(type === 'focus' ? "Focus Started 🎯" : "Break Started ☕");
+                }
+
+                // Timer Loop
+                updateTimerDisplay();
+                focusInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+
+                    if(timeLeft <= 0) {
+                        focusMode.reset(true); // Complete
+                    }
+                }, 1000);
+            },
+
+            reset: (completed = false) => {
+                if(focusInterval) clearInterval(focusInterval);
+                focusInterval = null;
+                
+                document.getElementById('timerCircle').classList.remove('focus-mode', 'break-mode');
+                document.getElementById('timerLabel').textContent = "Ready";
+                
+                if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+
+                if(completed) {
+                    playTone('end');
+                    if("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
+                    if(Notification.permission === 'granted') {
+                        new Notification("Timer Complete! 🎉");
+                    }
+                    alert("Time is up!");
+                    
+                    // Auto-complete task if selected
+                    if(currentMode === 'focus') {
+                        const tid = document.getElementById('focusTaskSelect').value;
+                        if(tid) app.toggleTask(tid);
+                    }
+                }
+                
+                currentMode = 'idle';
+                timeLeft = parseInt(document.getElementById('focusDuration').value) * 60;
+                updateTimerDisplay();
+            }
+        };
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2,'0');
+            const s = (timeLeft % 60).toString().padStart(2,'0');
+            document.getElementById('timerDisplay').textContent = `${m}:${s}`;
         }
+
+        // 2. IDLE TRACKER LOGIC
+        // Runs every second regardless of focus mode. Only increments if mode is 'idle'.
+        setInterval(() => {
+            if(currentMode === 'idle') {
+                state.idleSeconds++;
+                const hrs = Math.floor(state.idleSeconds / 3600).toString().padStart(2,'0');
+                const mins = Math.floor((state.idleSeconds % 3600) / 60).toString().padStart(2,'0');
+                const secs = (state.idleSeconds % 60).toString().padStart(2,'0');
+                document.getElementById('idleDisplay').textContent = `${hrs}:${mins}:${secs}`;
+            }
+        }, 1000);
+
+        // RENDERING HELPERS
+        function renderTasks() {
+            const list = document.getElementById('taskList');
+            list.innerHTML = "";
+            const filter = state.taskFilter; 
+            const visibleTasks = state.tasks.filter(t => filter === 'completed' ? t.completed : !t.completed);
+            visibleTasks.forEach(task => {
+                const subsHtml = (task.subtasks||[]).map(s => `<div class="subtask-row"><input type="checkbox" ${s.completed ? 'checked' : ''} onchange="app.toggleSubtask('${task.id}', '${s.id}')"><span style="text-decoration:${s.completed?'line-through':'none'}; opacity:${s.completed?0.5:1}; flex:1; color:var(--text-muted);">${s.text}</span><button class="btn btn-icon btn-danger" style="width:20px;height:20px;padding:0;font-size:10px;" onclick="app.deleteSubtask('${task.id}', '${s.id}')"><i class="fas fa-times"></i></button></div>`).join('');
+                const tagsHtml = (task.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
+                const html = `<div class="task-card priority-${task.priority}"><div class="task-header"><input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''} onchange="app.toggleTask('${task.id}')"><div class="task-content"><div class="task-title" style="text-decoration: ${task.completed ? 'line-through' : 'none'}">${task.text.replace(/#\w+/g,'')} ${tagsHtml}</div><div class="task-meta"><i class="far fa-calendar"></i> ${task.date} • ${task.priority.toUpperCase()}</div></div><div style="display:flex;gap:5px;"><button class="btn btn-icon" onclick="app.focusOnTask('${task.id}')"><i class="fas fa-stopwatch"></i></button><button class="btn btn-icon" onclick="app.startEdit('${task.id}')"><i class="fas fa-pencil"></i></button><button class="btn btn-icon btn-danger" onclick="app.deleteTask('${task.id}')"><i class="fas fa-trash"></i></button></div></div><div class="subtasks">${subsHtml}<div class="subtask-row"><input id="sub-input-${task.id}" placeholder="+ Subtask" style="background:transparent;border:none;color:var(--text-muted);width:100%;outline:none;font-size:13px;" onkeydown="if(event.key==='Enter') app.addSubtask('${task.id}')"></div></div></div>`;
+                list.insertAdjacentHTML('beforeend', html);
+            });
+            if(visibleTasks.length === 0) list.innerHTML = `<div style="text-align:center;color:var(--text-muted);margin-top:20px;">No ${filter} tasks found.</div>`;
+        }
+
         function renderCalendar() {
-            const g = document.getElementById('calGrid'); g.innerHTML = `<div class="cal-day-header">S</div><div class="cal-day-header">M</div><div class="cal-day-header">T</div><div class="cal-day-header">W</div><div class="cal-day-header">T</div><div class="cal-day-header">F</div><div class="cal-day-header">S</div>`;
-            const y=state.currentDate.getFullYear(), m=state.currentDate.getMonth();
-            document.getElementById('calMonthYear').textContent = new Date(y,m).toLocaleString('default',{month:'long',year:'numeric'});
-            for(let i=0;i<new Date(y,m,1).getDay();i++) g.insertAdjacentHTML('beforeend',`<div></div>`);
-            for(let d=1;d<=new Date(y,m+1,0).getDate();d++) {
-                const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const has = state.tasks.some(t=>t.date===dateStr);
-                g.insertAdjacentHTML('beforeend',`<div class="cal-cell ${has?'today':''}" onclick="app.selectDate('${dateStr}')"><div class="cal-date">${d}</div></div>`);
+            const grid = document.getElementById('calGrid');
+            grid.innerHTML = `<div class="cal-day-header">Sun</div><div class="cal-day-header">Mon</div><div class="cal-day-header">Tue</div><div class="cal-day-header">Wed</div><div class="cal-day-header">Thu</div><div class="cal-day-header">Fri</div><div class="cal-day-header">Sat</div>`;
+            const year = state.currentDate.getFullYear();
+            const month = state.currentDate.getMonth();
+            document.getElementById('calMonthYear').textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for(let i=0; i<firstDay; i++) grid.insertAdjacentHTML('beforeend', `<div></div>`);
+            for(let d=1; d<=daysInMonth; d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const isToday = dateStr === new Date().toISOString().split('T')[0];
+                const dayTasks = state.tasks.filter(t => t.date === dateStr);
+                const dots = dayTasks.map(t => `<div class="cal-task-dot ${t.completed?'done':''}">${t.text}</div>`).join('');
+                grid.insertAdjacentHTML('beforeend', `<div class="cal-cell ${isToday ? 'today' : ''}" data-date="${dateStr}" onclick="app.selectDate('${dateStr}')"><div class="cal-date">${d}</div>${dots}</div>`);
             }
         }
-        function renderSuggestions() { document.getElementById('suggestionsBox').innerHTML = state.history.map(h => `<div class="suggestion-chip" onclick="app.addTask('${h}')">${h}</div>`).join(''); }
 
+        function renderSuggestions() {
+            document.getElementById('suggestionsBox').innerHTML = state.history.map(h => `<div class="suggestion-chip" onclick="app.addTask('${h}')">${h} <span onclick="event.stopPropagation();app.removeSuggestion('${h}')">×</span></div>`).join('');
+        }
+        window.app.removeSuggestion = (t) => { state.history = state.history.filter(h => h !== t); localStorage.setItem('taskHistory', JSON.stringify(state.history)); renderSuggestions(); };
+
+        // AUTH LISTENER
         onAuthStateChanged(auth, (user) => {
             if(user) {
-                state.user = user; document.getElementById('authBtn').textContent="Sign Out"; document.getElementById('syncText').textContent="Cloud Active"; document.getElementById('syncDot').style.background="var(--success)";
-                onSnapshot(query(collection(db,'tasks'),where('uid','==',user.uid)), s=>{state.tasks=s.docs.map(d=>({id:d.id,...d.data()})); renderTasks(); app.syncLeaderboard();});
-                onSnapshot(query(collection(db,'notes'),where('uid','==',user.uid)), s=>{state.notes=s.docs.map(d=>({id:d.id,...d.data()})); app.renderNotes();});
+                state.user = user;
+                document.getElementById('authBtn').textContent = "Sign Out";
+                document.getElementById('syncDot').style.background = "var(--success)";
+                document.getElementById('syncText').textContent = "Cloud Active";
+                
+                const qTasks = query(collection(db, 'tasks'), where('uid', '==', user.uid));
+                onSnapshot(qTasks, (snap) => {
+                    state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    renderTasks();
+                    if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
+                    if(document.getElementById('calendar').classList.contains('active')) renderCalendar();
+                    app.syncLeaderboard();
+                });
+
+                // Load Notes (Instant Listener)
+                const qNotes = query(collection(db, 'notes'), where('uid', '==', user.uid));
+                onSnapshot(qNotes, (snap) => {
+                    state.notes = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    if(document.getElementById('notes').classList.contains('active')) app.renderNotes();
+                });
+
             } else {
-                state.user = null; document.getElementById('authBtn').textContent="Sign In"; document.getElementById('syncText').textContent="Offline"; document.getElementById('syncDot').style.background="var(--warning)";
-                state.tasks=JSON.parse(localStorage.getItem('local_tasks'))||[]; state.notes=JSON.parse(localStorage.getItem('local_notes'))||[]; renderTasks(); app.renderNotes();
+                state.user = null;
+                document.getElementById('authBtn').textContent = "Sign In";
+                document.getElementById('syncDot').style.background = "var(--warning)";
+                document.getElementById('syncText').textContent = "Offline";
+                state.tasks = JSON.parse(localStorage.getItem('local_tasks')) || [];
+                state.notes = JSON.parse(localStorage.getItem('local_notes')) || [];
+                renderTasks();
+                app.renderNotes();
             }
         });
 
-        app.init(); renderSuggestions();
+        app.init();
+        renderSuggestions();
     </script>
 </body>
 </html>
