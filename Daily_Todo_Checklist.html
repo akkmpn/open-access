@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v7.7 (Subtask Sync)</title>
+    <title>Enterprise TaskPro - v7.8 (Sync & Alarm Fix)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -266,6 +266,11 @@
         .focus-task-row:hover .focus-task-actions { opacity: 1; }
         .focus-icon-btn { cursor: pointer; color: var(--text-muted); font-size: 11px; padding: 2px; }
         .focus-icon-btn:hover { color: var(--accent); }
+
+        /* ALARM MODAL */
+        #alarmModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; display:none; align-items:center; justify-content:center; backdrop-filter: blur(10px); }
+        .alarm-content { background: var(--bg-card); padding: 40px; border-radius: 20px; text-align: center; border: 2px solid var(--accent); box-shadow: 0 0 50px rgba(32, 128, 132, 0.4); animation: pulseAlarm 1s infinite; max-width: 90%; }
+        @keyframes pulseAlarm { 0% { transform: scale(1); box-shadow: 0 0 30px rgba(32, 128, 132, 0.4); } 50% { transform: scale(1.02); box-shadow: 0 0 60px rgba(32, 128, 132, 0.7); } 100% { transform: scale(1); box-shadow: 0 0 30px rgba(32, 128, 132, 0.4); } }
     </style>
     <style id="dynamic-theme-style"></style>
 </head>
@@ -273,9 +278,18 @@
 
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="app.toggleSidebar()"></div>
 
+    <div id="alarmModal">
+        <div class="alarm-content">
+            <i class="fas fa-bell" style="font-size: 60px; color: var(--accent); margin-bottom: 20px;"></i>
+            <h1 style="color: var(--text-main); margin-bottom: 10px;">Time is Up!</h1>
+            <p style="color: var(--text-muted); margin-bottom: 30px; font-size: 16px;">Good job. Take a breath.</p>
+            <button class="btn btn-primary" style="padding: 15px 40px; font-size: 18px;" onclick="focusMode.stopAlarmUI()">Stop Alarm</button>
+        </div>
+    </div>
+
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="fas fa-bolt"></i> TaskPro 7.7
+            <i class="fas fa-bolt"></i> TaskPro 7.8
             <button class="btn btn-icon" style="margin-left:auto; background:transparent; display:none;" onclick="app.toggleSidebar()" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
         </div>
         
@@ -1508,6 +1522,8 @@
             ctx: null,
             activeNodes: [],
             gainNode: null,
+            alarmInterval: null,
+            alarmOsc: null,
 
             init: () => {
                 if(!AudioEngine.ctx) {
@@ -1534,19 +1550,44 @@
                     gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
                     osc.start(t);
                     osc.stop(t + 0.5);
-                } else {
-                    const osc2 = AudioEngine.ctx.createOscillator();
-                    const gain2 = AudioEngine.ctx.createGain();
-                    osc2.connect(gain2);
-                    gain2.connect(AudioEngine.ctx.destination);
-                    osc.frequency.setValueAtTime(523.25, t); 
-                    osc2.frequency.setValueAtTime(659.25, t); 
+                }
+            },
+
+            // NEW: Continuous Alarm Function
+            playAlarm: () => {
+                AudioEngine.init();
+                // Stop any existing alarm
+                if(AudioEngine.alarmInterval) clearInterval(AudioEngine.alarmInterval);
+                
+                const playPulse = () => {
+                    const t = AudioEngine.ctx.currentTime;
+                    const osc = AudioEngine.ctx.createOscillator();
+                    const gain = AudioEngine.ctx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(AudioEngine.ctx.destination);
+                    
+                    osc.frequency.setValueAtTime(880, t); // A5
+                    osc.frequency.setValueAtTime(1100, t + 0.2); // Just a bit higher
+                    
                     gain.gain.setValueAtTime(0.2, t);
-                    gain2.gain.setValueAtTime(0.2, t);
-                    gain.gain.exponentialRampToValueAtTime(0.01, t + 1);
-                    gain2.gain.exponentialRampToValueAtTime(0.01, t + 1);
-                    osc.start(t); osc2.start(t);
-                    osc.stop(t + 1); osc2.stop(t + 1);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                    
+                    osc.type = 'square';
+                    osc.start(t);
+                    osc.stop(t + 0.5);
+                };
+
+                // Play immediately
+                playPulse();
+                // Repeat every second
+                AudioEngine.alarmInterval = setInterval(playPulse, 1000);
+            },
+
+            stopAlarm: () => {
+                if(AudioEngine.alarmInterval) {
+                    clearInterval(AudioEngine.alarmInterval);
+                    AudioEngine.alarmInterval = null;
                 }
             },
 
@@ -1703,6 +1744,7 @@
             endTime: 0,
             remainingAtPause: 0,
             totalDuration: 0,
+            alarmTimeout: null,
             
             syncTimerState: async () => {
                 if(!state.user) return;
@@ -1780,34 +1822,31 @@
             complete: () => {
                 clearInterval(focusMode.timerInterval);
                 AudioEngine.stopBackground();
-                AudioEngine.playBeep('end');
                 
                 // SAVE SESSION LOG
                 if (focusMode.status === 'focus') {
                     const durationSec = focusMode.totalDuration / 1000;
-                    
-                    // Capture Task ID and Name for Analytics
                     const taskId = document.getElementById('focusTaskSelect').value;
                     const task = state.tasks.find(t => t.id === taskId);
                     
                     const log = { 
                         duration: durationSec, 
                         timestamp: Date.now(),
-                        taskId: taskId || null, // Store ID for breakdown
-                        taskTitle: task ? task.text : null // Store name snapshot
+                        taskId: taskId || null, 
+                        taskTitle: task ? task.text : null 
                     };
                     
                     state.focusLogs.push(log);
+                    // Critical for sync: save local too
                     localStorage.setItem('focusLogs', JSON.stringify(state.focusLogs));
                     
                     if(state.user) {
                          addDoc(collection(db, 'focus_sessions'), { 
                             uid: state.user.uid,
                             ...log
-                        }).catch(e => console.error(e));
+                        }).then(() => console.log("Session Synced")).catch(e => console.error("Sync Fail", e));
                     }
                     
-                    // Auto-complete task if selected
                     if(taskId) app.toggleTask(taskId);
                 }
 
@@ -1815,17 +1854,32 @@
                 focusMode.updateUI(false);
                 document.getElementById('timerDisplay').textContent = "00:00";
                 document.getElementById('timerLabel').textContent = "Done";
-                alert("Time is up!");
-                focusMode.syncTimerState();
                 
-                // Update Dashboard stats if active
-                if(document.getElementById('dashboard').classList.contains('active')) {
-                    app.renderDashboardCharts();
-                }
+                focusMode.syncTimerState();
+                if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
+
+                // START ALARM UI
+                AudioEngine.playAlarm();
+                document.getElementById('alarmModal').style.display = 'flex';
+
+                // Stop automatically after 10 seconds
+                if(focusMode.alarmTimeout) clearTimeout(focusMode.alarmTimeout);
+                focusMode.alarmTimeout = setTimeout(() => {
+                    focusMode.stopAlarmUI();
+                }, 10000);
+            },
+
+            stopAlarmUI: () => {
+                document.getElementById('alarmModal').style.display = 'none';
+                AudioEngine.stopAlarm();
+                if(focusMode.alarmTimeout) clearTimeout(focusMode.alarmTimeout);
             },
 
             reset: () => {
                 clearInterval(focusMode.timerInterval);
+                AudioEngine.stopAlarm();
+                document.getElementById('alarmModal').style.display = 'none';
+                
                 focusMode.status = 'idle';
                 focusMode.pausedType = null;
                 AudioEngine.stopBackground();
@@ -1932,11 +1986,15 @@
                     if(document.getElementById('notes').classList.contains('active')) app.renderNotes();
                 });
 
-                // Focus Logs Sync
+                // FIXED: Focus Logs Sync with FORCE UPDATE
                 const qSessions = query(collection(db, 'focus_sessions'), where('uid', '==', user.uid));
                 onSnapshot(qSessions, (snap) => {
+                    // Update State
                     state.focusLogs = snap.docs.map(d => d.data());
-                    if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
+                    // Critical: Update Local Storage to persist sync across refreshes
+                    localStorage.setItem('focusLogs', JSON.stringify(state.focusLogs));
+                    // Force Render immediately
+                    app.renderDashboardCharts();
                 });
                 
                 onSnapshot(doc(db, 'timers', user.uid), (docSnap) => {
