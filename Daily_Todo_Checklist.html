@@ -637,7 +637,17 @@
             messagingSenderId: "629797690976",
             appId: "1:629797690976:web:fda66df1691eb920e12d05"
         };
+        // 1. Register the Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(() => console.log("Service Worker Registered"))
+                .catch(err => console.log("SW Registration Failed", err));
+        }
 
+        // 2. Request Notification Permission (For Alarms)
+        if ("Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
         const appInit = initializeApp(firebaseConfig);
         const auth = getAuth(appInit);
         const db = getFirestore(appInit);
