@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v7.0 (Pomodoro & Idle)</title>
+    <title>Enterprise TaskPro - v7.1 (Mobile Fix)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -303,7 +303,7 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="fas fa-bolt"></i> TaskPro 7.0
+            <i class="fas fa-bolt"></i> TaskPro 7.1
             <button class="btn btn-icon" style="margin-left:auto; background:transparent; display:none;" onclick="app.toggleSidebar()" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
         </div>
         
@@ -1282,15 +1282,15 @@
         };
 
         // =======================================================
-        // IMPROVED POMODORO & IDLE LOGIC
+        // IMPROVED POMODORO (DELTA TIME FIX) & IDLE LOGIC
         // =======================================================
         
         let focusInterval = null;
-        let timeLeft = 0;
+        let endTime = null;
         let currentMode = 'idle'; // 'focus', 'break', 'idle'
         let currentAudio = null;
 
-        // 1. SOUND SYSTEM (WEB AUDIO API - Reliable Beeps)
+        // 1. SOUND SYSTEM
         const playTone = (type) => {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1298,25 +1298,16 @@
                 const gain = ctx.createGain();
                 osc.connect(gain);
                 gain.connect(ctx.destination);
-
                 const now = ctx.currentTime;
                 
                 if (type === 'start') {
-                    // Single high pitch beep for Start
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(880, now); // A5
-                    gain.gain.setValueAtTime(0.1, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-                    osc.start(now);
-                    osc.stop(now + 0.5);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(880, now);
+                    gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    osc.start(now); osc.stop(now + 0.5);
                 } else if (type === 'end') {
-                    // Double tone for End
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(523.25, now); // C5
-                    gain.gain.setValueAtTime(0.2, now);
-                    
-                    osc.start(now);
-                    osc.frequency.setValueAtTime(659.25, now + 0.2); // E5
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(523.25, now);
+                    gain.gain.setValueAtTime(0.2, now); osc.start(now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.2);
                     gain.gain.linearRampToValueAtTime(0.001, now + 0.6);
                     osc.stop(now + 0.6);
                 }
@@ -1327,12 +1318,15 @@
             start: (type) => {
                 if(focusInterval) clearInterval(focusInterval);
                 
-                // Get Duration based on type
+                // Get Duration
                 let minutes = 25;
                 if(type === 'focus') minutes = parseInt(document.getElementById('focusDuration').value) || 25;
                 if(type === 'break') minutes = parseInt(document.getElementById('breakDuration').value) || 5;
 
-                timeLeft = minutes * 60;
+                // DELTA TIME CALCULATION (The Fix)
+                const now = Date.now();
+                const durationMs = minutes * 60 * 1000;
+                endTime = now + durationMs;
                 currentMode = type;
                 
                 // UI Updates
@@ -1341,35 +1335,28 @@
                 circle.classList.add(type === 'focus' ? 'focus-mode' : 'break-mode');
                 document.getElementById('timerLabel').textContent = type === 'focus' ? "Focusing..." : "On Break";
 
-                // Audio - Start Tone
+                // Audio
                 playTone('start');
-
-                // Audio - Background Loop
                 const s = document.getElementById('soundSelect').value;
                 if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
                 if(s === 'beats') currentAudio = document.getElementById('audioBeats');
                 else if(s === 'white') currentAudio = document.getElementById('audioWhite');
                 else if(s === 'wind') currentAudio = document.getElementById('audioWind');
-                
-                if(currentAudio && s !== 'none') {
-                    currentAudio.volume = 0.5;
-                    currentAudio.play().catch(e => console.log("User interaction required for audio"));
-                }
+                if(currentAudio && s !== 'none') { currentAudio.volume = 0.5; currentAudio.play().catch(e => console.log("User interaction required")); }
 
-                // Notifications & Vibration
                 if("vibrate" in navigator) navigator.vibrate(200);
-                if(Notification.permission === 'granted') {
-                    new Notification(type === 'focus' ? "Focus Started 🎯" : "Break Started ☕");
-                }
+                if(Notification.permission === 'granted') new Notification(type === 'focus' ? "Focus Started 🎯" : "Break Started ☕");
 
-                // Timer Loop
-                updateTimerDisplay();
+                // Immediate update
+                updateTimerDisplay(Math.ceil((endTime - Date.now()) / 1000));
+
+                // Robust Interval
                 focusInterval = setInterval(() => {
-                    timeLeft--;
-                    updateTimerDisplay();
-
-                    if(timeLeft <= 0) {
-                        focusMode.reset(true); // Complete
+                    const remaining = Math.ceil((endTime - Date.now()) / 1000);
+                    if(remaining <= 0) {
+                        focusMode.reset(true);
+                    } else {
+                        updateTimerDisplay(remaining);
                     }
                 }, 1000);
             },
@@ -1377,6 +1364,7 @@
             reset: (completed = false) => {
                 if(focusInterval) clearInterval(focusInterval);
                 focusInterval = null;
+                endTime = null;
                 
                 document.getElementById('timerCircle').classList.remove('focus-mode', 'break-mode');
                 document.getElementById('timerLabel').textContent = "Ready";
@@ -1386,12 +1374,8 @@
                 if(completed) {
                     playTone('end');
                     if("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
-                    if(Notification.permission === 'granted') {
-                        new Notification("Timer Complete! 🎉");
-                    }
+                    if(Notification.permission === 'granted') new Notification("Timer Complete! 🎉");
                     alert("Time is up!");
-                    
-                    // Auto-complete task if selected
                     if(currentMode === 'focus') {
                         const tid = document.getElementById('focusTaskSelect').value;
                         if(tid) app.toggleTask(tid);
@@ -1399,19 +1383,20 @@
                 }
                 
                 currentMode = 'idle';
-                timeLeft = parseInt(document.getElementById('focusDuration').value) * 60;
-                updateTimerDisplay();
+                // Reset display to default setting
+                const defMin = parseInt(document.getElementById('focusDuration').value) || 25;
+                updateTimerDisplay(defMin * 60);
             }
         };
 
-        function updateTimerDisplay() {
-            const m = Math.floor(timeLeft / 60).toString().padStart(2,'0');
-            const s = (timeLeft % 60).toString().padStart(2,'0');
+        function updateTimerDisplay(seconds) {
+            if(seconds < 0) seconds = 0;
+            const m = Math.floor(seconds / 60).toString().padStart(2,'0');
+            const s = (seconds % 60).toString().padStart(2,'0');
             document.getElementById('timerDisplay').textContent = `${m}:${s}`;
         }
 
         // 2. IDLE TRACKER LOGIC
-        // Runs every second regardless of focus mode. Only increments if mode is 'idle'.
         setInterval(() => {
             if(currentMode === 'idle') {
                 state.idleSeconds++;
