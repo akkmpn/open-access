@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v7.1 (Mobile Fix)</title>
+    <title>Enterprise TaskPro - v7.1 (Fixed Audio & Pause)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -190,6 +190,8 @@
         
         .timer-active.focus-mode { border-color: var(--accent); box-shadow: 0 0 30px rgba(32, 128, 132, 0.4); }
         .timer-active.break-mode { border-color: var(--success); box-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
+        .timer-active.paused { animation: pulse 2s infinite; opacity: 0.7; }
+        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
 
         .idle-tracker {
             margin-top: 30px; padding: 15px; border-top: 1px solid var(--border);
@@ -203,72 +205,14 @@
         .rank-badge { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; margin-right: 10px; }
         .rank-1 { background: #fbbf24; color: #78350f; } .rank-2 { background: #94a3b8; color: #0f172a; } .rank-3 { background: #b45309; color: #fffbeb; }
 
-        /* ==================== REIMAGINED NOTES ==================== */
-        .note-card {
-            background: var(--bg-card);
-            border: var(--border-width) solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            margin-bottom: 15px;
-            position: relative;
-            box-shadow: var(--shadow);
-            transition: transform 0.2s ease;
-            display: flex;
-            flex-direction: column;
-        }
+        /* Notes & Chat */
+        .note-card { background: var(--bg-card); border: var(--border-width) solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+        .note-header-actions { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px; }
+        .note-action-btn { background: var(--bg-body); border: 1px solid var(--border); color: var(--text-muted); width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+        .note-action-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--bg-hover); }
+        .note-content { font-family: 'Playfair Display', serif; font-size: 18px; line-height: 1.6; color: var(--text-main); white-space: pre-wrap; flex: 1; }
+        .note-date { font-family: var(--font-main); font-size: 11px; color: var(--text-muted); margin-top: 15px; text-align: right; border-top: 1px solid var(--border); padding-top: 10px; }
         
-        .note-header-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .note-action-btn {
-            background: var(--bg-body);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            width: 30px; 
-            height: 30px; 
-            border-radius: 8px;
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .note-action-btn:hover {
-            color: var(--accent);
-            border-color: var(--accent);
-            background: var(--bg-hover);
-        }
-
-        .note-action-btn.delete-btn:hover {
-            color: var(--danger);
-            border-color: var(--danger);
-        }
-
-        .note-content {
-            font-family: 'Playfair Display', serif;
-            font-size: 18px;
-            line-height: 1.6;
-            color: var(--text-main);
-            white-space: pre-wrap;
-            flex: 1;
-        }
-        
-        .note-date {
-            font-family: var(--font-main);
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 15px;
-            text-align: right;
-            border-top: 1px solid var(--border);
-            padding-top: 10px;
-        }
-
-        /* Chat */
         .chat-layout { display: flex; height: 500px; background: var(--bg-body); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 20px; }
         .chat-main { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
         .chat-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
@@ -381,7 +325,6 @@
                     <option value="all">All Tags</option>
                 </select>
             </div>
-
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px;">
                 <div class="task-card" style="text-align:center; padding: 20px 10px;">
                     <div style="font-size:28px; font-weight:700; color:var(--accent);" id="dashTotal">0</div>
@@ -395,16 +338,13 @@
                     <div style="font-size:28px; font-weight:700; color:var(--warning);" id="dashPending">0</div>
                     <div style="color:var(--text-muted); font-size:11px; margin-top:5px;">PENDING</div>
                 </div>
-                
                 <div class="task-card" style="text-align:center; padding: 20px 10px;">
                     <div style="font-size:28px; font-weight:700; color:var(--streak-fire); display:flex; align-items:center; justify-content:center; gap:8px;">
                         <span id="streakCount">0</span>
                         <i class="fas fa-fire" id="streakIcon" style="font-size:20px; opacity:0.3; transition:0.3s;"></i>
                     </div>
                     <div style="color:var(--text-muted); font-size:11px; margin-top:5px;">DAILY STREAK</div>
-                    <div style="font-size:9px; color:var(--text-muted); margin-top:3px;">(Consecutive Days)</div>
                 </div>
-
                 <div class="task-card" style="text-align:center; padding: 20px 10px; border-left-color: var(--streak-target);">
                     <div style="font-size:28px; font-weight:700; color:var(--streak-target); display:flex; align-items:center; justify-content:center; gap:8px;">
                         <span id="subStreakCount">0</span>
@@ -418,7 +358,6 @@
                     <div style="font-size:9px; color:var(--text-muted); margin-top:5px;">TASK SPECIFIC STREAK</div>
                 </div>
             </div>
-
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
                 <div class="task-card">
                     <h3 style="margin-bottom:15px; color:var(--text-main); font-size:16px;">Productivity Trend</h3>
@@ -445,12 +384,10 @@
                 <button class="btn btn-primary" id="addUpdateBtn" onclick="app.handleTaskSubmit()"><i class="fas fa-plus"></i> Add</button>
                 <button class="btn btn-secondary" id="cancelEditBtn" style="display:none;" onclick="app.cancelEdit()">Cancel</button>
             </div>
-            
             <div style="margin-bottom:15px; display:flex; gap:10px;">
                 <button class="btn btn-secondary" onclick="app.setTaskFilter('active')" id="filterActive">Active</button>
                 <button class="btn btn-secondary" onclick="app.setTaskFilter('completed')" id="filterCompleted">Completed</button>
             </div>
-
             <div id="taskList" class="task-list"></div>
         </div>
 
@@ -462,12 +399,10 @@
                 </div>
                 <div style="font-size:30px; color:var(--accent); opacity:0.5;"><i class="fas fa-feather-alt"></i></div>
             </div>
-            
             <div class="input-group" style="align-items:flex-start;">
                 <textarea id="noteInput" class="main-input" rows="3" style="resize:vertical; min-height:80px;" placeholder="Write a quote, thought, or memo..."></textarea>
                 <button class="btn btn-primary" style="height:fit-content;" onclick="app.addNote()">Save Note</button>
             </div>
-            
             <div id="notesList" style="display: flex; flex-direction: column; gap: 15px;"></div>
         </div>
 
@@ -480,7 +415,6 @@
                 </div>
             </div>
             <div class="calendar-grid" id="calGrid"></div>
-            
             <div class="cal-mobile-list" id="calMobileView">
                 <h4 style="margin-bottom:10px; color:var(--text-muted);" id="calSelectedDate">Select a date</h4>
                 <div id="calSelectedTasks"></div>
@@ -508,11 +442,11 @@
                         <input type="number" id="breakDuration" class="select-input" value="5" style="width:80px; text-align:center;">
                     </div>
                     <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
-                        <span style="font-size:11px; color:var(--text-muted);">Sound</span>
-                        <select id="soundSelect" class="select-input" style="width:100px;">
+                        <span style="font-size:11px; color:var(--text-muted);">Soundscape</span>
+                        <select id="soundSelect" class="select-input" style="width:120px;" onchange="focusMode.changeSound(this.value)">
                             <option value="none">Silent</option>
-                            <option value="beats">Beats</option>
-                            <option value="wind">Wind</option>
+                            <option value="beats">Deep Focus (Beats)</option>
+                            <option value="wind">Pink Noise (Wind)</option>
                             <option value="white">White Noise</option>
                         </select>
                     </div>
@@ -523,9 +457,14 @@
                     <span id="timerLabel" class="timer-label">Ready</span>
                 </div>
 
-                <div style="display:flex; justify-content:center; gap:15px; margin-bottom:30px;">
-                    <button class="btn btn-primary" onclick="focusMode.start('focus')" style="min-width:100px;">Start Focus</button>
-                    <button class="btn btn-secondary" onclick="focusMode.start('break')" style="border-color:var(--success); color:var(--success);">Start Break</button>
+                <div style="display:flex; justify-content:center; gap:10px; margin-bottom:30px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" id="btnStartFocus" onclick="focusMode.start('focus')" style="min-width:110px;">Start Focus</button>
+                    <button class="btn btn-secondary" id="btnStartBreak" onclick="focusMode.start('break')" style="border-color:var(--success); color:var(--success); min-width:110px;">Start Break</button>
+                    
+                    <button class="btn btn-secondary" id="btnPause" onclick="focusMode.togglePause()" style="display:none; background:var(--bg-body); color:var(--warning); border-color:var(--warning); min-width:80px;">
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                    
                     <button class="btn btn-secondary btn-danger" onclick="focusMode.reset()">Stop</button>
                 </div>
 
@@ -599,10 +538,6 @@
         </div>
     </div>
 
-    <audio id="audioBeats" loop src="https://assets.mixkit.co/music/preview/mixkit-chill-lofi-777.mp3"></audio>
-    <audio id="audioWhite" loop src="https://assets.mixkit.co/sfx/preview/mixkit-white-noise-1254.mp3"></audio>
-    <audio id="audioWind" loop src="https://assets.mixkit.co/sfx/preview/mixkit-light-rain-loop-1253.mp3"></audio>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -644,7 +579,6 @@
                 document.getElementById('dateInput').valueAsDate = new Date();
                 if(state.customDesign) document.getElementById('dynamic-theme-style').textContent = state.customDesign;
                 
-                // If offline, load local notes immediately
                 if(!state.user) {
                     state.notes = JSON.parse(localStorage.getItem('local_notes')) || [];
                     app.renderNotes();
@@ -658,7 +592,6 @@
                     }
                 });
 
-                // Request notification permission early
                 if("Notification" in window && Notification.permission !== 'granted') {
                     Notification.requestPermission();
                 }
@@ -712,7 +645,6 @@
                 }
             },
 
-            // ==================== CLOUD SYNC & DATA ====================
             saveLifetime: async (showNotification = false) => {
                 localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
                 localStorage.setItem('local_notes', JSON.stringify(state.notes));
@@ -743,19 +675,15 @@
                         const qTasks = query(collection(db, 'tasks'), where('uid', '==', state.user.uid));
                         const snapTasks = await getDocs(qTasks);
                         snapTasks.docs.forEach(doc => { batch.delete(doc.ref); });
-
                         const qNotes = query(collection(db, 'notes'), where('uid', '==', state.user.uid));
                         const snapNotes = await getDocs(qNotes);
                         snapNotes.docs.forEach(doc => { batch.delete(doc.ref); });
-
                         await batch.commit();
-                        
-                         await setDoc(doc(db, 'leaderboard', state.user.uid), {
+                        await setDoc(doc(db, 'leaderboard', state.user.uid), {
                             username: state.user.email.split('@')[0],
                             score: 0,
                             lastActive: Date.now()
                         });
-
                         alert("Cloud data wiped successfully.");
                     } catch (e) { alert("Error wiping cloud data: " + e.message); }
                 } else { alert("Local data wiped successfully."); }
@@ -973,7 +901,6 @@
                 else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
             },
 
-            // --- NOTES START ---
             addNote: async () => {
                 const input = document.getElementById('noteInput');
                 const content = input.value.trim();
@@ -1058,7 +985,6 @@
                     </div>`;
                 }).join('');
             },
-            // --- NOTES END ---
 
             changeMonth: (offset) => {
                 state.currentDate.setMonth(state.currentDate.getMonth() + offset);
@@ -1074,7 +1000,6 @@
                 if(cell) cell.classList.add('selected');
             },
 
-            // --- COMMUNITY & LEADERBOARD LOGIC ---
             syncLeaderboard: async () => {
                 if (!state.user) return;
                 const completedCount = state.tasks.filter(t => t.completed).length;
@@ -1131,19 +1056,16 @@
                 box.scrollTop = box.scrollHeight;
             },
 
-            // --- STREAK CALCULATORS ---
             getStreak: (filterName = null) => {
                 let streak = 0;
                 let today = new Date();
                 today.setHours(0,0,0,0);
-                
                 const getIsoDate = (d) => {
                     const year = d.getFullYear();
                     const month = String(d.getMonth() + 1).padStart(2, '0');
                     const day = String(d.getDate()).padStart(2, '0');
                     return `${year}-${month}-${day}`;
                 };
-
                 const cleanText = (txt) => txt.replace(/#\w+/g, '').trim();
 
                 if(!filterName) {
@@ -1282,123 +1204,274 @@
         };
 
         // =======================================================
-        // IMPROVED POMODORO (DELTA TIME FIX) & IDLE LOGIC
+        //  FIX 1 & 2: ROBUST AUDIO ENGINE & RELIABLE TIMER
         // =======================================================
-        
-        let focusInterval = null;
-        let endTime = null;
-        let currentMode = 'idle'; // 'focus', 'break', 'idle'
-        let currentAudio = null;
 
-        // 1. SOUND SYSTEM
-        const playTone = (type) => {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                const now = ctx.currentTime;
-                
-                if (type === 'start') {
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(880, now);
-                    gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-                    osc.start(now); osc.stop(now + 0.5);
-                } else if (type === 'end') {
-                    osc.type = 'triangle'; osc.frequency.setValueAtTime(523.25, now);
-                    gain.gain.setValueAtTime(0.2, now); osc.start(now);
-                    osc.frequency.setValueAtTime(659.25, now + 0.2);
-                    gain.gain.linearRampToValueAtTime(0.001, now + 0.6);
-                    osc.stop(now + 0.6);
+        const AudioEngine = {
+            ctx: null,
+            noiseNode: null,
+            beatOsc1: null,
+            beatOsc2: null,
+            gainNode: null,
+
+            init: () => {
+                if(!AudioEngine.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    AudioEngine.ctx = new AudioContext();
                 }
-            } catch (e) { console.log("AudioContext blocked or failed", e); }
+                if(AudioEngine.ctx.state === 'suspended') {
+                    AudioEngine.ctx.resume();
+                }
+            },
+
+            playBeep: (type) => {
+                AudioEngine.init();
+                const t = AudioEngine.ctx.currentTime;
+                const osc = AudioEngine.ctx.createOscillator();
+                const gain = AudioEngine.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(AudioEngine.ctx.destination);
+
+                if (type === 'start') {
+                    osc.frequency.setValueAtTime(440, t);
+                    osc.frequency.exponentialRampToValueAtTime(880, t + 0.1);
+                    gain.gain.setValueAtTime(0.1, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                    osc.start(t);
+                    osc.stop(t + 0.5);
+                } else {
+                    // Success chord
+                    const osc2 = AudioEngine.ctx.createOscillator();
+                    const gain2 = AudioEngine.ctx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(AudioEngine.ctx.destination);
+
+                    osc.frequency.setValueAtTime(523.25, t); // C
+                    osc2.frequency.setValueAtTime(659.25, t); // E
+                    gain.gain.setValueAtTime(0.2, t);
+                    gain2.gain.setValueAtTime(0.2, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 1);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, t + 1);
+
+                    osc.start(t); osc2.start(t);
+                    osc.stop(t + 1); osc2.stop(t + 1);
+                }
+            },
+
+            playBackground: (type) => {
+                AudioEngine.stopBackground(); // clear previous
+                if(type === 'none') return;
+                AudioEngine.init();
+
+                const t = AudioEngine.ctx.currentTime;
+                
+                // Master Gain
+                AudioEngine.gainNode = AudioEngine.ctx.createGain();
+                AudioEngine.gainNode.gain.setValueAtTime(0.15, t);
+                AudioEngine.gainNode.connect(AudioEngine.ctx.destination);
+
+                if (type === 'white' || type === 'wind') {
+                    const bufferSize = AudioEngine.ctx.sampleRate * 2; // 2 sec loop
+                    const buffer = AudioEngine.ctx.createBuffer(1, bufferSize, AudioEngine.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+
+                    const noise = AudioEngine.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    noise.loop = true;
+
+                    // If Wind (Pink/Brown noise approx), add LowPass Filter
+                    if (type === 'wind') {
+                        const filter = AudioEngine.ctx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.value = 400; 
+                        noise.connect(filter);
+                        filter.connect(AudioEngine.gainNode);
+                    } else {
+                        noise.connect(AudioEngine.gainNode);
+                    }
+                    
+                    noise.start();
+                    AudioEngine.noiseNode = noise;
+                } 
+                
+                if (type === 'beats') {
+                    // Binaural/Isochronic beat approx using interference
+                    // 200Hz base tone
+                    const osc1 = AudioEngine.ctx.createOscillator();
+                    const osc2 = AudioEngine.ctx.createOscillator();
+                    
+                    osc1.type = 'sine';
+                    osc2.type = 'sine';
+                    
+                    osc1.frequency.value = 200;
+                    osc2.frequency.value = 205; // 5Hz beat frequency (Theta/Alpha)
+
+                    osc1.connect(AudioEngine.gainNode);
+                    osc2.connect(AudioEngine.gainNode);
+                    
+                    osc1.start();
+                    osc2.start();
+
+                    AudioEngine.beatOsc1 = osc1;
+                    AudioEngine.beatOsc2 = osc2;
+                }
+            },
+
+            stopBackground: () => {
+                if(AudioEngine.noiseNode) { try{AudioEngine.noiseNode.stop();}catch(e){} AudioEngine.noiseNode = null; }
+                if(AudioEngine.beatOsc1) { try{AudioEngine.beatOsc1.stop();}catch(e){} AudioEngine.beatOsc1 = null; }
+                if(AudioEngine.beatOsc2) { try{AudioEngine.beatOsc2.stop();}catch(e){} AudioEngine.beatOsc2 = null; }
+                if(AudioEngine.gainNode) { AudioEngine.gainNode.disconnect(); AudioEngine.gainNode = null; }
+            }
         };
 
         window.focusMode = {
-            start: (type) => {
-                if(focusInterval) clearInterval(focusInterval);
-                
-                // Get Duration
-                let minutes = 25;
-                if(type === 'focus') minutes = parseInt(document.getElementById('focusDuration').value) || 25;
-                if(type === 'break') minutes = parseInt(document.getElementById('breakDuration').value) || 5;
+            timerInterval: null,
+            remainingSeconds: 1500, // 25 min default
+            currentMode: 'idle', // 'focus', 'break', 'idle'
+            isPaused: false,
 
-                // DELTA TIME CALCULATION (The Fix)
-                const now = Date.now();
-                const durationMs = minutes * 60 * 1000;
-                endTime = now + durationMs;
-                currentMode = type;
-                
+            start: (type) => {
+                // If switching modes or starting fresh
+                if (focusMode.currentMode !== type) {
+                    focusMode.reset();
+                    focusMode.currentMode = type;
+                    let mins = parseInt(document.getElementById(type === 'focus' ? 'focusDuration' : 'breakDuration').value) || 25;
+                    focusMode.remainingSeconds = mins * 60;
+                }
+
+                // If currently running, do nothing (or reset if users clicks same button again? Let's just resume if paused)
+                if (focusMode.timerInterval && !focusMode.isPaused) {
+                    if(confirm("Timer is running. Restart?")) {
+                        focusMode.reset();
+                        focusMode.start(type);
+                    }
+                    return;
+                }
+
                 // UI Updates
+                focusMode.isPaused = false;
                 const circle = document.getElementById('timerCircle');
-                circle.classList.remove('focus-mode', 'break-mode');
+                circle.classList.remove('focus-mode', 'break-mode', 'paused');
                 circle.classList.add(type === 'focus' ? 'focus-mode' : 'break-mode');
                 document.getElementById('timerLabel').textContent = type === 'focus' ? "Focusing..." : "On Break";
+                
+                // Update Button Visibility
+                document.getElementById('btnStartFocus').style.display = type==='focus' ? 'inline-block' : 'none';
+                document.getElementById('btnStartBreak').style.display = type==='break' ? 'inline-block' : 'none';
+                document.getElementById('btnPause').style.display = 'inline-block';
+                document.getElementById('btnPause').innerHTML = '<i class="fas fa-pause"></i> Pause';
 
                 // Audio
-                playTone('start');
-                const s = document.getElementById('soundSelect').value;
-                if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-                if(s === 'beats') currentAudio = document.getElementById('audioBeats');
-                else if(s === 'white') currentAudio = document.getElementById('audioWhite');
-                else if(s === 'wind') currentAudio = document.getElementById('audioWind');
-                if(currentAudio && s !== 'none') { currentAudio.volume = 0.5; currentAudio.play().catch(e => console.log("User interaction required")); }
+                AudioEngine.playBeep('start');
+                const soundType = document.getElementById('soundSelect').value;
+                AudioEngine.playBackground(soundType);
 
-                if("vibrate" in navigator) navigator.vibrate(200);
-                if(Notification.permission === 'granted') new Notification(type === 'focus' ? "Focus Started 🎯" : "Break Started ☕");
+                // Start Timer Logic (Using Delta Time for accuracy)
+                const endTime = Date.now() + (focusMode.remainingSeconds * 1000);
+                
+                clearInterval(focusMode.timerInterval);
+                focusMode.updateDisplay();
 
-                // Immediate update
-                updateTimerDisplay(Math.ceil((endTime - Date.now()) / 1000));
+                focusMode.timerInterval = setInterval(() => {
+                    if(!focusMode.isPaused) {
+                        focusMode.remainingSeconds--;
+                        focusMode.updateDisplay();
 
-                // Robust Interval
-                focusInterval = setInterval(() => {
-                    const remaining = Math.ceil((endTime - Date.now()) / 1000);
-                    if(remaining <= 0) {
-                        focusMode.reset(true);
-                    } else {
-                        updateTimerDisplay(remaining);
+                        if (focusMode.remainingSeconds <= 0) {
+                            focusMode.complete();
+                        }
                     }
                 }, 1000);
             },
 
-            reset: (completed = false) => {
-                if(focusInterval) clearInterval(focusInterval);
-                focusInterval = null;
-                endTime = null;
-                
-                document.getElementById('timerCircle').classList.remove('focus-mode', 'break-mode');
-                document.getElementById('timerLabel').textContent = "Ready";
-                
-                if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+            togglePause: () => {
+                if(focusMode.currentMode === 'idle') return;
 
-                if(completed) {
-                    playTone('end');
-                    if("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
-                    if(Notification.permission === 'granted') new Notification("Timer Complete! 🎉");
-                    alert("Time is up!");
-                    if(currentMode === 'focus') {
-                        const tid = document.getElementById('focusTaskSelect').value;
-                        if(tid) app.toggleTask(tid);
-                    }
+                focusMode.isPaused = !focusMode.isPaused;
+                const btn = document.getElementById('btnPause');
+                const circle = document.getElementById('timerCircle');
+
+                if (focusMode.isPaused) {
+                    btn.innerHTML = '<i class="fas fa-play"></i> Resume';
+                    document.getElementById('timerLabel').textContent = "Paused";
+                    circle.classList.add('paused');
+                    AudioEngine.stopBackground(); // Stop noise when paused
+                } else {
+                    btn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+                    document.getElementById('timerLabel').textContent = focusMode.currentMode === 'focus' ? "Focusing..." : "On Break";
+                    circle.classList.remove('paused');
+                    const soundType = document.getElementById('soundSelect').value;
+                    AudioEngine.playBackground(soundType);
+                }
+            },
+
+            changeSound: (newSound) => {
+                if(!focusMode.isPaused && focusMode.currentMode !== 'idle') {
+                    AudioEngine.playBackground(newSound);
+                }
+            },
+
+            complete: () => {
+                clearInterval(focusMode.timerInterval);
+                focusMode.timerInterval = null;
+                AudioEngine.stopBackground();
+                AudioEngine.playBeep('end');
+                
+                // Reset UI
+                document.getElementById('timerCircle').classList.remove('focus-mode', 'break-mode', 'paused');
+                document.getElementById('timerLabel').textContent = "Completed";
+                document.getElementById('btnStartFocus').style.display = 'inline-block';
+                document.getElementById('btnStartBreak').style.display = 'inline-block';
+                document.getElementById('btnPause').style.display = 'none';
+                
+                if (Notification.permission === 'granted') new Notification("Timer Complete! 🎉");
+                
+                // Auto-complete linked task
+                if (focusMode.currentMode === 'focus') {
+                    const tid = document.getElementById('focusTaskSelect').value;
+                    if(tid) app.toggleTask(tid);
                 }
                 
-                currentMode = 'idle';
-                // Reset display to default setting
-                const defMin = parseInt(document.getElementById('focusDuration').value) || 25;
-                updateTimerDisplay(defMin * 60);
+                focusMode.currentMode = 'idle';
+                alert("Time is up!");
+            },
+
+            reset: () => {
+                clearInterval(focusMode.timerInterval);
+                focusMode.timerInterval = null;
+                focusMode.isPaused = false;
+                focusMode.currentMode = 'idle';
+                AudioEngine.stopBackground();
+
+                document.getElementById('timerCircle').classList.remove('focus-mode', 'break-mode', 'paused');
+                document.getElementById('timerLabel').textContent = "Ready";
+                
+                // Reset Buttons
+                document.getElementById('btnStartFocus').style.display = 'inline-block';
+                document.getElementById('btnStartBreak').style.display = 'inline-block';
+                document.getElementById('btnPause').style.display = 'none';
+                document.getElementById('btnPause').innerHTML = '<i class="fas fa-pause"></i> Pause';
+
+                // Reset Time Display
+                let mins = parseInt(document.getElementById('focusDuration').value) || 25;
+                focusMode.remainingSeconds = mins * 60;
+                focusMode.updateDisplay();
+            },
+
+            updateDisplay: () => {
+                const m = Math.floor(focusMode.remainingSeconds / 60).toString().padStart(2,'0');
+                const s = (focusMode.remainingSeconds % 60).toString().padStart(2,'0');
+                document.getElementById('timerDisplay').textContent = `${m}:${s}`;
             }
         };
 
-        function updateTimerDisplay(seconds) {
-            if(seconds < 0) seconds = 0;
-            const m = Math.floor(seconds / 60).toString().padStart(2,'0');
-            const s = (seconds % 60).toString().padStart(2,'0');
-            document.getElementById('timerDisplay').textContent = `${m}:${s}`;
-        }
-
-        // 2. IDLE TRACKER LOGIC
+        // IDLE TRACKER (Independent loop)
         setInterval(() => {
-            if(currentMode === 'idle') {
+            if(focusMode.currentMode === 'idle') {
                 state.idleSeconds++;
                 const hrs = Math.floor(state.idleSeconds / 3600).toString().padStart(2,'0');
                 const mins = Math.floor((state.idleSeconds % 3600) / 60).toString().padStart(2,'0');
@@ -1406,6 +1479,7 @@
                 document.getElementById('idleDisplay').textContent = `${hrs}:${mins}:${secs}`;
             }
         }, 1000);
+
 
         // RENDERING HELPERS
         function renderTasks() {
@@ -1462,7 +1536,6 @@
                     app.syncLeaderboard();
                 });
 
-                // Load Notes (Instant Listener)
                 const qNotes = query(collection(db, 'notes'), where('uid', '==', user.uid));
                 onSnapshot(qNotes, (snap) => {
                     state.notes = snap.docs.map(d => ({id: d.id, ...d.data()}));
