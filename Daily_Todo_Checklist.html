@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v7.4 (Goals & Focus Analytics)</title>
+    <title>Enterprise TaskPro - v7.5 (Focus Fixes)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -256,6 +256,12 @@
         .focus-stat-box { flex:1; min-width:200px; background:var(--bg-body); border-radius:10px; padding:15px; border:1px solid var(--border); display:flex; flex-direction:column; gap:5px;}
         .progress-bar { width:100%; height:8px; background:var(--bg-body); border-radius:4px; overflow:hidden; margin-top:5px; border:1px solid var(--border); }
         .progress-fill { height:100%; background:var(--accent); border-radius:4px; width:0%; transition: width 0.5s ease; }
+
+        /* Task Focus Row */
+        .focus-task-row { display:flex; justify-content:space-between; font-size:12px; padding:6px 0; border-bottom:1px solid var(--border); }
+        .focus-task-row:last-child { border-bottom:none; }
+        .focus-task-name { color:var(--text-main); font-weight:500; }
+        .focus-task-time { color:var(--text-muted); font-family:monospace; }
     </style>
     <style id="dynamic-theme-style"></style>
 </head>
@@ -265,7 +271,7 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="fas fa-bolt"></i> TaskPro 7.4
+            <i class="fas fa-bolt"></i> TaskPro 7.5
             <button class="btn btn-icon" style="margin-left:auto; background:transparent; display:none;" onclick="app.toggleSidebar()" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
         </div>
         
@@ -400,6 +406,13 @@
                             <div class="progress-fill" id="goalProgressBar"></div>
                         </div>
                         <div style="font-size:10px; color:var(--text-muted); margin-top:5px;">Target: <span id="goalTargetDisplay">3h</span></div>
+                    </div>
+                </div>
+                
+                <div style="margin-top:15px; border-top:1px solid var(--border); padding-top:15px;">
+                    <h4 style="font-size:12px; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase;">Top Focused Tasks</h4>
+                    <div id="taskFocusList" style="max-height:150px; overflow-y:auto; padding-right:5px;">
+                        <div style="font-size:12px; color:var(--text-muted); font-style:italic;">No specific task data yet.</div>
                     </div>
                 </div>
             </div>
@@ -1197,10 +1210,24 @@
                     streakIcon.style.opacity = '0.3'; streakIcon.style.color = 'var(--text-muted)'; streakIcon.classList.remove('fa-beat');
                 }
 
-                // Focus Time Calculation
+                // ==========================================
+                //  UPDATED FOCUS ANALYTICS LOGIC (THE FIX)
+                // ==========================================
+                
                 let focusSeconds = 0;
                 const logs = state.focusLogs || [];
+                const taskStats = {}; // To hold accumulated time per task
+                
+                // Get set of currently active task IDs to verify existence
+                // If a task is deleted, its ID won't be in this list.
+                const validTaskIds = new Set(state.tasks.map(t => t.id));
+
                 logs.forEach(log => {
+                    // BUG FIX: Check if task still exists. If log has a taskId, but it's not in validTaskIds, skip it.
+                    if (log.taskId && !validTaskIds.has(log.taskId)) {
+                        return; // Skip deleted task logs
+                    }
+
                     const logDate = new Date(log.timestamp);
                     let include = false;
                     if(timeFilter === 'all') include = true;
@@ -1209,30 +1236,59 @@
                     else if(timeFilter === 'monthly') include = logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
                     else if(timeFilter === 'yearly') include = logDate.getFullYear() === now.getFullYear();
                     
-                    if(include) focusSeconds += (log.duration || 0);
+                    if(include) {
+                        focusSeconds += (log.duration || 0);
+                        
+                        // Accumulate for specific task breakdown
+                        if (log.taskId) {
+                            // Re-fetch name from current tasks to ensure up-to-date name
+                            const currentTask = state.tasks.find(t => t.id === log.taskId);
+                            const name = currentTask ? currentTask.text : (log.taskTitle || 'Unknown Task');
+                            taskStats[name] = (taskStats[name] || 0) + log.duration;
+                        } else {
+                             // Optional: track general focus
+                             // taskStats['General Focus'] = (taskStats['General Focus'] || 0) + log.duration;
+                        }
+                    }
                 });
 
                 const hrs = Math.floor(focusSeconds / 3600);
                 const mins = Math.floor((focusSeconds % 3600) / 60);
                 document.getElementById('focusTimeDisplay').textContent = `${hrs}h ${mins}m`;
                 
-                // Goal Calculation (Daily based)
+                // Goal Calculation
                 let goalProgress = 0;
                 if(timeFilter === 'daily') {
-                    // Only calculate progress bar if filter is daily, else hide or show relevant info
-                    // But user request implies generic goal tracking. Let's assume Daily Goal for Daily View.
                     document.getElementById('focusTimeLabel').textContent = "Today";
                     const goalSecs = state.dailyGoal * 3600;
                     goalProgress = Math.min(100, Math.round((focusSeconds / goalSecs) * 100));
                 } else {
                     document.getElementById('focusTimeLabel').textContent = timeFilter === 'all' ? "Total" : timeFilter;
-                    // For non-daily, we just show the total time, progress bar implies "Daily Average" or just 0
-                    // Let's keep it simple: Progress bar reflects daily goal only when Daily is selected
-                     goalProgress = 0; 
+                    goalProgress = 0; 
                 }
                 
                 document.getElementById('goalProgressBar').style.width = goalProgress + '%';
                 document.getElementById('goalPercentDisplay').textContent = goalProgress + '%';
+
+                // RENDER TASK BREAKDOWN LIST
+                const taskListEl = document.getElementById('taskFocusList');
+                const sortedTasks = Object.entries(taskStats).sort((a,b) => b[1] - a[1]); // Sort by duration desc
+                
+                if (sortedTasks.length === 0) {
+                    taskListEl.innerHTML = `<div style="font-size:12px; color:var(--text-muted); font-style:italic;">No specific task data yet.</div>`;
+                } else {
+                    taskListEl.innerHTML = sortedTasks.map(([name, dur]) => {
+                        const h = Math.floor(dur / 3600);
+                        const m = Math.floor((dur % 3600) / 60);
+                        return `
+                        <div class="focus-task-row">
+                            <span class="focus-task-name">${name.length > 25 ? name.substring(0,25)+'...' : name}</span>
+                            <span class="focus-task-time">${h > 0 ? h+'h ' : ''}${m}m</span>
+                        </div>`;
+                    }).join('');
+                }
+                
+                // End Focus Analytics Update
 
                 const subSelect = document.getElementById('subStreakSelect');
                 const cleanText = (txt) => txt.replace(/#\w+/g, '').trim();
@@ -1313,7 +1369,7 @@
         };
 
         // =======================================================
-        //  FIX 1 & 2 & 3: AUDIO ENGINE & RELIABLE TIMER & SYNC
+        //  AUDIO ENGINE & FOCUS TIMER LOGIC
         // =======================================================
 
         const AudioEngine = {
@@ -1532,7 +1588,7 @@
             },
 
             start: (type) => {
-                // FIXED: Check if we are resuming the correct type
+                // Check if we are resuming the correct type
                 if (focusMode.status === 'paused' && focusMode.pausedType === type) {
                     focusMode.endTime = Date.now() + focusMode.remainingAtPause;
                     focusMode.status = type;
@@ -1597,21 +1653,30 @@
                 // SAVE SESSION LOG
                 if (focusMode.status === 'focus') {
                     const durationSec = focusMode.totalDuration / 1000;
-                    const log = { duration: durationSec, timestamp: Date.now() };
+                    
+                    // Capture Task ID and Name for Analytics
+                    const taskId = document.getElementById('focusTaskSelect').value;
+                    const task = state.tasks.find(t => t.id === taskId);
+                    
+                    const log = { 
+                        duration: durationSec, 
+                        timestamp: Date.now(),
+                        taskId: taskId || null, // Store ID for breakdown
+                        taskTitle: task ? task.text : null // Store name snapshot
+                    };
+                    
                     state.focusLogs.push(log);
                     localStorage.setItem('focusLogs', JSON.stringify(state.focusLogs));
                     
                     if(state.user) {
                          addDoc(collection(db, 'focus_sessions'), { 
                             uid: state.user.uid,
-                            duration: durationSec, 
-                            timestamp: Date.now() 
+                            ...log
                         }).catch(e => console.error(e));
                     }
                     
                     // Auto-complete task if selected
-                    const tid = document.getElementById('focusTaskSelect').value;
-                    if(tid) app.toggleTask(tid);
+                    if(taskId) app.toggleTask(taskId);
                 }
 
                 focusMode.status = 'idle';
