@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v7.6 (Precision & Controls)</title>
+    <title>Enterprise TaskPro - v7.7 (Subtask Sync)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
@@ -275,7 +275,7 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="fas fa-bolt"></i> TaskPro 7.6
+            <i class="fas fa-bolt"></i> TaskPro 7.7
             <button class="btn btn-icon" style="margin-left:auto; background:transparent; display:none;" onclick="app.toggleSidebar()" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
         </div>
         
@@ -356,7 +356,7 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px;">
                 <div class="task-card" style="text-align:center; padding: 20px 10px;">
                     <div style="font-size:28px; font-weight:700; color:var(--accent);" id="dashTotal">0</div>
-                    <div style="color:var(--text-muted); font-size:11px; margin-top:5px;">TOTAL</div>
+                    <div style="color:var(--text-muted); font-size:11px; margin-top:5px;">TOTAL (INC. SUBS)</div>
                 </div>
                 <div class="task-card" style="text-align:center; padding: 20px 10px;">
                     <div style="font-size:28px; font-weight:700; color:var(--success);" id="dashDone">0</div>
@@ -873,6 +873,7 @@
             handleTaskSubmit: async () => {
                 const id = document.getElementById('editTaskId').value;
                 if(id) await app.updateTask(id); else await app.addTask();
+                if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
             },
 
             addTask: async (title = null) => {
@@ -937,6 +938,7 @@
                     if(idx !== -1) { state.tasks[idx] = { ...state.tasks[idx], text, date, priority, tags }; app.saveLifetime(false); renderTasks(); }
                 }
                 app.cancelEdit();
+                if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
             },
 
             cancelEdit: () => {
@@ -953,12 +955,16 @@
                 const newVal = !task.completed;
                 if(state.user) await updateDoc(doc(db, 'tasks', id), { completed: newVal });
                 else { task.completed = newVal; app.saveLifetime(false); renderTasks(); }
+                
+                if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
             },
 
             deleteTask: async (id) => {
                 if(!confirm("Permanently delete?")) return;
                 if(state.user) await deleteDoc(doc(db, 'tasks', id));
                 else { state.tasks = state.tasks.filter(t => t.id !== id); app.saveLifetime(false); renderTasks(); }
+                
+                if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
             },
 
             addSubtask: async (parentId) => {
@@ -969,6 +975,8 @@
                 const subtasks = [...(task.subtasks||[]), newSub];
                 if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
                 else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
+                
+                if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
             },
             
             toggleSubtask: async (parentId, subId) => {
@@ -976,6 +984,8 @@
                 const subtasks = task.subtasks.map(s => s.id == subId ? {...s, completed: !s.completed} : s);
                 if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
                 else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
+                
+                if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
             },
 
             deleteSubtask: async (parentId, subId) => {
@@ -983,6 +993,8 @@
                 const subtasks = task.subtasks.filter(s => s.id != subId);
                 if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
                 else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
+                
+                if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
             },
 
             addNote: async () => {
@@ -1271,11 +1283,6 @@
                 localStorage.setItem('focusLogs', JSON.stringify(state.focusLogs));
 
                 if(state.user) {
-                    // This is harder in cloud without IDs on every log in local state mapping to document IDs.
-                    // Simplified strategy: We just deleted locally.
-                    // For full cloud sync, we'd need to fetch doc IDs. 
-                    // To keep it simple in this file structure:
-                    // We will just do a query delete based on properties.
                     try {
                         const batch = writeBatch(db);
                         const q = query(collection(db, 'focus_sessions'), where('uid', '==', state.user.uid), where('taskTitle', '==', taskName));
@@ -1428,10 +1435,23 @@
                 }
                 if (tagFilter !== 'all') filtered = filtered.filter(t => (t.tags||[]).includes(tagFilter));
 
-                document.getElementById('dashTotal').textContent = filtered.length;
-                const done = filtered.filter(t => t.completed).length;
-                document.getElementById('dashDone').textContent = done;
-                document.getElementById('dashPending').textContent = filtered.length - done;
+                // FIXED: Subtask Counting Logic
+                let totalCount = 0;
+                let doneCount = 0;
+                
+                filtered.forEach(t => {
+                    totalCount++; // The task itself
+                    if(t.completed) doneCount++;
+                    
+                    if(t.subtasks && t.subtasks.length > 0) {
+                        totalCount += t.subtasks.length;
+                        doneCount += t.subtasks.filter(s => s.completed).length;
+                    }
+                });
+
+                document.getElementById('dashTotal').textContent = totalCount;
+                document.getElementById('dashDone').textContent = doneCount;
+                document.getElementById('dashPending').textContent = totalCount - doneCount;
 
                 const allTags = [...new Set(state.tasks.flatMap(t => t.tags || []))];
                 const tagSelect = document.getElementById('dashFilterTag');
