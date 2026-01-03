@@ -3,28 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v7.2 (Cloud Sync & Glow)</title>
+    <title>Enterprise TaskPro - v7.2 (Sync & Glow)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* ==================== CORE VARIABLES ==================== */
+        /* ==================== 1. CORE VARIABLES ==================== */
         :root {
             --bg-body: #0f172a;
             --bg-sidebar: #1e293b;
             --bg-card: #334155;
             --bg-input: #1e293b;
+            --bg-hover: rgba(255,255,255,0.05);
             --accent: #208084;
+            --accent-hover: #2ba8ad;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border: #475569;
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
+            --streak-fire: #f97316;
+            --streak-target: #8b5cf6;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             --radius: 12px;
             --font-main: 'Inter', sans-serif;
+            --border-width: 1px;
             --sidebar-width: 260px;
         }
 
@@ -33,6 +38,7 @@
             --bg-sidebar: #ffffff;
             --bg-card: #ffffff;
             --bg-input: #f8fafc;
+            --bg-hover: #f1f5f9;
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border: #e2e8f0;
@@ -47,183 +53,512 @@
             height: 100vh;
             overflow: hidden;
             display: flex;
+            transition: background 0.3s, color 0.3s;
         }
 
-        /* SIDEBAR & LAYOUT */
-        .sidebar { width: var(--sidebar-width); background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; z-index: 50; flex-shrink: 0; transition: transform 0.3s; }
-        .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 15px; color: var(--text-muted); text-decoration: none; border-radius: var(--radius); margin-bottom: 5px; cursor: pointer; border: 1px solid transparent; background: none; width: 100%; font-family: var(--font-main); }
-        .nav-link:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
-        .nav-link.active { background: var(--accent); color: white; }
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        /* ==================== SIDEBAR ==================== */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-sidebar);
+            border-right: var(--border-width) solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            transition: transform 0.3s ease;
+            z-index: 50;
+            flex-shrink: 0;
+        }
         
-        /* HEADER */
-        .header { height: 70px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
-        .view-container { flex: 1; overflow-y: auto; padding: 20px; display: none; }
-        .view-container.active { display: block; }
+        .logo { font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+        .logo i { color: var(--accent); }
 
-        /* COMPONENTS */
-        .btn { padding: 10px 16px; border-radius: var(--radius); border: 1px solid transparent; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--font-main); }
-        .btn-primary { background: var(--accent); color: white; }
+        .nav-link {
+            display: flex; align-items: center; gap: 12px; padding: 12px 15px;
+            color: var(--text-muted); text-decoration: none; border-radius: var(--radius);
+            margin-bottom: 5px; transition: 0.2s; cursor: pointer; font-size: 14px; font-weight: 500;
+            border: var(--border-width) solid transparent; background: none; width: 100%; text-align: left;
+            font-family: var(--font-main);
+        }
+        .nav-link:hover { background: var(--bg-hover); color: var(--text-main); }
+        .nav-link.active { background: var(--accent); color: white; box-shadow: var(--shadow); border-color: var(--accent); }
+
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 40; display: none; backdrop-filter: blur(2px); }
+
+        /* ==================== MAIN CONTENT ==================== */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; width: 100%; }
+
+        /* HEADER */
+        .header {
+            height: 70px;
+            border-bottom: var(--border-width) solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; background: var(--bg-body); transition: background 0.3s; flex-shrink: 0;
+        }
+        
+        .weather-widget { font-size: 11px; display: flex; flex-direction: column; text-align: right; color: var(--text-muted); margin-right: 15px; }
+        .weather-info { display: flex; align-items: center; gap: 6px; color: var(--text-main); font-weight: 600; }
+
+        .menu-btn { display: none; background: none; border: none; color: var(--text-main); font-size: 20px; cursor: pointer; padding: 5px; }
+        .header-actions { display: flex; align-items: center; gap: 10px; }
+        .icon-btn-header {
+            background: var(--bg-card); border: var(--border-width) solid var(--border); color: var(--text-muted);
+            width: 36px; height: 36px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; box-shadow: var(--shadow);
+        }
+        .icon-btn-header:hover { color: var(--accent); border-color: var(--accent); }
+
+        /* VIEWS */
+        .view-container { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px; display: none; animation: fadeIn 0.3s ease; }
+        .view-container.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ==================== COMPONENTS ==================== */
+        .btn {
+            padding: 10px 16px; border-radius: var(--radius); border: var(--border-width) solid transparent;
+            font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 13px;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            font-family: var(--font-main); box-shadow: var(--shadow);
+        }
+        .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+        .btn-primary:hover { opacity: 0.9; filter: brightness(110%); }
         .btn-secondary { background: var(--bg-card); color: var(--text-main); border-color: var(--border); }
-        .input-group { background: var(--bg-card); padding: 15px; border-radius: var(--radius); display: flex; gap: 10px; margin-bottom: 20px; border: 1px solid var(--border); flex-wrap: wrap; }
-        .main-input { background: transparent; border: none; color: var(--text-main); padding: 10px; flex: 1; outline: none; }
+        .btn-secondary:hover { border-color: var(--text-muted); }
+        .btn-icon { padding: 8px; border-radius: 50%; width: 36px; height: 36px; }
+        .btn-danger { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
+
+        .input-group {
+            background: var(--bg-card); padding: 15px; border-radius: var(--radius);
+            display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
+            border: var(--border-width) solid var(--border); align-items: center; box-shadow: var(--shadow);
+        }
+        .main-input { background: transparent; border: none; color: var(--text-main); padding: 10px; flex: 1; min-width: 200px; outline: none; font-size: 16px; font-family: var(--font-main); }
+        .date-input, .select-input { background: var(--bg-body); border: var(--border-width) solid var(--border); color: var(--text-main); padding: 10px 12px; border-radius: var(--radius); outline: none; font-size: 14px; font-family: var(--font-main); }
+
+        /* Task Cards */
+        .task-list { display: flex; flex-direction: column; gap: 12px; padding-bottom: 80px; }
+        .task-card {
+            background: var(--bg-card); border-radius: var(--radius); padding: 16px;
+            border: var(--border-width) solid var(--border); border-left: 4px solid var(--border);
+            transition: all 0.2s; box-shadow: var(--shadow); position: relative;
+        }
+        .task-header { display: flex; align-items: flex-start; gap: 15px; }
+        .checkbox { appearance: none; width: 24px; height: 24px; border: 2px solid var(--text-muted); border-radius: 6px; cursor: pointer; flex-shrink: 0; margin-top: 2px; position: relative; }
+        .checkbox:checked { background: var(--accent); border-color: var(--accent); }
+        .checkbox:checked::after { content: '✓'; position: absolute; color: white; font-size: 14px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+        .task-content { flex: 1; min-width: 0; }
+        .task-title { font-size: 15px; margin-bottom: 5px; line-height: 1.4; color: var(--text-main); word-wrap: break-word; }
+        .task-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--text-muted); align-items: center; }
+        .tag { padding: 2px 8px; border-radius: 10px; background: rgba(32, 128, 132, 0.15); color: var(--accent); font-size: 11px; font-weight: 600; white-space: nowrap;}
         
-        /* TASKS */
-        .task-card { background: var(--bg-card); border-radius: var(--radius); padding: 16px; border: 1px solid var(--border); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .priority-high { border-left-color: var(--danger); }
+        .priority-medium { border-left-color: var(--warning); }
+        .priority-low { border-left-color: var(--success); }
+
+        .subtasks { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+        .subtask-row { display: flex; align-items: center; gap: 12px; font-size: 14px; padding-left: 5px; }
+
+        .suggestions { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; }
+        .suggestion-chip { padding: 6px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; cursor: pointer; white-space: nowrap; transition: 0.2s; display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
         
-        /* === TIMER & GLOW EFFECTS === */
+        /* Calendar */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 20px; }
+        .cal-day-header { text-align: center; font-size: 11px; color: var(--text-muted); padding-bottom: 5px; }
+        .cal-cell { background: var(--bg-card); border-radius: var(--radius); min-height: 80px; padding: 5px; border: 1px solid var(--border); position: relative; overflow: hidden; cursor: pointer; transition: 0.2s; }
+        .cal-cell:hover { border-color: var(--accent); }
+        .cal-cell.today { border-color: var(--accent); background: rgba(32, 128, 132, 0.05); }
+        .cal-cell.selected { border: 2px solid var(--text-main); }
+        .cal-date { font-size: 11px; font-weight: bold; margin-bottom: 3px; color: var(--text-main); }
+        .cal-task-dot { width: 100%; margin-bottom: 2px; padding: 2px; border-radius: 3px; font-size: 9px; background: var(--bg-input); color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cal-task-dot.done { text-decoration: line-through; opacity: 0.5; }
+        
+        /* Mobile List for Calendar */
+        .cal-mobile-list { margin-top: 20px; padding: 15px; background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); display: none; }
+        
+        /* Focus Timer */
         .timer-container { text-align:center; max-width:500px; margin:0 auto; }
         .timer-circle { 
-            width: 240px; height: 240px; border-radius: 50%; border: 6px solid var(--bg-card); 
+            width: 240px; height: 240px; border-radius: 50%; border: 8px solid var(--bg-card); 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            margin: 30px auto; position: relative; 
+            margin: 20px auto; position: relative; 
             background: radial-gradient(circle, var(--bg-sidebar) 0%, var(--bg-body) 100%); 
-            transition: all 0.5s ease;
+            box-shadow: var(--shadow); color: var(--text-main); transition: 0.3s; 
         }
         .timer-time { font-size: 48px; font-weight: 700; line-height: 1; }
+        .timer-label { font-size: 14px; text-transform: uppercase; color: var(--text-muted); margin-top: 5px; letter-spacing: 1px;}
         
-        /* Glow Modes */
-        .timer-circle.focus-mode {
-            border-color: var(--accent);
-            box-shadow: 0 0 20px var(--accent), inset 0 0 30px rgba(32, 128, 132, 0.3);
+        /* UPDATED: Visual Glows for Modes */
+        .timer-active.focus-mode { 
+            border-color: var(--accent); 
+            box-shadow: 0 0 40px rgba(32, 128, 132, 0.5), inset 0 0 15px rgba(32, 128, 132, 0.2); 
         }
-        .timer-circle.break-mode {
-            border-color: var(--success);
-            box-shadow: 0 0 20px var(--success), inset 0 0 30px rgba(16, 185, 129, 0.3);
+        .timer-active.break-mode { 
+            border-color: var(--success); 
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.5), inset 0 0 15px rgba(16, 185, 129, 0.2); 
         }
-        .timer-circle.paused {
+        .timer-active.paused { 
             border-color: var(--warning);
-            animation: pulse-pause 2s infinite;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+            animation: pulse 2s infinite; 
+            opacity: 0.9; 
         }
-        
-        @keyframes pulse-pause {
-            0% { box-shadow: 0 0 10px var(--warning); opacity: 1; }
-            50% { box-shadow: 0 0 25px var(--warning); opacity: 0.7; }
-            100% { box-shadow: 0 0 10px var(--warning); opacity: 1; }
+        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
+
+        .idle-tracker {
+            margin-top: 30px; padding: 15px; border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
         }
 
-        .idle-tracker { margin-top: 30px; padding: 15px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        /* Leaderboard */
+        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 300px; }
+        .leaderboard-table th { text-align: left; padding: 10px; color: var(--text-muted); font-size: 12px; border-bottom: 1px solid var(--border); }
+        .leaderboard-table td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .rank-badge { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; margin-right: 10px; }
+        .rank-1 { background: #fbbf24; color: #78350f; } .rank-2 { background: #94a3b8; color: #0f172a; } .rank-3 { background: #b45309; color: #fffbeb; }
+
+        /* Notes & Chat */
+        .note-card { background: var(--bg-card); border: var(--border-width) solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+        .note-header-actions { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px; }
+        .note-action-btn { background: var(--bg-body); border: 1px solid var(--border); color: var(--text-muted); width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+        .note-action-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--bg-hover); }
+        .note-content { font-family: 'Playfair Display', serif; font-size: 18px; line-height: 1.6; color: var(--text-main); white-space: pre-wrap; flex: 1; }
+        .note-date { font-family: var(--font-main); font-size: 11px; color: var(--text-muted); margin-top: 15px; text-align: right; border-top: 1px solid var(--border); padding-top: 10px; }
+        
+        .chat-layout { display: flex; height: 500px; background: var(--bg-body); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 20px; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-input-area { padding: 10px; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; gap: 10px; }
+        .chat-sidebar-panel { width: 200px; background: var(--bg-sidebar); padding: 10px; overflow-y: auto; display: none; }
+        @media(min-width: 768px) { .chat-sidebar-panel { display: block; } }
+        .chat-msg { max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; word-wrap: break-word; }
+        .chat-msg.them { background: var(--bg-card); align-self: flex-start; border-bottom-left-radius: 0; border: 1px solid var(--border); }
+        .chat-msg.me { background: var(--accent); color: white; align-self: flex-end; border-bottom-right-radius: 0; }
 
         @media (max-width: 768px) {
-            .sidebar { position: fixed; transform: translateX(-100%); height: 100%; box-shadow: 10px 0 20px rgba(0,0,0,0.5); }
+            .sidebar { position: fixed; top: 0; left: 0; bottom: 0; transform: translateX(-100%); box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
             .sidebar.open { transform: translateX(0); }
+            .menu-btn { display: block; }
+            .view-container { padding: 15px; }
+            .input-group { flex-direction: column; align-items: stretch; }
+            .date-input, .select-input, .btn { width: 100%; }
+            .timer-circle { width: 200px; height: 200px; border-width: 6px; }
+            .timer-time { font-size: 40px; }
+            .cal-cell { min-height: 50px; }
+            .cal-task-dot { display: none; }
+            .cal-mobile-list { display: block; }
+            .chat-layout { height: 100%; flex-direction: column; }
+            .chat-sidebar-panel { width: 100%; height: 100px; border-bottom: 1px solid var(--border); display: block; }
         }
     </style>
+    <style id="dynamic-theme-style"></style>
 </head>
 <body>
 
-    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:40; display:none;" id="sidebarOverlay" onclick="app.toggleSidebar()"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="app.toggleSidebar()"></div>
+
     <aside class="sidebar" id="sidebar">
-        <div style="font-size:20px; font-weight:800; color:var(--text-main); margin-bottom:30px;">
-            <i class="fas fa-bolt" style="color:var(--accent);"></i> TaskPro 7.2
+        <div class="logo">
+            <i class="fas fa-bolt"></i> TaskPro 7.2
+            <button class="btn btn-icon" style="margin-left:auto; background:transparent; display:none;" onclick="app.toggleSidebar()" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
         </div>
+        
         <nav>
             <button class="nav-link active" onclick="app.switchTab('dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</button>
-            <button class="nav-link" onclick="app.switchTab('tasks')"><i class="fas fa-tasks"></i> My Tasks</button>
-            <button class="nav-link" onclick="app.switchTab('focus')"><i class="fas fa-stopwatch"></i> Focus & Idle</button>
+            <button class="nav-link" onclick="app.switchTab('tasks')">
+                <i class="fas fa-tasks"></i> My Tasks
+                <span id="badge" style="margin-left:auto; background:var(--accent); padding:2px 8px; border-radius:10px; font-size:10px; color: white;">0</span>
+            </button>
+            <button class="nav-link" onclick="app.switchTab('notes')"><i class="fas fa-sticky-note"></i> My Notes</button>
+            <button class="nav-link" onclick="app.switchTab('calendar')"><i class="far fa-calendar-alt"></i> Calendar</button>
+            <button class="nav-link" onclick="app.switchTab('focus')"><i class="fas fa-stopwatch"></i> Pomodoro & Idle</button>
+            <button class="nav-link" onclick="app.switchTab('community')"><i class="fas fa-users"></i> Community</button>
         </nav>
-        <div style="margin-top:auto;">
-            <div class="nav-link" style="cursor:default; font-size:12px;"><i class="fas fa-circle" style="color:var(--warning); font-size:10px;" id="syncDot"></i> <span id="syncText">Offline</span></div>
+
+        <div style="margin-top: auto;">
+            <button class="nav-link" onclick="app.saveLifetime(true)">
+                <i class="fas fa-save"></i> Force Save
+            </button>
+            <button class="nav-link" onclick="app.backupData()">
+                <i class="fas fa-download"></i> Checkpoint
+            </button>
+            <button class="nav-link" onclick="app.resetAllData()" style="color:var(--danger);">
+                <i class="fas fa-trash-alt"></i> Reset All Data
+            </button>
+
+            <button class="nav-link" onclick="document.getElementById('importInput').click()">
+                <i class="fas fa-upload"></i> Restore
+            </button>
+            <input type="file" id="importInput" style="display:none" onchange="app.restoreData(this)">
+            <div class="nav-link" style="cursor: default; opacity: 0.7; font-size:12px;">
+                <i class="fas fa-cloud"></i> <span id="syncText">Offline</span>
+            </div>
             <button class="btn btn-secondary" style="width:100%; margin-top:10px;" id="authBtn" onclick="app.toggleAuth()">Sign In</button>
         </div>
     </aside>
 
     <main class="main">
         <header class="header">
-            <button class="btn btn-secondary" onclick="app.toggleSidebar()" style="padding:8px;"><i class="fas fa-bars"></i></button>
-            <h2 id="pageTitle" style="margin-left:15px; color:var(--text-main);">Dashboard</h2>
-            <div style="margin-left:auto; font-size:14px; font-weight:bold; color:var(--text-muted);" id="clockDisplay">--:--</div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button class="menu-btn" onclick="app.toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <h2 id="pageTitle" style="color:var(--text-main); font-size: 18px;">Dashboard</h2>
+            </div>
+
+            <div style="display:flex; align-items:center;">
+                <div class="weather-widget">
+                    <div id="clockDisplay" style="margin-bottom:2px;">--:--</div>
+                    <div class="weather-info" id="weatherDisplay">
+                        <i class="fas fa-cloud"></i> <span>--°C</span>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <button class="btn btn-primary" style="font-size:11px; padding: 8px 12px;" onclick="app.generateRandomDesign()" title="Remix UI">
+                        <i class="fas fa-magic"></i>
+                    </button>
+                    <button class="icon-btn-header" onclick="app.toggleTheme()"><i class="fas fa-moon" id="themeIcon"></i></button>
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--warning);" id="syncDot"></div>
+                    </div>
+                </div>
+            </div>
         </header>
 
         <div id="dashboard" class="view-container active">
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px;">
-                <div class="task-card" style="display:block; text-align:center;">
-                    <div style="font-size:30px; font-weight:bold; color:var(--accent);" id="dashTotal">0</div>
-                    <div style="font-size:12px; color:var(--text-muted);">Total Tasks</div>
+            <div style="display:flex; gap:10px; margin-bottom:20px; overflow-x:auto;">
+                <select id="dashFilterTime" class="select-input" style="width:auto;" onchange="app.renderDashboardCharts()">
+                    <option value="all">All Time</option>
+                    <option value="daily">Today</option>
+                    <option value="weekly">This Week</option>
+                    <option value="monthly">This Month</option>
+                    <option value="yearly">This Year</option>
+                </select>
+                <select id="dashFilterTag" class="select-input" style="width:auto;" onchange="app.renderDashboardCharts()">
+                    <option value="all">All Tags</option>
+                </select>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                <div class="task-card" style="text-align:center; padding: 20px 10px;">
+                    <div style="font-size:28px; font-weight:700; color:var(--accent);" id="dashTotal">0</div>
+                    <div style="color:var(--text-muted); font-size:11px; margin-top:5px;">TOTAL</div>
                 </div>
-                <div class="task-card" style="display:block; text-align:center;">
-                    <div style="font-size:30px; font-weight:bold; color:var(--warning);" id="idleDash">0h</div>
-                    <div style="font-size:12px; color:var(--text-muted);">Total Idle Time</div>
+                <div class="task-card" style="text-align:center; padding: 20px 10px;">
+                    <div style="font-size:28px; font-weight:700; color:var(--success);" id="dashDone">0</div>
+                    <div style="color:var(--text-muted); font-size:11px; margin-top:5px;">COMPLETED</div>
+                </div>
+                <div class="task-card" style="text-align:center; padding: 20px 10px;">
+                    <div style="font-size:28px; font-weight:700; color:var(--warning);" id="dashPending">0</div>
+                    <div style="color:var(--text-muted); font-size:11px; margin-top:5px;">PENDING</div>
+                </div>
+                <div class="task-card" style="text-align:center; padding: 20px 10px;">
+                    <div style="font-size:28px; font-weight:700; color:var(--streak-fire); display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <span id="streakCount">0</span>
+                        <i class="fas fa-fire" id="streakIcon" style="font-size:20px; opacity:0.3; transition:0.3s;"></i>
+                    </div>
+                    <div style="color:var(--text-muted); font-size:11px; margin-top:5px;">DAILY STREAK</div>
+                </div>
+                <div class="task-card" style="text-align:center; padding: 20px 10px; border-left-color: var(--streak-target);">
+                    <div style="font-size:28px; font-weight:700; color:var(--streak-target); display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <span id="subStreakCount">0</span>
+                        <i class="fas fa-crosshairs" style="font-size:18px;"></i>
+                    </div>
+                    <div style="margin-top:5px; padding:0 10px;">
+                        <select id="subStreakSelect" class="select-input" style="width:100%; font-size:11px; padding:5px; background: var(--bg-body);" onchange="app.updateSubStreak()">
+                            <option value="">Select Task...</option>
+                        </select>
+                    </div>
+                    <div style="font-size:9px; color:var(--text-muted); margin-top:5px;">TASK SPECIFIC STREAK</div>
                 </div>
             </div>
-            <div style="margin-top:20px; height:300px;"><canvas id="mainChart"></canvas></div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+                <div class="task-card">
+                    <h3 style="margin-bottom:15px; color:var(--text-main); font-size:16px;">Productivity Trend</h3>
+                    <div style="height: 250px; position: relative;"><canvas id="mainChart"></canvas></div>
+                </div>
+                <div class="task-card">
+                    <h3 style="margin-bottom:15px; color:var(--text-main); font-size:16px;">Hashtag Analysis</h3>
+                    <div style="height: 250px; position: relative;"><canvas id="tagChart"></canvas></div>
+                </div>
+            </div>
         </div>
 
         <div id="tasks" class="view-container">
+            <div class="suggestions" id="suggestionsBox"></div>
             <div class="input-group">
-                <input type="text" id="taskInput" class="main-input" placeholder="Add a new task...">
-                <button class="btn btn-primary" onclick="app.addTask()">Add</button>
+                <input type="hidden" id="editTaskId">
+                <input type="text" id="taskInput" class="main-input" placeholder="Add a task... (Use #tag)">
+                <input type="date" id="dateInput" class="date-input">
+                <select id="prioInput" class="select-input" style="width: auto;">
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="low">Low</option>
+                </select>
+                <button class="btn btn-primary" id="addUpdateBtn" onclick="app.handleTaskSubmit()"><i class="fas fa-plus"></i> Add</button>
+                <button class="btn btn-secondary" id="cancelEditBtn" style="display:none;" onclick="app.cancelEdit()">Cancel</button>
             </div>
-            <div id="taskList"></div>
+            <div style="margin-bottom:15px; display:flex; gap:10px;">
+                <button class="btn btn-secondary" onclick="app.setTaskFilter('active')" id="filterActive">Active</button>
+                <button class="btn btn-secondary" onclick="app.setTaskFilter('completed')" id="filterCompleted">Completed</button>
+            </div>
+            <div id="taskList" class="task-list"></div>
+        </div>
+
+        <div id="notes" class="view-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <h2 style="color:var(--text-main);">My Notes & Quotes</h2>
+                    <p style="color:var(--text-muted); font-size:13px;">Online Storage. Your thoughts, safe in the cloud.</p>
+                </div>
+                <div style="font-size:30px; color:var(--accent); opacity:0.5;"><i class="fas fa-feather-alt"></i></div>
+            </div>
+            <div class="input-group" style="align-items:flex-start;">
+                <textarea id="noteInput" class="main-input" rows="3" style="resize:vertical; min-height:80px;" placeholder="Write a quote, thought, or memo..."></textarea>
+                <button class="btn btn-primary" style="height:fit-content;" onclick="app.addNote()">Save Note</button>
+            </div>
+            <div id="notesList" style="display: flex; flex-direction: column; gap: 15px;"></div>
+        </div>
+
+        <div id="calendar" class="view-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 id="calMonthYear" style="color:var(--text-main); font-size:18px;"></h2>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn btn-secondary btn-icon" onclick="app.changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                    <button class="btn btn-secondary btn-icon" onclick="app.changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="calendar-grid" id="calGrid"></div>
+            <div class="cal-mobile-list" id="calMobileView">
+                <h4 style="margin-bottom:10px; color:var(--text-muted);" id="calSelectedDate">Select a date</h4>
+                <div id="calSelectedTasks"></div>
+            </div>
         </div>
 
         <div id="focus" class="view-container">
             <div class="timer-container">
-                <h2 style="color:var(--text-main); margin-bottom:10px;">Pomodoro Sync</h2>
+                <h2 style="color:var(--text-main); margin-bottom: 20px;">Pomodoro & Idle Tracker</h2>
                 
-                <div style="margin-bottom:20px;">
-                    <select id="focusTaskSelect" class="main-input" style="background:var(--bg-card); border:1px solid var(--border); padding:8px; border-radius:8px; width:100%; max-width:300px; color:var(--text-main);">
-                        <option value="">-- Select Task to Focus On --</option>
+                <div style="margin-bottom: 20px;">
+                    <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:5px;">Link to Task (Optional)</label>
+                    <select id="focusTaskSelect" class="select-input" style="width:100%; max-width:300px;">
+                        <option value="">-- No specific task --</option>
                     </select>
                 </div>
 
-                <div style="display:flex; justify-content:center; gap:15px; margin-bottom:20px;">
-                    <div>
-                        <div style="font-size:10px; color:var(--text-muted);">Focus (min)</div>
-                        <input type="number" id="focusDuration" value="25" style="width:60px; padding:5px; background:var(--bg-body); border:1px solid var(--border); color:var(--text-main); text-align:center; border-radius:5px;">
+                <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                    <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
+                        <span style="font-size:11px; color:var(--text-muted);">Focus (min)</span>
+                        <input type="number" id="focusDuration" class="select-input" value="25" style="width:80px; text-align:center;">
                     </div>
-                    <div>
-                        <div style="font-size:10px; color:var(--text-muted);">Soundscape</div>
-                        <select id="soundSelect" onchange="audioEngine.change(this.value)" style="width:100px; padding:5px; background:var(--bg-body); border:1px solid var(--border); color:var(--text-main); border-radius:5px;">
+                    <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
+                        <span style="font-size:11px; color:var(--text-muted);">Break (min)</span>
+                        <input type="number" id="breakDuration" class="select-input" value="5" style="width:80px; text-align:center;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
+                        <span style="font-size:11px; color:var(--text-muted);">Soundscape</span>
+                        <select id="soundSelect" class="select-input" style="width:140px;" onchange="focusMode.changeSound(this.value)">
                             <option value="none">Silent</option>
-                            <option value="beats">Binaural</option>
+                            <option value="beats">Deep Focus (Beats)</option>
                             <option value="wind">Pink Noise</option>
                             <option value="white">White Noise</option>
+                            <option value="brown">Brown Noise (Deep)</option>
+                            <option value="rain">Heavy Rain</option>
+                            <option value="forest">Forest Ambience</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="timer-circle" id="timerCircle">
                     <span id="timerDisplay" class="timer-time">25:00</span>
-                    <span id="timerLabel" style="text-transform:uppercase; font-size:12px; color:var(--text-muted); margin-top:5px;">Ready</span>
+                    <span id="timerLabel" class="timer-label">Ready</span>
                 </div>
 
-                <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:30px;">
-                    <button class="btn btn-primary" id="btnStart" onclick="focusMode.start('focus')">Start Focus</button>
-                    <button class="btn btn-secondary" id="btnBreak" onclick="focusMode.start('break')" style="border-color:var(--success); color:var(--success);">Start Break</button>
-                    <button class="btn btn-secondary" id="btnPause" onclick="focusMode.togglePause()" style="display:none; color:var(--warning); border-color:var(--warning);">Pause</button>
-                    <button class="btn btn-secondary" onclick="focusMode.stop()" style="color:var(--danger); border-color:var(--danger);">Stop</button>
+                <div style="display:flex; justify-content:center; gap:10px; margin-bottom:30px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" id="btnStartFocus" onclick="focusMode.start('focus')" style="min-width:110px;">Start Focus</button>
+                    <button class="btn btn-secondary" id="btnStartBreak" onclick="focusMode.start('break')" style="border-color:var(--success); color:var(--success); min-width:110px;">Start Break</button>
+                    
+                    <button class="btn btn-secondary" id="btnPause" onclick="focusMode.togglePause()" style="display:none; background:var(--bg-body); color:var(--warning); border-color:var(--warning); min-width:80px;">
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                    
+                    <button class="btn btn-secondary btn-danger" onclick="focusMode.reset()">Stop</button>
                 </div>
 
                 <div class="idle-tracker">
                     <div style="text-align:left;">
                         <h4 style="color:var(--text-main); font-size:15px;"><i class="fas fa-hourglass-half"></i> Idle Time</h4>
-                        <div style="font-size:10px; color:var(--text-muted);">Increments when paused or not focusing.</div>
+                        <p style="color:var(--text-muted); font-size:11px;">Time spent online without timer running</p>
                     </div>
-                    <div style="font-family:'Roboto Mono', monospace; font-size:24px; color:var(--warning);" id="idleDisplay">00:00:00</div>
+                    <div style="font-family:'Roboto Mono', monospace; font-size:24px; color:var(--warning);" id="idleDisplay">
+                        00:00:00
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="community" class="view-container">
+            <div style="display:grid; grid-template-columns: 1fr; gap:30px;">
+                <div id="commBoard">
+                    <div class="task-card">
+                        <h3 style="color:var(--accent); margin-bottom:5px;"><i class="fas fa-trophy"></i> Live Leaderboard</h3>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Points are awarded for every completed task.</p>
+                        <div class="leaderboard-container">
+                            <table class="leaderboard-table" id="leaderboardTable">
+                                <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Sign in to view live rankings.</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id="groupChat" style="display:none; flex-direction:column; height: 100%;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div>
+                            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="app.leaveGroup()">← Back</button>
+                            <strong id="chatTitle" style="margin-left:10px; font-size:16px;">Group</strong>
+                        </div>
+                    </div>
+                    <div class="chat-layout">
+                        <div class="chat-main">
+                            <div class="chat-messages" id="chatMsgs"></div>
+                            <div class="chat-input-area">
+                                <input type="text" id="chatInput" class="main-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') app.sendMessage()">
+                                <button class="btn btn-primary" onclick="app.sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                        <div class="chat-sidebar-panel">
+                            <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">ONLINE</div>
+                            <div id="chatParticipants"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:none; align-items:center; justify-content:center;" id="authModal">
-        <div style="background:var(--bg-sidebar); padding:30px; border-radius:16px; width:90%; max-width:400px; border:1px solid var(--border); text-align:center;">
+    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:none; align-items:center; justify-content:center; backdrop-filter: blur(5px);" id="authModal">
+        <div style="background:var(--bg-sidebar); padding:30px; border-radius:16px; width:90%; max-width:400px; border:1px solid var(--border); text-align:center; position:relative;">
             <h2 style="margin-bottom:20px; color:var(--text-main);">Cloud Sync</h2>
-            <input type="email" id="authEmail" class="main-input" style="border:1px solid var(--border); margin-bottom:10px; width:100%; background:var(--bg-body);" placeholder="Email">
-            <input type="password" id="authPass" class="main-input" style="border:1px solid var(--border); margin-bottom:20px; width:100%; background:var(--bg-body);" placeholder="Password">
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-primary" style="flex:1" onclick="app.login()">Login</button>
-                <button class="btn btn-secondary" style="flex:1" onclick="app.register()">Sign Up</button>
-            </div>
-            <button onclick="document.getElementById('authModal').style.display='none'" style="background:none; border:none; color:var(--text-muted); margin-top:15px; cursor:pointer;">Close</button>
+            <form onsubmit="event.preventDefault(); app.login();">
+                <input type="email" id="authEmail" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:10px; border-radius:8px;" placeholder="Email" autocomplete="username">
+                <input type="password" id="authPass" class="main-input" style="border:1px solid var(--border); background:var(--bg-body); width:100%; margin-bottom:20px; border-radius:8px;" placeholder="Password" autocomplete="current-password">
+                
+                <div style="margin-bottom: 20px; text-align: right;">
+                    <a href="#" onclick="app.forgotPassword()" style="color: var(--accent); font-size: 13px; text-decoration: none;">Forgot Password?</a>
+                </div>
+
+                <div style="display:flex; gap:10px;">
+                    <button type="submit" class="btn btn-primary" style="flex:1">Login</button>
+                    <button type="button" class="btn btn-secondary" style="flex:1" onclick="app.register()">Sign Up</button>
+                </div>
+            </form>
+            <button class="btn btn-icon" style="position:absolute; top:10px; right:10px; width:auto; height:auto; color:var(--text-muted);" onclick="document.getElementById('authModal').style.display='none'">✕</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, writeBatch, orderBy, limit, getDocs, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyCoCFw0hezldX3t33AYa1ytddYMuQCWliM",
             authDomain: "daily-todo-1e4ad.firebaseapp.com",
@@ -237,146 +572,196 @@
         const auth = getAuth(appInit);
         const db = getFirestore(appInit);
 
-        // --- STATE MANAGEMENT ---
         const state = {
             user: null,
             tasks: [],
-            idleTotal: 0, // Total seconds from DB
-            idleSession: 0, // Seconds in current session since last sync
-            timer: { mode: 'idle', endTime: null, paused: false, remainingPaused: 0 }
+            notes: [],
+            history: JSON.parse(localStorage.getItem('taskHistory')) || ["Meeting", "Workout", "Study"],
+            currentDate: new Date(),
+            charts: {},
+            customDesign: localStorage.getItem('customDesignCSS') || null,
+            taskFilter: 'active',
+            weather: { temp: '--', condition: 'Unknown' },
+            subStreakTask: localStorage.getItem('subStreakTask') || '',
+            idleSeconds: parseInt(localStorage.getItem('localIdleSeconds')) || 0
         };
 
-        // --- AUDIO ENGINE (SYNTH) ---
-        window.audioEngine = {
-            ctx: null, nodes: [],
-            init: () => {
-                if(!audioEngine.ctx) audioEngine.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                if(audioEngine.ctx.state === 'suspended') audioEngine.ctx.resume();
-            },
-            play: (type) => {
-                audioEngine.stop();
-                if(type === 'none') return;
-                audioEngine.init();
-                const t = audioEngine.ctx.currentTime;
-                const gain = audioEngine.ctx.createGain();
-                gain.gain.setValueAtTime(0.1, t);
-                gain.connect(audioEngine.ctx.destination);
-                audioEngine.nodes.push(gain);
-
-                if(type === 'white' || type === 'wind') {
-                    const bSize = audioEngine.ctx.sampleRate * 2;
-                    const b = audioEngine.ctx.createBuffer(1, bSize, audioEngine.ctx.sampleRate);
-                    const d = b.getChannelData(0);
-                    for(let i=0; i<bSize; i++) d[i] = Math.random() * 2 - 1;
-                    const noise = audioEngine.ctx.createBufferSource();
-                    noise.buffer = b;
-                    noise.loop = true;
-                    
-                    if(type === 'wind') { // Pink/Brownish noise filter
-                        const f = audioEngine.ctx.createBiquadFilter();
-                        f.type = 'lowpass'; f.frequency.value = 400;
-                        noise.connect(f); f.connect(gain);
-                    } else { noise.connect(gain); }
-                    noise.start();
-                    audioEngine.nodes.push(noise);
-                } else if (type === 'beats') { // Binaural 200Hz + 205Hz
-                    [200, 205].forEach(f => {
-                        const o = audioEngine.ctx.createOscillator();
-                        o.type = 'sine'; o.frequency.value = f;
-                        o.connect(gain); o.start();
-                        audioEngine.nodes.push(o);
-                    });
-                }
-            },
-            stop: () => {
-                audioEngine.nodes.forEach(n => { try{n.stop();}catch(e){} try{n.disconnect();}catch(e){} });
-                audioEngine.nodes = [];
-            },
-            change: (val) => {
-                if(state.timer.mode !== 'idle' && !state.timer.paused) audioEngine.play(val);
-            }
-        };
-
-        // --- APP LOGIC ---
         window.app = {
             init: () => {
-                setInterval(app.updateClock, 1000);
-                // Idle Ticker (Local)
-                setInterval(() => {
-                    const isFocusing = state.timer.mode === 'focus';
-                    const isPaused = state.timer.paused;
-                    
-                    // ISSUE 2 FIX: Idle runs if mode is idle OR if timer is paused
-                    if (!isFocusing || isPaused) {
-                        state.idleSession++;
-                        app.renderIdle();
-                    }
-                }, 1000);
+                app.updateClock();
+                setInterval(app.updateClock, 1000 * 60);
+                app.fetchWeather();
+                document.getElementById('dateInput').valueAsDate = new Date();
+                if(state.customDesign) document.getElementById('dynamic-theme-style').textContent = state.customDesign;
+                
+                if(!state.user) {
+                    state.notes = JSON.parse(localStorage.getItem('local_notes')) || [];
+                    app.renderNotes();
+                }
 
-                // Idle Sync (Cloud) - Sync every 60s
-                setInterval(() => {
-                    if(state.user && state.idleSession > 0) {
-                        const newTotal = state.idleTotal + state.idleSession;
-                        updateDoc(doc(db, 'user_stats', state.user.uid), { idleTotal: newTotal });
-                        state.idleTotal = newTotal;
-                        state.idleSession = 0;
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'local_tasks' && !state.user) {
+                        state.tasks = JSON.parse(e.newValue || "[]");
+                        renderTasks();
+                        if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
                     }
-                }, 60000);
+                });
+
+                if("Notification" in window && Notification.permission !== 'granted') {
+                    Notification.requestPermission();
+                }
             },
 
             updateClock: () => {
                 const now = new Date();
-                document.getElementById('clockDisplay').innerText = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                
-                // Timer Logic
-                if (state.timer.mode !== 'idle' && !state.timer.paused && state.timer.endTime) {
-                    const diff = state.timer.endTime - Date.now();
-                    if (diff <= 0) focusMode.complete();
-                    else focusMode.renderTime(Math.ceil(diff/1000));
+                const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('clockDisplay').textContent = time;
+            },
+
+            fetchWeather: () => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(async (pos) => {
+                        try {
+                            const { latitude, longitude } = pos.coords;
+                            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+                            const data = await res.json();
+                            const temp = Math.round(data.current_weather.temperature);
+                            document.getElementById('weatherDisplay').innerHTML = `<i class="fas fa-cloud-sun"></i> <span>${temp}${data.current_weather_units.temperature}</span>`;
+                        } catch (e) { console.error("Weather Error", e); }
+                    }, () => {
+                        document.getElementById('weatherDisplay').innerHTML = `<span>Loc. Denied</span>`;
+                    });
                 }
             },
 
-            renderIdle: () => {
-                const total = state.idleTotal + state.idleSession;
-                const h = Math.floor(total/3600).toString().padStart(2,'0');
-                const m = Math.floor((total%3600)/60).toString().padStart(2,'0');
-                const s = (total%60).toString().padStart(2,'0');
-                document.getElementById('idleDisplay').innerText = `${h}:${m}:${s}`;
-                document.getElementById('idleDash').innerText = `${h}h ${m}m`;
+            generateRandomDesign: () => {
+                const hue = Math.floor(Math.random() * 360);
+                const sat = Math.floor(Math.random() * 40) + 20;
+                const lit = Math.floor(Math.random() * 15) + 5;
+                const fonts = ["'Inter', sans-serif", "'Playfair Display', serif", "'Roboto Mono', monospace", "'Comic Neue', cursive"];
+                const font = fonts[Math.floor(Math.random() * fonts.length)];
+                const css = `:root { --bg-body: hsl(${hue}, ${sat}%, ${lit}%); --bg-sidebar: hsl(${hue}, ${sat}%, ${lit + 5}%); --bg-card: hsl(${hue}, ${sat}%, ${lit + 10}%); --bg-input: hsl(${hue}, ${sat}%, ${lit + 5}%); --accent: hsl(${(hue + 180) % 360}, 70%, 50%); --font-main: ${font}; }`;
+                document.getElementById('dynamic-theme-style').textContent = css;
+                localStorage.setItem('customDesignCSS', css);
+                state.customDesign = css;
             },
 
-            // --- AUTH & SYNC ---
-            toggleAuth: () => { if(state.user) signOut(auth); else document.getElementById('authModal').style.display = 'flex'; },
-            login: async () => { await signInWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display='none'; },
-            register: async () => { 
-                const cred = await createUserWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); 
-                // Create Stats Doc
-                await setDoc(doc(db, 'user_stats', cred.user.uid), { idleTotal: 0, timerState: { mode: 'idle', endTime: null, paused: false, duration: 25 } });
-                document.getElementById('authModal').style.display='none'; 
+            toggleTheme: () => {
+                const html = document.documentElement;
+                const icon = document.getElementById('themeIcon');
+                if (html.getAttribute('data-theme') === 'dark') {
+                    html.setAttribute('data-theme', 'light');
+                    icon.className = 'fas fa-sun';
+                    document.getElementById('dynamic-theme-style').textContent = "";
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    icon.className = 'fas fa-moon';
+                    if(state.customDesign) document.getElementById('dynamic-theme-style').textContent = state.customDesign;
+                }
             },
 
-            addTask: async () => {
-                const txt = document.getElementById('taskInput').value;
-                if(!txt) return;
-                const task = { text: txt, completed: false, date: new Date().toISOString().split('T')[0] };
-                if(state.user) await addDoc(collection(db, 'tasks'), { ...task, uid: state.user.uid });
-                else { state.tasks.push(task); app.renderTasks(); }
-                document.getElementById('taskInput').value = '';
+            saveLifetime: async (showNotification = false) => {
+                localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+                localStorage.setItem('local_notes', JSON.stringify(state.notes));
+                localStorage.setItem('localIdleSeconds', state.idleSeconds);
+                if (showNotification) {
+                    if(state.user) { 
+                        alert("Cloud Sync is active. All changes are being saved to your account."); 
+                    } else { 
+                        alert("Local data secured. Sign in to enable Cloud Sync."); 
+                    }
+                }
             },
 
-            renderTasks: () => {
-                const list = document.getElementById('taskList');
-                list.innerHTML = state.tasks.map(t => `
-                    <div class="task-card">
-                        <div style="flex:1;">${t.text}</div>
-                    </div>
-                `).join('');
-                document.getElementById('dashTotal').innerText = state.tasks.length;
-                
-                // Populate Focus Select
-                const sel = document.getElementById('focusTaskSelect');
-                sel.innerHTML = '<option value="">-- Select Task --</option>';
-                state.tasks.forEach(t => { sel.innerHTML += `<option value="${t.text}">${t.text}</option>`; });
+            resetAllData: async () => {
+                if(!confirm("⚠️ DANGER ZONE ⚠️\n\nThis will permanently DELETE ALL tasks, history, notes, and statistics.\n\nAre you sure?")) return;
+                if(!confirm("Last chance: This cannot be undone. Confirm full data wipe?")) return;
+
+                state.tasks = [];
+                state.notes = [];
+                state.history = ["Meeting", "Workout", "Study"]; 
+                state.charts = {};
+                state.idleSeconds = 0;
+                localStorage.removeItem('local_tasks');
+                localStorage.removeItem('local_notes');
+                localStorage.setItem('taskHistory', JSON.stringify(state.history));
+                localStorage.setItem('localIdleSeconds', 0);
+
+                if(state.user) {
+                    try {
+                        const batch = writeBatch(db);
+                        const qTasks = query(collection(db, 'tasks'), where('uid', '==', state.user.uid));
+                        const snapTasks = await getDocs(qTasks);
+                        snapTasks.docs.forEach(doc => { batch.delete(doc.ref); });
+                        const qNotes = query(collection(db, 'notes'), where('uid', '==', state.user.uid));
+                        const snapNotes = await getDocs(qNotes);
+                        snapNotes.docs.forEach(doc => { batch.delete(doc.ref); });
+                        await batch.commit();
+                        await setDoc(doc(db, 'leaderboard', state.user.uid), {
+                            username: state.user.email.split('@')[0],
+                            score: 0,
+                            lastActive: Date.now()
+                        });
+                        // Reset timer doc
+                        await setDoc(doc(db, 'timers', state.user.uid), {
+                            status: 'idle', idleSeconds: 0, updatedAt: Date.now()
+                        });
+                        alert("Cloud data wiped successfully.");
+                    } catch (e) { alert("Error wiping cloud data: " + e.message); }
+                } else { alert("Local data wiped successfully."); }
+
+                renderTasks();
+                app.renderNotes();
+                renderSuggestions();
+                if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
+            },
+
+            backupData: () => {
+                const data = { meta: { version: "5.0", date: new Date().toISOString() }, tasks: state.tasks, notes: state.notes, history: state.history };
+                const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "TaskPro_Checkpoint_" + Date.now() + ".json";
+                a.click();
+            },
+
+            restoreData: (input) => {
+                const file = input.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if(data.tasks && Array.isArray(data.tasks)) {
+                            if(state.user) {
+                                alert("Restoring to cloud... please wait.");
+                                const batch = writeBatch(db);
+                                data.tasks.forEach(t => {
+                                    const { id, ...taskData } = t;
+                                    const newDocRef = doc(collection(db, 'tasks'));
+                                    batch.set(newDocRef, { ...taskData, uid: state.user.uid });
+                                });
+                                if(data.notes) {
+                                    data.notes.forEach(n => {
+                                        const { id, ...noteData } = n;
+                                        const newNoteRef = doc(collection(db, 'notes'));
+                                        batch.set(newNoteRef, { ...noteData, uid: state.user.uid });
+                                    });
+                                }
+                                await batch.commit();
+                                alert("Cloud restore successful!");
+                            } else {
+                                state.tasks = [...state.tasks, ...data.tasks];
+                                if(data.notes) state.notes = [...state.notes, ...data.notes];
+                                app.saveLifetime(true);
+                                renderTasks();
+                                app.renderNotes();
+                            }
+                        }
+                    } catch(err) { alert("Invalid File Format"); console.error(err); }
+                };
+                reader.readAsText(file);
             },
 
             toggleSidebar: () => {
@@ -386,162 +771,893 @@
             },
 
             switchTab: (id) => {
-                document.querySelectorAll('.view-container').forEach(e => e.classList.remove('active'));
+                document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
                 document.getElementById(id).classList.add('active');
-            }
-        };
+                event.currentTarget.classList.add('active');
+                document.getElementById('pageTitle').textContent = (id === 'notes' ? "My Notes" : id.charAt(0).toUpperCase() + id.slice(1));
+                
+                if(window.innerWidth <= 768) app.toggleSidebar();
+                if(id === 'dashboard') app.renderDashboardCharts();
+                if(id === 'calendar') renderCalendar();
+                if(id === 'community') app.loadCommunity();
+                if(id === 'focus') app.loadFocusTasks();
+                if(id === 'notes') app.renderNotes();
+            },
 
-        // --- FOCUS MODE (CLOUD SYNCED) ---
-        window.focusMode = {
-            start: async (mode) => {
-                const mins = parseInt(document.getElementById('focusDuration').value) || 25;
-                const newState = {
-                    mode: mode,
-                    endTime: Date.now() + (mins * 60000),
-                    duration: mins,
-                    paused: false,
-                    remainingPaused: 0
+            toggleAuth: () => { if(state.user) signOut(auth); else document.getElementById('authModal').style.display = 'flex'; },
+            
+            login: async () => {
+                try { await signInWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display='none'; } catch(e){alert(e.message);}
+            },
+            
+            register: async () => {
+                try { await createUserWithEmailAndPassword(auth, document.getElementById('authEmail').value, document.getElementById('authPass').value); document.getElementById('authModal').style.display='none'; } catch(e){alert(e.message);}
+            },
+
+            forgotPassword: async () => {
+                const email = document.getElementById('authEmail').value;
+                if(!email) { alert("Please enter your email address in the box first."); return; }
+                try { await sendPasswordResetEmail(auth, email); alert("Password reset email sent! Check your inbox."); } catch(e) { alert("Error: " + e.message); }
+            },
+
+            setTaskFilter: (filter) => {
+                state.taskFilter = filter;
+                document.getElementById('filterActive').className = filter === 'active' ? 'btn btn-primary' : 'btn btn-secondary';
+                document.getElementById('filterCompleted').className = filter === 'completed' ? 'btn btn-primary' : 'btn btn-secondary';
+                renderTasks();
+            },
+
+            handleTaskSubmit: async () => {
+                const id = document.getElementById('editTaskId').value;
+                if(id) await app.updateTask(id); else await app.addTask();
+            },
+
+            addTask: async (title = null) => {
+                const input = document.getElementById('taskInput');
+                const text = title || input.value.trim();
+                if(!text) return;
+
+                if(!state.history.includes(text)) {
+                    state.history.unshift(text);
+                    if(state.history.length > 8) state.history.pop();
+                    localStorage.setItem('taskHistory', JSON.stringify(state.history));
+                    renderSuggestions();
+                }
+
+                const newTask = {
+                    text,
+                    completed: false,
+                    date: document.getElementById('dateInput').value,
+                    priority: document.getElementById('prioInput').value,
+                    tags: (text.match(/#\w+/g) || []).map(t => t.replace('#','')),
+                    subtasks: [],
+                    createdAt: Date.now()
                 };
-                
-                audioEngine.play(document.getElementById('soundSelect').value);
-                
+
                 if(state.user) {
-                    await updateDoc(doc(db, 'user_stats', state.user.uid), { timerState: newState });
+                    await addDoc(collection(db, 'tasks'), { ...newTask, uid: state.user.uid });
                 } else {
-                    state.timer = newState;
-                    focusMode.updateUI(newState);
+                    newTask.id = 'local_' + Date.now();
+                    state.tasks.push(newTask);
+                    app.saveLifetime(false);
+                    renderTasks();
+                }
+                if(!title) input.value = '';
+            },
+
+            startEdit: (id) => {
+                const task = state.tasks.find(t => t.id === id);
+                if(!task) return;
+                document.getElementById('taskInput').value = task.text;
+                document.getElementById('dateInput').value = task.date;
+                document.getElementById('prioInput').value = task.priority;
+                document.getElementById('editTaskId').value = task.id;
+                const btn = document.getElementById('addUpdateBtn');
+                btn.innerHTML = 'Update';
+                btn.classList.replace('btn-primary', 'btn-secondary');
+                document.getElementById('cancelEditBtn').style.display = 'inline-block';
+            },
+
+            updateTask: async (id) => {
+                const text = document.getElementById('taskInput').value;
+                const date = document.getElementById('dateInput').value;
+                const priority = document.getElementById('prioInput').value;
+                const tags = (text.match(/#\w+/g) || []).map(t => t.replace('#',''));
+                
+                const oldTask = state.tasks.find(t => t.id === id);
+                const subtasks = oldTask ? (oldTask.subtasks || []) : [];
+
+                if(state.user) {
+                    await updateDoc(doc(db, 'tasks', id), { text, date, priority, tags, subtasks });
+                } else {
+                    const idx = state.tasks.findIndex(t => t.id === id);
+                    if(idx !== -1) { state.tasks[idx] = { ...state.tasks[idx], text, date, priority, tags }; app.saveLifetime(false); renderTasks(); }
+                }
+                app.cancelEdit();
+            },
+
+            cancelEdit: () => {
+                document.getElementById('taskInput').value = '';
+                document.getElementById('editTaskId').value = '';
+                const btn = document.getElementById('addUpdateBtn');
+                btn.innerHTML = '<i class="fas fa-plus"></i> Add';
+                btn.classList.replace('btn-secondary', 'btn-primary');
+                document.getElementById('cancelEditBtn').style.display = 'none';
+            },
+
+            toggleTask: async (id) => {
+                const task = state.tasks.find(t => t.id === id);
+                const newVal = !task.completed;
+                if(state.user) await updateDoc(doc(db, 'tasks', id), { completed: newVal });
+                else { task.completed = newVal; app.saveLifetime(false); renderTasks(); }
+            },
+
+            deleteTask: async (id) => {
+                if(!confirm("Permanently delete?")) return;
+                if(state.user) await deleteDoc(doc(db, 'tasks', id));
+                else { state.tasks = state.tasks.filter(t => t.id !== id); app.saveLifetime(false); renderTasks(); }
+            },
+
+            addSubtask: async (parentId) => {
+                const input = document.getElementById(`sub-input-${parentId}`);
+                if(!input.value.trim()) return;
+                const task = state.tasks.find(t => t.id === parentId);
+                const newSub = { id: Date.now(), text: input.value.trim(), completed: false };
+                const subtasks = [...(task.subtasks||[]), newSub];
+                if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
+                else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
+            },
+            
+            toggleSubtask: async (parentId, subId) => {
+                const task = state.tasks.find(t => t.id === parentId);
+                const subtasks = task.subtasks.map(s => s.id == subId ? {...s, completed: !s.completed} : s);
+                if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
+                else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
+            },
+
+            deleteSubtask: async (parentId, subId) => {
+                const task = state.tasks.find(t => t.id === parentId);
+                const subtasks = task.subtasks.filter(s => s.id != subId);
+                if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
+                else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
+            },
+
+            addNote: async () => {
+                const input = document.getElementById('noteInput');
+                const content = input.value.trim();
+                if(!content) return;
+                
+                const newNote = { content, createdAt: Date.now() };
+
+                if(state.user) {
+                    try {
+                        await addDoc(collection(db, 'notes'), { ...newNote, uid: state.user.uid });
+                        input.value = '';
+                    } catch(e) {
+                        alert("Error saving note: " + e.message);
+                    }
+                } else {
+                    newNote.id = 'local_note_' + Date.now();
+                    state.notes.unshift(newNote);
+                    localStorage.setItem('local_notes', JSON.stringify(state.notes));
+                    app.renderNotes();
+                    input.value = '';
                 }
             },
 
-            stop: async () => {
-                audioEngine.stop();
-                const newState = { mode: 'idle', endTime: null, paused: false, remainingPaused: 0 };
-                if(state.user) await updateDoc(doc(db, 'user_stats', state.user.uid), { timerState: newState });
-                else { state.timer = newState; focusMode.updateUI(newState); }
-            },
-
-            togglePause: async () => {
-                if(state.timer.mode === 'idle') return;
-                
-                let newState = { ...state.timer };
-                
-                if(!state.timer.paused) {
-                    // PAUSE: Calculate remaining time and save it
-                    const remaining = state.timer.endTime - Date.now();
-                    newState.paused = true;
-                    newState.remainingPaused = remaining;
-                    audioEngine.stop(); // Stop sound on pause
+            deleteNote: async (id) => {
+                if(!confirm("Permanently delete this note?")) return;
+                if(state.user) {
+                    await deleteDoc(doc(db, 'notes', id));
                 } else {
-                    // RESUME: Calculate new EndTime based on saved remaining time
-                    newState.paused = false;
-                    newState.endTime = Date.now() + state.timer.remainingPaused;
-                    audioEngine.play(document.getElementById('soundSelect').value); // Resume sound
+                    state.notes = state.notes.filter(n => n.id !== id);
+                    localStorage.setItem('local_notes', JSON.stringify(state.notes));
+                    app.renderNotes();
                 }
-
-                if(state.user) await updateDoc(doc(db, 'user_stats', state.user.uid), { timerState: newState });
-                else { state.timer = newState; focusMode.updateUI(newState); }
             },
 
-            complete: async () => {
-                if(state.timer.mode === 'idle') return;
-                // Play simple beep using raw oscillator (independent of soundscape)
-                const ctx = audioEngine.ctx; 
-                const o = ctx.createOscillator(); const g = ctx.createGain();
-                o.connect(g); g.connect(ctx.destination);
-                o.frequency.value = 523.25; g.gain.value = 0.5;
-                o.start(); o.stop(ctx.currentTime + 1);
-                
-                alert("Timer Complete!");
-                focusMode.stop();
+            enableEditNote: (id) => {
+                const note = state.notes.find(n => n.id === id);
+                if(!note) return;
+                const card = document.getElementById(`note-card-${id}`);
+                const contentDiv = card.querySelector('.note-content');
+                const currentText = note.content;
+                contentDiv.innerHTML = `<textarea id="edit-note-input-${id}" class="main-input" style="width:100%; min-height:100px; background:var(--bg-body); border:1px solid var(--accent); resize:vertical;">${currentText}</textarea>`;
+                const actionsDiv = card.querySelector('.note-header-actions');
+                actionsDiv.innerHTML = `<button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="app.saveEditedNote('${id}')">Save</button><button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="app.renderNotes()">Cancel</button>`;
             },
 
-            updateUI: (timerData) => {
-                const circle = document.getElementById('timerCircle');
-                const btnPause = document.getElementById('btnPause');
-                const btnStart = document.getElementById('btnStart');
-                const label = document.getElementById('timerLabel');
+            saveEditedNote: async (id) => {
+                const input = document.getElementById(`edit-note-input-${id}`);
+                const newContent = input.value.trim();
+                if(!newContent) return;
 
-                // 4. ISSUE FIX: Glow Effects & Logic
-                circle.classList.remove('focus-mode', 'break-mode', 'paused');
-                
-                if (timerData.mode === 'idle') {
-                    circle.style.borderColor = 'var(--bg-card)';
-                    label.innerText = 'Ready';
-                    btnPause.style.display = 'none';
-                    btnStart.style.display = 'inline-block';
-                    focusMode.renderTime(parseInt(document.getElementById('focusDuration').value) * 60);
+                if(state.user) {
+                    await updateDoc(doc(db, 'notes', id), { content: newContent });
                 } else {
-                    btnStart.style.display = 'none';
-                    btnPause.style.display = 'inline-block';
-                    
-                    if (timerData.paused) {
-                        circle.classList.add('paused');
-                        label.innerText = 'Paused';
-                        btnPause.innerText = 'Resume';
-                        focusMode.renderTime(Math.ceil(timerData.remainingPaused / 1000));
-                    } else {
-                        btnPause.innerText = 'Pause';
-                        if (timerData.mode === 'focus') {
-                            circle.classList.add('focus-mode');
-                            label.innerText = 'Focusing...';
-                        } else {
-                            circle.classList.add('break-mode');
-                            label.innerText = 'On Break';
-                        }
+                    const idx = state.notes.findIndex(n => n.id === id);
+                    if(idx !== -1) {
+                        state.notes[idx].content = newContent;
+                        localStorage.setItem('local_notes', JSON.stringify(state.notes));
+                        app.renderNotes();
                     }
                 }
             },
 
-            renderTime: (seconds) => {
-                const m = Math.floor(seconds/60).toString().padStart(2,'0');
-                const s = (seconds%60).toString().padStart(2,'0');
-                document.getElementById('timerDisplay').innerText = `${m}:${s}`;
+            renderNotes: () => {
+                const list = document.getElementById('notesList');
+                if(!list) return;
+                const sortedNotes = [...state.notes].sort((a,b) => b.createdAt - a.createdAt);
+                if(sortedNotes.length === 0) {
+                    list.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin-top:30px;"><i class="fas fa-pencil-alt" style="font-size:24px; margin-bottom:10px;"></i><br>No notes yet. Save your first thought!</div>`;
+                    return;
+                }
+                list.innerHTML = sortedNotes.map(note => {
+                    const dateObj = new Date(note.createdAt);
+                    const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                    return `
+                    <div class="note-card" id="note-card-${note.id}">
+                        <div class="note-header-actions">
+                            <button class="note-action-btn" onclick="app.enableEditNote('${note.id}')" title="Edit"><i class="fas fa-pencil"></i></button>
+                            <button class="note-action-btn delete-btn" onclick="app.deleteNote('${note.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                        <div class="note-content">${note.content}</div>
+                        <div class="note-date">${dateStr}</div>
+                    </div>`;
+                }).join('');
+            },
+
+            changeMonth: (offset) => {
+                state.currentDate.setMonth(state.currentDate.getMonth() + offset);
+                renderCalendar();
+            },
+            selectDate: (dateStr) => {
+                document.getElementById('calSelectedDate').textContent = new Date(dateStr).toDateString();
+                const tasks = state.tasks.filter(t => t.date === dateStr);
+                const html = tasks.length ? tasks.map(t => `<div style="padding:10px; background:var(--bg-body); margin-bottom:5px; border-radius:5px; border-left:3px solid var(--accent);">${t.text} ${t.completed?'(Done)':''}</div>`).join('') : '<div style="color:var(--text-muted)">No tasks.</div>';
+                document.getElementById('calSelectedTasks').innerHTML = html;
+                document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
+                const cell = document.querySelector(`.cal-cell[data-date="${dateStr}"]`);
+                if(cell) cell.classList.add('selected');
+            },
+
+            syncLeaderboard: async () => {
+                if (!state.user) return;
+                const completedCount = state.tasks.filter(t => t.completed).length;
+                const score = completedCount * 10;
+                const username = state.user.email.split('@')[0];
+                try {
+                    await setDoc(doc(db, 'leaderboard', state.user.uid), { username: username, score: score, lastActive: Date.now() });
+                } catch (e) { console.error("Leaderboard Sync Error:", e); }
+            },
+
+            loadCommunity: async () => {
+                const boardTable = document.getElementById('leaderboardTable');
+                boardTable.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">Loading live scores...</td></tr>`;
+
+                try {
+                    const q = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), limit(20));
+                    const snapshot = await getDocs(q);
+                    
+                    let html = `<thead><tr><th style="width:60px">Rank</th><th>User</th><th style="text-align:right">Score</th></tr></thead><tbody>`;
+                    let rank = 1;
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const isMe = state.user && doc.id === state.user.uid;
+                        
+                        let rankDisplay = `<span style="opacity:0.5">#${rank}</span>`;
+                        if (rank === 1) rankDisplay = `<span class="rank-badge rank-1">1</span>`;
+                        if (rank === 2) rankDisplay = `<span class="rank-badge rank-2">2</span>`;
+                        if (rank === 3) rankDisplay = `<span class="rank-badge rank-3">3</span>`;
+                        const rowStyle = isMe ? `background: rgba(32, 128, 132, 0.15); font-weight:bold; border-left: 3px solid var(--accent);` : ``;
+                        html += `<tr style="${rowStyle}"><td>${rankDisplay}</td><td>${data.username} ${isMe ? '(You)' : ''}</td><td style="text-align:right; font-family:monospace; font-size:15px;">${data.score}</td></tr>`;
+                        rank++;
+                    });
+
+                    if (snapshot.empty) html += `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">No players yet.</td></tr>`;
+                    html += `</tbody>`;
+                    boardTable.innerHTML = html;
+                } catch (e) {
+                    console.error(e);
+                    boardTable.innerHTML = `<tr><td colspan="3" style="color:var(--danger); text-align:center;">Could not load leaderboard.<br>Sign in required.</td></tr>`;
+                }
+            },
+
+            sendMessage: (isSys = false) => {
+                const box = document.getElementById('chatMsgs');
+                const input = document.getElementById('chatInput');
+                const txt = isSys ? "Welcome to the group!" : input.value;
+                if(!txt) return;
+                const div = document.createElement('div');
+                div.className = isSys ? 'chat-msg them' : 'chat-msg me';
+                div.textContent = txt;
+                box.appendChild(div);
+                input.value = '';
+                box.scrollTop = box.scrollHeight;
+            },
+
+            getStreak: (filterName = null) => {
+                let streak = 0;
+                let today = new Date();
+                today.setHours(0,0,0,0);
+                const getIsoDate = (d) => {
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+                const cleanText = (txt) => txt.replace(/#\w+/g, '').trim();
+
+                if(!filterName) {
+                    const todayStr = getIsoDate(today);
+                    const tasksToday = state.tasks.filter(t => t.date === todayStr);
+                    if (tasksToday.length > 0 && tasksToday.every(t => t.completed)) streak++;
+                    
+                    let checkDate = new Date(today);
+                    checkDate.setDate(checkDate.getDate() - 1);
+                    while (true) {
+                        const dateStr = getIsoDate(checkDate);
+                        const tasksOnDate = state.tasks.filter(t => t.date === dateStr);
+                        if (tasksOnDate.length === 0) break;
+                        if (tasksOnDate.every(t => t.completed)) {
+                            streak++;
+                            checkDate.setDate(checkDate.getDate() - 1);
+                        } else break;
+                    }
+                    return streak;
+                } else {
+                    const todayStr = getIsoDate(today);
+                    const doneToday = state.tasks.some(t => t.date === todayStr && cleanText(t.text) === filterName && t.completed);
+                    if(doneToday) streak++;
+
+                    let checkDate = new Date(today);
+                    checkDate.setDate(checkDate.getDate() - 1);
+                    while(true) {
+                        const dateStr = getIsoDate(checkDate);
+                        const doneOnDate = state.tasks.some(t => t.date === dateStr && cleanText(t.text) === filterName && t.completed);
+                        if (doneOnDate) { streak++; checkDate.setDate(checkDate.getDate() - 1); } else { break; }
+                    }
+                    return streak;
+                }
+            },
+
+            updateSubStreak: () => {
+                const select = document.getElementById('subStreakSelect');
+                const val = select.value;
+                state.subStreakTask = val;
+                localStorage.setItem('subStreakTask', val);
+                const count = val ? app.getStreak(val) : 0;
+                document.getElementById('subStreakCount').textContent = count;
+            },
+
+            renderDashboardCharts: () => {
+                const timeFilter = document.getElementById('dashFilterTime').value;
+                const tagFilter = document.getElementById('dashFilterTag').value;
+                let filtered = state.tasks;
+                const now = new Date();
+                
+                const currentStreak = app.getStreak(null);
+                document.getElementById('streakCount').textContent = currentStreak;
+                const streakIcon = document.getElementById('streakIcon');
+                if(currentStreak > 0) {
+                    streakIcon.style.opacity = '1'; streakIcon.style.color = '#f97316'; streakIcon.classList.add('fa-beat');
+                } else {
+                    streakIcon.style.opacity = '0.3'; streakIcon.style.color = 'var(--text-muted)'; streakIcon.classList.remove('fa-beat');
+                }
+
+                const subSelect = document.getElementById('subStreakSelect');
+                const cleanText = (txt) => txt.replace(/#\w+/g, '').trim();
+                const allTaskNames = new Set([...state.history, ...state.tasks.map(t => cleanText(t.text))]);
+                
+                while(subSelect.options.length > 1) { subSelect.remove(1); }
+                allTaskNames.forEach(name => {
+                    if(!name) return;
+                    const opt = document.createElement('option');
+                    opt.value = name; opt.textContent = name;
+                    if(name === state.subStreakTask) opt.selected = true;
+                    subSelect.appendChild(opt);
+                });
+                app.updateSubStreak();
+
+                if (timeFilter !== 'all') {
+                    filtered = filtered.filter(t => {
+                        const d = new Date(t.date);
+                        if(timeFilter === 'daily') return d.toDateString() === now.toDateString();
+                        if(timeFilter === 'weekly') { const ago = new Date(); ago.setDate(now.getDate() - 7); return d >= ago && d <= now; }
+                        if(timeFilter === 'monthly') return d.getMonth() === now.getMonth();
+                        if(timeFilter === 'yearly') return d.getFullYear() === now.getFullYear();
+                        return true;
+                    });
+                }
+                if (tagFilter !== 'all') filtered = filtered.filter(t => (t.tags||[]).includes(tagFilter));
+
+                document.getElementById('dashTotal').textContent = filtered.length;
+                const done = filtered.filter(t => t.completed).length;
+                document.getElementById('dashDone').textContent = done;
+                document.getElementById('dashPending').textContent = filtered.length - done;
+
+                const allTags = [...new Set(state.tasks.flatMap(t => t.tags || []))];
+                const tagSelect = document.getElementById('dashFilterTag');
+                if(tagSelect.options.length === 1) { 
+                    allTags.forEach(tag => {
+                        const opt = document.createElement('option'); opt.value = tag; opt.textContent = '#' + tag; tagSelect.appendChild(opt);
+                    });
+                }
+
+                const ctx1 = document.getElementById('mainChart').getContext('2d');
+                if(state.charts.main) state.charts.main.destroy();
+                const labels = [], dataPoints = [];
+                for(let i=6; i>=0; i--) {
+                    const d = new Date(); d.setDate(d.getDate() - i);
+                    const k = d.toISOString().split('T')[0];
+                    labels.push(k.slice(5));
+                    dataPoints.push(state.tasks.filter(t => t.date === k && t.completed).length);
+                }
+                state.charts.main = new Chart(ctx1, {
+                    type: 'line',
+                    data: { labels: labels, datasets: [{ label: 'Completed', data: dataPoints, borderColor: getComputedStyle(document.body).getPropertyValue('--accent'), tension: 0.4 }] },
+                    options: { maintainAspectRatio: false, plugins: { legend: {display:false} } }
+                });
+
+                const ctx2 = document.getElementById('tagChart').getContext('2d');
+                if(state.charts.tags) state.charts.tags.destroy();
+                const tagCounts = {};
+                filtered.forEach(t => (t.tags||[]).forEach(tag => tagCounts[tag] = (tagCounts[tag]||0)+1));
+                state.charts.tags = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: { labels: Object.keys(tagCounts), datasets: [{ data: Object.values(tagCounts), backgroundColor: ['#208084', '#10b981', '#f59e0b', '#ef4444', '#6366f1'] }] },
+                    options: { maintainAspectRatio: false }
+                });
+            },
+
+            focusOnTask: (id) => { app.switchTab('focus'); document.getElementById('focusTaskSelect').value = id; },
+            loadFocusTasks: () => {
+                const sel = document.getElementById('focusTaskSelect');
+                const currentVal = sel.value;
+                sel.innerHTML = '<option value="">-- No specific task --</option>';
+                state.tasks.filter(t => !t.completed).forEach(t => {
+                    const opt = document.createElement('option'); opt.value = t.id; opt.textContent = t.text;
+                    if(t.id === currentVal) opt.selected = true;
+                    sel.appendChild(opt);
+                });
             }
         };
 
-        // --- AUTH LISTENER ---
-        onAuthStateChanged(auth, async (user) => {
+        // =======================================================
+        //  FIX 1 & 2: ROBUST AUDIO ENGINE & RELIABLE TIMER & SYNC
+        // =======================================================
+
+        const AudioEngine = {
+            ctx: null,
+            activeNodes: [],
+            gainNode: null,
+
+            init: () => {
+                if(!AudioEngine.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    AudioEngine.ctx = new AudioContext();
+                }
+                if(AudioEngine.ctx.state === 'suspended') {
+                    AudioEngine.ctx.resume();
+                }
+            },
+
+            playBeep: (type) => {
+                AudioEngine.init();
+                const t = AudioEngine.ctx.currentTime;
+                const osc = AudioEngine.ctx.createOscillator();
+                const gain = AudioEngine.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(AudioEngine.ctx.destination);
+
+                if (type === 'start') {
+                    osc.frequency.setValueAtTime(440, t);
+                    osc.frequency.exponentialRampToValueAtTime(880, t + 0.1);
+                    gain.gain.setValueAtTime(0.1, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                    osc.start(t);
+                    osc.stop(t + 0.5);
+                } else {
+                    const osc2 = AudioEngine.ctx.createOscillator();
+                    const gain2 = AudioEngine.ctx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(AudioEngine.ctx.destination);
+                    osc.frequency.setValueAtTime(523.25, t); 
+                    osc2.frequency.setValueAtTime(659.25, t); 
+                    gain.gain.setValueAtTime(0.2, t);
+                    gain2.gain.setValueAtTime(0.2, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 1);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, t + 1);
+                    osc.start(t); osc2.start(t);
+                    osc.stop(t + 1); osc2.stop(t + 1);
+                }
+            },
+
+            createNoiseBuffer: () => {
+                const bufferSize = AudioEngine.ctx.sampleRate * 2; 
+                const buffer = AudioEngine.ctx.createBuffer(1, bufferSize, AudioEngine.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                return buffer;
+            },
+
+            playBackground: (type) => {
+                AudioEngine.stopBackground();
+                if(type === 'none') return;
+                AudioEngine.init();
+                const t = AudioEngine.ctx.currentTime;
+                
+                AudioEngine.gainNode = AudioEngine.ctx.createGain();
+                AudioEngine.gainNode.gain.setValueAtTime(0.15, t);
+                AudioEngine.gainNode.connect(AudioEngine.ctx.destination);
+
+                if (['white', 'wind', 'rain', 'brown'].includes(type)) {
+                    const noise = AudioEngine.ctx.createBufferSource();
+                    noise.buffer = AudioEngine.createNoiseBuffer();
+                    noise.loop = true;
+                    
+                    let finalNode = noise;
+
+                    // Filters
+                    if (type === 'wind' || type === 'rain') { // Pink-ish
+                        const filter = AudioEngine.ctx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.value = type === 'wind' ? 400 : 800; 
+                        noise.connect(filter);
+                        finalNode = filter;
+                    } 
+                    if (type === 'brown') { // Brown Noise Approx
+                         const filter = AudioEngine.ctx.createBiquadFilter();
+                         filter.type = 'lowpass';
+                         filter.frequency.value = 150;
+                         noise.connect(filter);
+                         finalNode = filter;
+                    }
+
+                    finalNode.connect(AudioEngine.gainNode);
+                    noise.start();
+                    AudioEngine.activeNodes.push(noise);
+                } 
+                
+                if (type === 'beats') {
+                    const osc1 = AudioEngine.ctx.createOscillator();
+                    const osc2 = AudioEngine.ctx.createOscillator();
+                    osc1.frequency.value = 200;
+                    osc2.frequency.value = 205; 
+                    osc1.connect(AudioEngine.gainNode);
+                    osc2.connect(AudioEngine.gainNode);
+                    osc1.start(); osc2.start();
+                    AudioEngine.activeNodes.push(osc1, osc2);
+                }
+
+                if (type === 'forest') {
+                    // Simple synthesized forest ambience (chirps)
+                    const lfo = AudioEngine.ctx.createOscillator();
+                    lfo.frequency.value = 2; // mod speed
+                    const gain = AudioEngine.ctx.createGain();
+                    gain.gain.value = 500;
+                    lfo.connect(gain);
+                    
+                    const osc = AudioEngine.ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.value = 1500;
+                    gain.connect(osc.frequency);
+                    
+                    osc.connect(AudioEngine.gainNode);
+                    
+                    // Modulate volume heavily to simulate intermittent chirps
+                    const chirpEnv = AudioEngine.ctx.createOscillator();
+                    chirpEnv.frequency.value = 0.8;
+                    const chirpGain = AudioEngine.ctx.createGain();
+                    chirpGain.gain.value = 1;
+                    chirpEnv.connect(chirpGain.gain);
+                    osc.connect(chirpGain);
+                    chirpGain.connect(AudioEngine.gainNode);
+
+                    lfo.start(); osc.start(); chirpEnv.start();
+                    AudioEngine.activeNodes.push(lfo, osc, chirpEnv);
+                }
+            },
+
+            stopBackground: () => {
+                AudioEngine.activeNodes.forEach(n => { try{n.stop();}catch(e){}});
+                AudioEngine.activeNodes = [];
+                if(AudioEngine.gainNode) { AudioEngine.gainNode.disconnect(); AudioEngine.gainNode = null; }
+            }
+        };
+
+        window.focusMode = {
+            timerInterval: null,
+            status: 'idle', // 'idle', 'running', 'paused', 'break'
+            endTime: 0,
+            remainingAtPause: 0,
+            totalDuration: 0,
+            
+            // Sync logic
+            syncTimerState: async () => {
+                if(!state.user) return;
+                const data = {
+                    status: focusMode.status,
+                    endTime: focusMode.endTime,
+                    remainingAtPause: focusMode.remainingAtPause,
+                    totalDuration: focusMode.totalDuration,
+                    updatedAt: Date.now()
+                };
+                try {
+                    await setDoc(doc(db, 'timers', state.user.uid), data, {merge: true});
+                } catch(e) { console.error("Sync timer error", e); }
+            },
+
+            start: (type) => {
+                // If starting fresh
+                if (focusMode.status === 'idle' || focusMode.status !== type) {
+                    let mins = parseInt(document.getElementById(type === 'focus' ? 'focusDuration' : 'breakDuration').value) || 25;
+                    focusMode.totalDuration = mins * 60 * 1000;
+                    focusMode.endTime = Date.now() + focusMode.totalDuration;
+                    focusMode.status = type; // 'focus' or 'break'
+                } else if (focusMode.status === 'paused') {
+                    // Resuming
+                    focusMode.endTime = Date.now() + focusMode.remainingAtPause;
+                    focusMode.status = type;
+                }
+
+                focusMode.updateUI(true);
+                AudioEngine.playBeep('start');
+                AudioEngine.playBackground(document.getElementById('soundSelect').value);
+                
+                focusMode.runLoop();
+                focusMode.syncTimerState();
+            },
+
+            togglePause: () => {
+                if(focusMode.status === 'idle') return;
+
+                if (focusMode.status === 'paused') {
+                    // Resume logic handled in start, but we need to know previous mode
+                    // For simplicity, resume based on UI class
+                    const isBreak = document.getElementById('timerCircle').classList.contains('break-mode');
+                    focusMode.start(isBreak ? 'break' : 'focus');
+                } else {
+                    // Pause
+                    const now = Date.now();
+                    focusMode.remainingAtPause = Math.max(0, focusMode.endTime - now);
+                    focusMode.status = 'paused';
+                    
+                    focusMode.updateUI(false);
+                    AudioEngine.stopBackground();
+                    clearInterval(focusMode.timerInterval);
+                    focusMode.syncTimerState();
+                }
+            },
+
+            complete: () => {
+                clearInterval(focusMode.timerInterval);
+                AudioEngine.stopBackground();
+                AudioEngine.playBeep('end');
+                
+                // Auto-complete task if in focus mode
+                if (focusMode.status === 'focus') {
+                    const tid = document.getElementById('focusTaskSelect').value;
+                    if(tid) app.toggleTask(tid);
+                }
+
+                focusMode.status = 'idle';
+                focusMode.updateUI(false);
+                document.getElementById('timerDisplay').textContent = "00:00";
+                document.getElementById('timerLabel').textContent = "Done";
+                alert("Time is up!");
+                focusMode.syncTimerState();
+            },
+
+            reset: () => {
+                clearInterval(focusMode.timerInterval);
+                focusMode.status = 'idle';
+                AudioEngine.stopBackground();
+                focusMode.updateUI(false);
+                
+                // Reset display
+                let mins = parseInt(document.getElementById('focusDuration').value) || 25;
+                const m = mins.toString().padStart(2,'0');
+                document.getElementById('timerDisplay').textContent = `${m}:00`;
+                document.getElementById('timerLabel').textContent = "Ready";
+                focusMode.syncTimerState();
+            },
+
+            runLoop: () => {
+                clearInterval(focusMode.timerInterval);
+                focusMode.timerInterval = setInterval(() => {
+                    const now = Date.now();
+                    const diff = focusMode.endTime - now;
+                    
+                    if (diff <= 0) {
+                        focusMode.complete();
+                    } else {
+                        const m = Math.floor(diff / 60000).toString().padStart(2,'0');
+                        const s = Math.floor((diff % 60000) / 1000).toString().padStart(2,'0');
+                        document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+                    }
+                }, 1000);
+            },
+
+            updateUI: (isRunning) => {
+                const circle = document.getElementById('timerCircle');
+                const btnPause = document.getElementById('btnPause');
+                const btnFocus = document.getElementById('btnStartFocus');
+                const btnBreak = document.getElementById('btnStartBreak');
+
+                circle.className = 'timer-circle'; // reset
+                
+                if (focusMode.status === 'focus') circle.classList.add('focus-mode', 'timer-active');
+                if (focusMode.status === 'break') circle.classList.add('break-mode', 'timer-active');
+                if (focusMode.status === 'paused') circle.classList.add('paused', 'timer-active');
+
+                if (focusMode.status === 'idle') {
+                    btnFocus.style.display = 'inline-block';
+                    btnBreak.style.display = 'inline-block';
+                    btnPause.style.display = 'none';
+                } else {
+                    btnFocus.style.display = focusMode.status === 'focus' ? 'inline-block' : 'none';
+                    btnBreak.style.display = focusMode.status === 'break' ? 'inline-block' : 'none';
+                    btnPause.style.display = 'inline-block';
+                    btnPause.innerHTML = focusMode.status === 'paused' ? '<i class="fas fa-play"></i> Resume' : '<i class="fas fa-pause"></i> Pause';
+                    
+                    const label = focusMode.status === 'focus' ? "Focusing..." : (focusMode.status === 'break' ? "On Break" : "Paused");
+                    document.getElementById('timerLabel').textContent = label;
+                }
+            },
+            
+            changeSound: (newSound) => {
+                if(focusMode.status === 'focus' || focusMode.status === 'break') {
+                    AudioEngine.playBackground(newSound);
+                }
+            }
+        };
+
+        // IDLE TRACKER & SYNC
+        let lastIdleSync = Date.now();
+
+        setInterval(() => {
+            // Run idle if Mode is IDLE OR PAUSED
+            if(focusMode.status === 'idle' || focusMode.status === 'paused') {
+                state.idleSeconds++;
+                
+                const hrs = Math.floor(state.idleSeconds / 3600).toString().padStart(2,'0');
+                const mins = Math.floor((state.idleSeconds % 3600) / 60).toString().padStart(2,'0');
+                const secs = (state.idleSeconds % 60).toString().padStart(2,'0');
+                document.getElementById('idleDisplay').textContent = `${hrs}:${mins}:${secs}`;
+                
+                localStorage.setItem('localIdleSeconds', state.idleSeconds);
+
+                // Sync Idle to Cloud every 10 seconds if user exists
+                if(state.user && Date.now() - lastIdleSync > 10000) {
+                    setDoc(doc(db, 'timers', state.user.uid), { 
+                        idleSeconds: state.idleSeconds 
+                    }, { merge: true });
+                    lastIdleSync = Date.now();
+                }
+            }
+        }, 1000);
+
+        // AUTH LISTENER & SYNC INITIALIZATION
+        onAuthStateChanged(auth, (user) => {
             if(user) {
                 state.user = user;
-                document.getElementById('authBtn').innerText = 'Sign Out';
-                document.getElementById('syncDot').style.color = 'var(--success)';
-                document.getElementById('syncText').innerText = 'Cloud Active';
-
-                // Sync Tasks
-                const q = query(collection(db, 'tasks'), where('uid', '==', user.uid));
-                onSnapshot(q, (snap) => {
-                    state.tasks = snap.docs.map(d => d.data());
-                    app.renderTasks();
+                document.getElementById('authBtn').textContent = "Sign Out";
+                document.getElementById('syncDot').style.background = "var(--success)";
+                document.getElementById('syncText').textContent = "Cloud Active";
+                
+                // Tasks Sync
+                const qTasks = query(collection(db, 'tasks'), where('uid', '==', user.uid));
+                onSnapshot(qTasks, (snap) => {
+                    state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    renderTasks();
+                    if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
+                    if(document.getElementById('calendar').classList.contains('active')) renderCalendar();
+                    app.syncLeaderboard();
                 });
 
-                // Sync Stats (Idle & Timer) - ISSUE 1 FIX
-                onSnapshot(doc(db, 'user_stats', user.uid), (docSnap) => {
+                // Notes Sync
+                const qNotes = query(collection(db, 'notes'), where('uid', '==', user.uid));
+                onSnapshot(qNotes, (snap) => {
+                    state.notes = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    if(document.getElementById('notes').classList.contains('active')) app.renderNotes();
+                });
+                
+                // Timer & Idle Sync Listener
+                onSnapshot(doc(db, 'timers', user.uid), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
                         
-                        // Sync Idle
-                        state.idleTotal = data.idleTotal || 0;
-                        app.renderIdle();
+                        // Sync Idle Time (Max of local or cloud to prevent overwrite by older device)
+                        if(data.idleSeconds > state.idleSeconds) {
+                            state.idleSeconds = data.idleSeconds;
+                        }
 
                         // Sync Timer State
-                        if (data.timerState) {
-                            state.timer = data.timerState;
-                            focusMode.updateUI(state.timer);
+                        if(data.status && data.updatedAt > (focusMode.lastLocalUpdate || 0)) {
+                             // Only update if remote change is newer (we need logic to avoid loops)
+                             // For simplicity: accept remote truth if we aren't the one who just wrote it
+                             // In this simple version, we'll just check if status differs significantly
+                             if (data.status !== focusMode.status || Math.abs(data.endTime - focusMode.endTime) > 2000) {
+                                 focusMode.status = data.status;
+                                 focusMode.endTime = data.endTime;
+                                 focusMode.remainingAtPause = data.remainingAtPause;
+                                 focusMode.totalDuration = data.totalDuration;
+                                 
+                                 // Update UI based on remote state
+                                 focusMode.updateUI(data.status === 'focus' || data.status === 'break');
+                                 if(data.status === 'focus' || data.status === 'break') {
+                                     focusMode.runLoop();
+                                 } else {
+                                     clearInterval(focusMode.timerInterval);
+                                     if(data.status === 'idle') {
+                                         document.getElementById('timerDisplay').textContent = "00:00"; // Or ready state
+                                     } else if (data.status === 'paused') {
+                                         const diff = data.remainingAtPause;
+                                         const m = Math.floor(diff / 60000).toString().padStart(2,'0');
+                                         const s = Math.floor((diff % 60000) / 1000).toString().padStart(2,'0');
+                                         document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+                                     }
+                                 }
+                             }
                         }
                     }
                 });
 
             } else {
                 state.user = null;
-                document.getElementById('authBtn').innerText = 'Sign In';
-                document.getElementById('syncDot').style.color = 'var(--warning)';
-                document.getElementById('syncText').innerText = 'Offline';
-                state.tasks = []; // Clear or load local
-                app.renderTasks();
+                document.getElementById('authBtn').textContent = "Sign In";
+                document.getElementById('syncDot').style.background = "var(--warning)";
+                document.getElementById('syncText').textContent = "Offline";
+                state.tasks = JSON.parse(localStorage.getItem('local_tasks')) || [];
+                state.notes = JSON.parse(localStorage.getItem('local_notes')) || [];
+                renderTasks();
+                app.renderNotes();
             }
         });
 
+        // RENDERING HELPERS
+        function renderTasks() {
+            const list = document.getElementById('taskList');
+            list.innerHTML = "";
+            const filter = state.taskFilter; 
+            const visibleTasks = state.tasks.filter(t => filter === 'completed' ? t.completed : !t.completed);
+            visibleTasks.forEach(task => {
+                const subsHtml = (task.subtasks||[]).map(s => `<div class="subtask-row"><input type="checkbox" ${s.completed ? 'checked' : ''} onchange="app.toggleSubtask('${task.id}', '${s.id}')"><span style="text-decoration:${s.completed?'line-through':'none'}; opacity:${s.completed?0.5:1}; flex:1; color:var(--text-muted);">${s.text}</span><button class="btn btn-icon btn-danger" style="width:20px;height:20px;padding:0;font-size:10px;" onclick="app.deleteSubtask('${task.id}', '${s.id}')"><i class="fas fa-times"></i></button></div>`).join('');
+                const tagsHtml = (task.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
+                const html = `<div class="task-card priority-${task.priority}"><div class="task-header"><input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''} onchange="app.toggleTask('${task.id}')"><div class="task-content"><div class="task-title" style="text-decoration: ${task.completed ? 'line-through' : 'none'}">${task.text.replace(/#\w+/g,'')} ${tagsHtml}</div><div class="task-meta"><i class="far fa-calendar"></i> ${task.date} • ${task.priority.toUpperCase()}</div></div><div style="display:flex;gap:5px;"><button class="btn btn-icon" onclick="app.focusOnTask('${task.id}')"><i class="fas fa-stopwatch"></i></button><button class="btn btn-icon" onclick="app.startEdit('${task.id}')"><i class="fas fa-pencil"></i></button><button class="btn btn-icon btn-danger" onclick="app.deleteTask('${task.id}')"><i class="fas fa-trash"></i></button></div></div><div class="subtasks">${subsHtml}<div class="subtask-row"><input id="sub-input-${task.id}" placeholder="+ Subtask" style="background:transparent;border:none;color:var(--text-muted);width:100%;outline:none;font-size:13px;" onkeydown="if(event.key==='Enter') app.addSubtask('${task.id}')"></div></div></div>`;
+                list.insertAdjacentHTML('beforeend', html);
+            });
+            if(visibleTasks.length === 0) list.innerHTML = `<div style="text-align:center;color:var(--text-muted);margin-top:20px;">No ${filter} tasks found.</div>`;
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calGrid');
+            grid.innerHTML = `<div class="cal-day-header">Sun</div><div class="cal-day-header">Mon</div><div class="cal-day-header">Tue</div><div class="cal-day-header">Wed</div><div class="cal-day-header">Thu</div><div class="cal-day-header">Fri</div><div class="cal-day-header">Sat</div>`;
+            const year = state.currentDate.getFullYear();
+            const month = state.currentDate.getMonth();
+            document.getElementById('calMonthYear').textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for(let i=0; i<firstDay; i++) grid.insertAdjacentHTML('beforeend', `<div></div>`);
+            for(let d=1; d<=daysInMonth; d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const isToday = dateStr === new Date().toISOString().split('T')[0];
+                const dayTasks = state.tasks.filter(t => t.date === dateStr);
+                const dots = dayTasks.map(t => `<div class="cal-task-dot ${t.completed?'done':''}">${t.text}</div>`).join('');
+                grid.insertAdjacentHTML('beforeend', `<div class="cal-cell ${isToday ? 'today' : ''}" data-date="${dateStr}" onclick="app.selectDate('${dateStr}')"><div class="cal-date">${d}</div>${dots}</div>`);
+            }
+        }
+
+        function renderSuggestions() {
+            document.getElementById('suggestionsBox').innerHTML = state.history.map(h => `<div class="suggestion-chip" onclick="app.addTask('${h}')">${h} <span onclick="event.stopPropagation();app.removeSuggestion('${h}')">×</span></div>`).join('');
+        }
+        window.app.removeSuggestion = (t) => { state.history = state.history.filter(h => h !== t); localStorage.setItem('taskHistory', JSON.stringify(state.history)); renderSuggestions(); };
+
         app.init();
+        renderSuggestions();
     </script>
 </body>
 </html>
