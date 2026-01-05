@@ -804,36 +804,6 @@
                 box-shadow: 0 0 0 0 rgba(32, 128, 132, 0);
             }
         }
-
-        @media (max-width: 480px) {
-            .view-container { padding: 8px; }
-            .timer-circle { width: 180px; height: 180px; }
-            .timer-time { font-size: 32px; }
-            .timer-label { font-size: 12px; }
-            .focus-stat-container { flex-direction: column; gap: 10px; }
-            .focus-stat-box { min-width: 100%; }
-            .section-header h3 { font-size: 14px; }
-            .chat-messages { min-height: 120px; }
-            .chat-input-area { padding: 6px; }
-            .emoji-btn { width: 28px; height: 28px; }
-            .emoji-picker { grid-template-columns: repeat(2, 1fr); }
-        }
-        
-        /* New Focus Stats */
-        .focus-stat-container { display:flex; align-items:center; justify-content:space-between; width:100%; gap:20px; flex-wrap:wrap;}
-        .focus-stat-box { flex:1; min-width:200px; background:var(--bg-body); border-radius:10px; padding:15px; border:1px solid var(--border); display:flex; flex-direction:column; gap:5px;}
-        .progress-bar { width:100%; height:8px; background:var(--bg-body); border-radius:4px; overflow:hidden; margin-top:5px; border:1px solid var(--border); }
-        .progress-fill { height:100%; background:var(--accent); border-radius:4px; width:0%; transition: width 0.5s ease; }
-
-        /* Task Focus Row */
-        .focus-task-row { display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:6px 0; border-bottom:1px solid var(--border); }
-        .focus-task-row:last-child { border-bottom:none; }
-        .focus-task-name { color:var(--text-main); font-weight:500; flex: 1; }
-        .focus-task-time { color:var(--text-muted); font-family:monospace; margin-right: 10px; }
-        .focus-task-actions { display: flex; gap: 5px; opacity: 0.6; transition: 0.2s; }
-        .focus-task-row:hover .focus-task-actions { opacity: 1; }
-        .focus-icon-btn { cursor: pointer; color: var(--text-muted); font-size: 11px; padding: 2px; }
-        .focus-icon-btn:hover { color: var(--accent); }
         
         /* Community Layout */
         .community-grid {
@@ -862,9 +832,28 @@
         }
         
         @media (max-width: 1023px) {
+            .community-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                height: auto;
+            }
             .leaderboard-section, .chat-section {
                 min-height: 400px;
             }
+        }
+        
+        @media (max-width: 480px) {
+            .view-container { padding: 8px; }
+            .timer-circle { width: 180px; height: 180px; }
+            .timer-time { font-size: 32px; }
+            .timer-label { font-size: 12px; }
+            .focus-stat-container { flex-direction: column; gap: 10px; }
+            .focus-stat-box { min-width: 100%; }
+            .section-header h3 { font-size: 14px; }
+            .chat-messages { min-height: 120px; }
+            .chat-input-area { padding: 6px; }
+            .emoji-btn { width: 28px; height: 28px; }
+            .emoji-picker { grid-template-columns: repeat(2, 1fr); }
         }
         
         .section-header {
