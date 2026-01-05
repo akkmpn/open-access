@@ -1,8 +1,71 @@
+const CACHE_NAME = 'taskpro-v9-cache';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/Daily_Todo_Checklist.html',
+  '/manifest.json',
+  '/sw.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap'
+];
+
 self.addEventListener('install', (e) => {
-  console.log('Service Worker: Installed');
+  console.log('Service Worker: Installing...');
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    }).catch(err => console.log('Cache Error:', err))
+  );
+});
+
+self.addEventListener('activate', (e) => {
+  console.log('Service Worker: Activating');
+  e.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
 });
 
 self.addEventListener('fetch', (e) => {
-  // This helps the app load correctly on mobile data
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  const { request } = e;
+  const url = new URL(request.url);
+
+  if (url.origin.includes('firebase') || url.origin.includes('firestore')) {
+    e.respondWith(fetch(request));
+    return;
+  }
+
+  if (request.destination === 'style' || request.destination === 'script' || request.destination === 'font') {
+    e.respondWith(
+      caches.match(request).then((response) => {
+        return response || fetch(request).then((fetchResponse) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, fetchResponse.clone());
+            return fetchResponse;
+          });
+        });
+      }).catch(() => new Response('Offline'))
+    );
+    return;
+  }
+
+  e.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (response.status === 200) {
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, response.clone());
+          });
+        }
+        return response;
+      })
+      .catch(() => caches.match(request) || new Response('Offline', { status: 503 }))
+  );
 });
