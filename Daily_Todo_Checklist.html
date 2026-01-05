@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Enterprise TaskPro - v8.0 (Live Cloud Sync)</title>
+    <title>Enterprise TaskPro_v9</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="manifest" href="manifest.json">
+    
     <style>
         /* ==================== 1. CORE VARIABLES ==================== */
         :root {
@@ -289,7 +289,7 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="fas fa-bolt"></i> TaskPro 8.0
+            <i class="fas fa-bolt"></i> TaskPro 9.0
             <button class="btn btn-icon" style="margin-left:auto; background:transparent; display:none;" onclick="app.toggleSidebar()" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
         </div>
         
@@ -300,9 +300,9 @@
                 <span id="badge" style="margin-left:auto; background:var(--accent); padding:2px 8px; border-radius:10px; font-size:10px; color: white;">0</span>
             </button>
             <button class="nav-link" onclick="app.switchTab('notes')"><i class="fas fa-sticky-note"></i> My Notes</button>
-            <button class="nav-link" onclick="app.switchTab('calendar')"><i class="far fa-calendar-alt"></i> Calendar</button>
+            <a class="nav-link" onclick="app.switchTab('habits')"><i class="fas fa-calendar-check"></i> Habits</a>
+            <a class="nav-link" onclick="app.switchTab('community')"><i class="fas fa-users"></i> Community</a>
             <button class="nav-link" onclick="app.switchTab('focus')"><i class="fas fa-stopwatch"></i> Pomodoro & Idle</button>
-            <button class="nav-link" onclick="app.switchTab('community')"><i class="fas fa-users"></i> Community</button>
         </nav>
 
         <div style="margin-top: auto;">
@@ -436,6 +436,13 @@
                         <div style="font-size:12px; color:var(--text-muted); font-style:italic;">No specific task data yet.</div>
                     </div>
                 </div>
+                
+                <div style="margin-top:15px; border-top:1px solid var(--border); padding-top:15px;">
+                    <h4 style="font-size:12px; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase;">Focus Timeline</h4>
+                    <div id="focusTimeline" style="max-height:200px; overflow-y:auto; padding-right:5px;">
+                        <div style="font-size:12px; color:var(--text-muted); font-style:italic;">No focus sessions yet.</div>
+                    </div>
+                </div>
             </div>
 
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
@@ -454,7 +461,12 @@
             <div class="suggestions" id="suggestionsBox"></div>
             <div class="input-group">
                 <input type="hidden" id="editTaskId">
-                <input type="text" id="taskInput" class="main-input" placeholder="Add a task... (Use #tag)">
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 250px;">
+                    <input type="text" id="taskInput" class="main-input" placeholder="Add a task..." oninput="app.detectHashtags(this.value)">
+                    <div id="hashtagSuggestions" style="display: none; position: absolute; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 5px; margin-top: 5px; z-index: 100; max-width: 250px;"></div>
+                    <textarea id="taskDescription" class="main-input" placeholder="Task description (optional)..." rows="2" style="resize: vertical; min-height: 40px; background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 8px;"></textarea>
+                </div>
+                <input type="text" id="hashtagInput" class="main-input" placeholder="#hashtag" style="min-width: 120px; max-width: 200px;">
                 <input type="date" id="dateInput" class="date-input">
                 <select id="prioInput" class="select-input" style="width: auto;">
                     <option value="medium">Medium</option>
@@ -466,6 +478,7 @@
             </div>
             <div style="margin-bottom:15px; display:flex; gap:10px;">
                 <button class="btn btn-secondary" onclick="app.setTaskFilter('active')" id="filterActive">Active</button>
+                <button class="btn btn-secondary" onclick="app.setTaskFilter('overdue')" id="filterOverdue">Overdue</button>
                 <button class="btn btn-secondary" onclick="app.setTaskFilter('completed')" id="filterCompleted">Completed</button>
             </div>
             <div id="taskList" class="task-list"></div>
@@ -566,8 +579,20 @@
             </div>
         </div>
 
+        <div id="habits" class="view-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <h2 style="color:var(--text-main);">Habit Challenges</h2>
+                    <p style="color:var(--text-muted); font-size:13px;">Build lasting habits with 7 & 21 day challenges.</p>
+                </div>
+                <button class="btn btn-primary" onclick="app.showAddHabitModal()"><i class="fas fa-plus"></i> Add Habit</button>
+            </div>
+            
+            <div id="habitsList" class="task-list"></div>
+        </div>
+
         <div id="community" class="view-container">
-            <div style="display:grid; grid-template-columns: 1fr; gap:30px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
                 <div id="commBoard">
                     <div class="task-card">
                         <h3 style="color:var(--accent); margin-bottom:5px;"><i class="fas fa-trophy"></i> Live Leaderboard</h3>
@@ -579,25 +604,44 @@
                         </div>
                     </div>
                 </div>
-                <div id="groupChat" style="display:none; flex-direction:column; height: 100%;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <div>
-                            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="app.leaveGroup()">← Back</button>
-                            <strong id="chatTitle" style="margin-left:10px; font-size:16px;">Group</strong>
-                        </div>
-                    </div>
-                    <div class="chat-layout">
-                        <div class="chat-main">
-                            <div class="chat-messages" id="chatMsgs"></div>
-                            <div class="chat-input-area">
-                                <input type="text" id="chatInput" class="main-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') app.sendMessage()">
-                                <button class="btn btn-primary" onclick="app.sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                <div id="chatSection" style="display:none;">
+                    <div class="task-card" style="height: 500px; display: flex; flex-direction: column;">
+                        <h3 style="color:var(--accent); margin-bottom:5px;"><i class="fas fa-comments"></i> Community Chat</h3>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Connect with other TaskPro users.</p>
+                        <div class="chat-layout" style="flex: 1;">
+                            <div class="chat-main">
+                                <div class="chat-messages" id="communityChatMsgs"></div>
+                                <div class="chat-input-area">
+                                    <input type="text" id="communityChatInput" class="main-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') app.sendCommunityMessage()">
+                                    <button class="btn btn-primary" onclick="app.sendCommunityMessage()"><i class="fas fa-paper-plane"></i></button>
+                                </div>
+                            </div>
+                            <div class="chat-sidebar-panel">
+                                <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">ONLINE USERS</div>
+                                <div id="communityChatParticipants"></div>
                             </div>
                         </div>
-                        <div class="chat-sidebar-panel">
-                            <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">ONLINE</div>
-                            <div id="chatParticipants"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="groupChat" style="display:none; flex-direction:column; height: 100%; margin-top: 30px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div>
+                        <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="app.leaveGroup()">← Back</button>
+                        <strong id="chatTitle" style="margin-left:10px; font-size:16px;">Group</strong>
+                    </div>
+                </div>
+                <div class="chat-layout">
+                    <div class="chat-main">
+                        <div class="chat-messages" id="chatMsgs"></div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chatInput" class="main-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') app.sendMessage()">
+                            <button class="btn btn-primary" onclick="app.sendMessage()"><i class="fas fa-paper-plane"></i></button>
                         </div>
+                    </div>
+                    <div class="chat-sidebar-panel">
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">ONLINE</div>
+                        <div id="chatParticipants"></div>
                     </div>
                 </div>
             </div>
@@ -637,17 +681,7 @@
             messagingSenderId: "629797690976",
             appId: "1:629797690976:web:fda66df1691eb920e12d05"
         };
-        // 1. Register the Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-                .then(() => console.log("Service Worker Registered"))
-                .catch(err => console.log("SW Registration Failed", err));
-        }
 
-        // 2. Request Notification Permission (For Alarms)
-        if ("Notification" in window && Notification.permission !== "granted") {
-            Notification.requestPermission();
-        }
         const appInit = initializeApp(firebaseConfig);
         const auth = getAuth(appInit);
         const db = getFirestore(appInit);
@@ -665,7 +699,8 @@
             weather: { temp: '--', condition: 'Unknown' },
             subStreakTask: localStorage.getItem('subStreakTask') || '',
             idleSeconds: parseInt(localStorage.getItem('localIdleSeconds')) || 0,
-            dailyGoal: parseInt(localStorage.getItem('dailyGoal')) || 3
+            dailyGoal: parseInt(localStorage.getItem('dailyGoal')) || 3,
+            habits: [] // Add habits to state
         };
 
         window.app = {
@@ -703,18 +738,60 @@
             },
 
             fetchWeather: () => {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(async (pos) => {
-                        try {
-                            const { latitude, longitude } = pos.coords;
-                            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
-                            const data = await res.json();
-                            const temp = Math.round(data.current_weather.temperature);
-                            document.getElementById('weatherDisplay').innerHTML = `<i class="fas fa-cloud-sun"></i> <span>${temp}${data.current_weather_units.temperature}</span>`;
-                        } catch (e) { console.error("Weather Error", e); }
-                    }, () => {
-                        document.getElementById('weatherDisplay').innerHTML = `<span>Loc. Denied</span>`;
+                // Try IP-based geolocation first (no permission prompt)
+                fetch('https://ipapi.co/json/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.latitude && data.longitude) {
+                            app.getWeatherData(data.latitude, data.longitude);
+                        } else {
+                            // Fallback to browser geolocation
+                            app.tryBrowserGeolocation();
+                        }
+                    })
+                    .catch(() => {
+                        // Fallback to browser geolocation
+                        app.tryBrowserGeolocation();
                     });
+            },
+            
+            tryBrowserGeolocation: () => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        async (pos) => {
+                            const { latitude, longitude } = pos.coords;
+                            app.getWeatherData(latitude, longitude);
+                        },
+                        () => {
+                            // Location denied, show default weather
+                            document.getElementById('weatherDisplay').innerHTML = `<i class="fas fa-cloud-sun"></i> <span>--°C</span>`;
+                        },
+                        { timeout: 5000, enableHighAccuracy: true }
+                    );
+                } else {
+                    document.getElementById('weatherDisplay').innerHTML = `<i class="fas fa-cloud-sun"></i> <span>--°C</span>`;
+                }
+            },
+            
+            getWeatherData: async (lat, lon) => {
+                try {
+                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+                    const data = await res.json();
+                    const temp = Math.round(data.current_weather.temperature);
+                    const condition = data.current_weather.weathercode;
+                    let weatherIcon = 'fa-cloud';
+                    
+                    // Simple weather icon mapping
+                    if(condition >= 0 && condition < 4) weatherIcon = 'fa-sun';
+                    else if(condition >= 4 && condition < 50) weatherIcon = 'fa-cloud-sun';
+                    else if(condition >= 50 && condition < 70) weatherIcon = 'fa-cloud-rain';
+                    else if(condition >= 70 && condition < 80) weatherIcon = 'fa-cloud-showers-heavy';
+                    else if(condition >= 80 && condition < 100) weatherIcon = 'fa-cloud-showers-heavy';
+                    
+                    document.getElementById('weatherDisplay').innerHTML = `<i class="fas ${weatherIcon}"></i> <span>${temp}${data.current_weather_units.temperature}</span>`;
+                } catch (e) { 
+                    console.error("Weather Error", e);
+                    document.getElementById('weatherDisplay').innerHTML = `<i class="fas fa-cloud"></i> <span>--°C</span>`;
                 }
             },
 
@@ -890,8 +967,84 @@
             setTaskFilter: (filter) => {
                 state.taskFilter = filter;
                 document.getElementById('filterActive').className = filter === 'active' ? 'btn btn-primary' : 'btn btn-secondary';
+                document.getElementById('filterOverdue').className = filter === 'overdue' ? 'btn btn-primary' : 'btn btn-secondary';
                 document.getElementById('filterCompleted').className = filter === 'completed' ? 'btn btn-primary' : 'btn btn-secondary';
                 renderTasks();
+            },
+            
+            detectHashtags: (text) => {
+                const hashtags = text.match(/#\w+/g) || [];
+                if(hashtags.length > 0) {
+                    const cleanHashtags = hashtags.map(h => h.replace('#', '').trim());
+                    
+                    // Get hashtags from completed tasks first, then all tasks
+                    const completedTags = [...new Set(state.tasks.filter(t => t.completed).flatMap(t => t.tags || []))];
+                    const allTags = [...new Set(state.tasks.flatMap(t => t.tags || []))];
+                    
+                    // Auto-complete matching hashtags - prioritize from completed tasks
+                    const autoCompleteTags = [];
+                    cleanHashtags.forEach(ch => {
+                        // First try to find exact match in completed tasks
+                        let exactMatch = completedTags.find(tag => tag.toLowerCase() === ch.toLowerCase());
+                        
+                        // If not found in completed, try all tasks
+                        if(!exactMatch) {
+                            exactMatch = allTags.find(tag => tag.toLowerCase() === ch.toLowerCase());
+                        }
+                        
+                        // Then try partial matches in completed tasks
+                        let partialMatch = completedTags.find(tag => tag.toLowerCase().startsWith(ch.toLowerCase()));
+                        
+                        // If not found in completed, try all tasks for partial
+                        if(!partialMatch) {
+                            partialMatch = allTags.find(tag => tag.toLowerCase().startsWith(ch.toLowerCase()));
+                        }
+                        
+                        if(exactMatch) {
+                            autoCompleteTags.push(exactMatch);
+                        } else if(partialMatch) {
+                            autoCompleteTags.push(partialMatch);
+                        } else {
+                            autoCompleteTags.push(ch);
+                        }
+                    });
+                    
+                    // Remove duplicates while preserving order
+                    const uniqueTags = [...new Set(autoCompleteTags)];
+                    document.getElementById('hashtagInput').value = uniqueTags.join(' ');
+                    
+                    // Show suggestions from completed tasks first, then all tasks
+                    const matchingCompletedTags = completedTags.filter(tag => 
+                        cleanHashtags.some(ch => tag.toLowerCase().includes(ch.toLowerCase()))
+                    );
+                    const matchingAllTags = allTags.filter(tag => 
+                        cleanHashtags.some(ch => tag.toLowerCase().includes(ch.toLowerCase()))
+                    );
+                    
+                    // Combine and deduplicate suggestions
+                    const allMatchingTags = [...new Set([...matchingCompletedTags, ...matchingAllTags])];
+                    
+                    if(allMatchingTags.length > 0) {
+                        const suggestionsEl = document.getElementById('hashtagSuggestions');
+                        suggestionsEl.innerHTML = allMatchingTags.map(tag => {
+                            const isFromCompleted = matchingCompletedTags.includes(tag);
+                            const priorityText = isFromCompleted ? ' ⭐' : '';
+                            return `<div style="padding: 5px; cursor: pointer; border-radius: 4px; ${isFromCompleted ? 'background: var(--bg-hover); font-weight: bold;' : ''}" onclick="app.selectHashtag('${tag}')" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
+                                #${tag}${priorityText}
+                            </div>`;
+                        }).join('');
+                        suggestionsEl.style.display = 'block';
+                    } else {
+                        document.getElementById('hashtagSuggestions').style.display = 'none';
+                    }
+                } else {
+                    document.getElementById('hashtagSuggestions').style.display = 'none';
+                }
+            },
+            
+            selectHashtag: (tag) => {
+                document.getElementById('hashtagInput').value = tag;
+                document.getElementById('hashtagSuggestions').style.display = 'none';
             },
 
             handleTaskSubmit: async () => {
@@ -902,8 +1055,13 @@
 
             addTask: async (title = null) => {
                 const input = document.getElementById('taskInput');
+                const descInput = document.getElementById('taskDescription');
+                const hashtagInput = document.getElementById('hashtagInput');
                 const text = title || input.value.trim();
                 if(!text) return;
+                
+                // Hide hashtag suggestions when adding task
+                document.getElementById('hashtagSuggestions').style.display = 'none';
 
                 if(!state.history.includes(text)) {
                     state.history.unshift(text);
@@ -912,12 +1070,19 @@
                     renderSuggestions();
                 }
 
+                // Parse hashtags from dedicated input
+                let tags = [];
+                if(hashtagInput.value.trim()) {
+                    tags = hashtagInput.value.trim().split(/[,\s]+/).map(t => t.replace('#', '').trim()).filter(t => t);
+                }
+
                 const newTask = {
                     text,
+                    description: descInput.value.trim(),
                     completed: false,
                     date: document.getElementById('dateInput').value,
                     priority: document.getElementById('prioInput').value,
-                    tags: (text.match(/#\w+/g) || []).map(t => t.replace('#','')),
+                    tags: tags,
                     subtasks: [],
                     createdAt: Date.now()
                 };
@@ -930,13 +1095,19 @@
                     app.saveLifetime(false);
                     renderTasks();
                 }
-                if(!title) input.value = '';
+                if(!title) {
+                    input.value = '';
+                    descInput.value = '';
+                    hashtagInput.value = '';
+                }
             },
 
             startEdit: (id) => {
                 const task = state.tasks.find(t => t.id === id);
                 if(!task) return;
                 document.getElementById('taskInput').value = task.text;
+                document.getElementById('taskDescription').value = task.description || '';
+                document.getElementById('hashtagInput').value = (task.tags || []).map(t => '#' + t).join(' ');
                 document.getElementById('dateInput').value = task.date;
                 document.getElementById('prioInput').value = task.priority;
                 document.getElementById('editTaskId').value = task.id;
@@ -948,18 +1119,29 @@
 
             updateTask: async (id) => {
                 const text = document.getElementById('taskInput').value;
+                const description = document.getElementById('taskDescription').value.trim();
                 const date = document.getElementById('dateInput').value;
                 const priority = document.getElementById('prioInput').value;
-                const tags = (text.match(/#\w+/g) || []).map(t => t.replace('#',''));
+                
+                // Parse hashtags from dedicated input
+                let tags = [];
+                const hashtagInput = document.getElementById('hashtagInput').value;
+                if(hashtagInput.trim()) {
+                    tags = hashtagInput.trim().split(/[,\s]+/).map(t => t.replace('#', '').trim()).filter(t => t);
+                }
                 
                 const oldTask = state.tasks.find(t => t.id === id);
                 const subtasks = oldTask ? (oldTask.subtasks || []) : [];
 
                 if(state.user) {
-                    await updateDoc(doc(db, 'tasks', id), { text, date, priority, tags, subtasks });
+                    await updateDoc(doc(db, 'tasks', id), { text, description, date, priority, tags, subtasks });
                 } else {
                     const idx = state.tasks.findIndex(t => t.id === id);
-                    if(idx !== -1) { state.tasks[idx] = { ...state.tasks[idx], text, date, priority, tags }; app.saveLifetime(false); renderTasks(); }
+                    if(idx !== -1) { 
+                        state.tasks[idx] = { ...state.tasks[idx], text, description, date, priority, tags }; 
+                        app.saveLifetime(false); 
+                        renderTasks(); 
+                    }
                 }
                 app.cancelEdit();
                 if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
@@ -967,6 +1149,8 @@
 
             cancelEdit: () => {
                 document.getElementById('taskInput').value = '';
+                document.getElementById('taskDescription').value = '';
+                document.getElementById('hashtagInput').value = '';
                 document.getElementById('editTaskId').value = '';
                 const btn = document.getElementById('addUpdateBtn');
                 btn.innerHTML = '<i class="fas fa-plus"></i> Add';
@@ -995,11 +1179,37 @@
                 const input = document.getElementById(`sub-input-${parentId}`);
                 if(!input.value.trim()) return;
                 const task = state.tasks.find(t => t.id === parentId);
-                const newSub = { id: Date.now(), text: input.value.trim(), completed: false };
+                const newSub = { 
+                    id: Date.now(), 
+                    text: input.value.trim(), 
+                    description: '',
+                    completed: false 
+                };
                 const subtasks = [...(task.subtasks||[]), newSub];
                 if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
                 else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
                 
+                if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
+            },
+            
+            addSubtaskWithDesc: async (parentId) => {
+                const input = document.getElementById(`sub-input-${parentId}`);
+                const text = input.value.trim();
+                if(!text) return;
+                
+                const description = prompt('Enter subtask description (optional):');
+                const task = state.tasks.find(t => t.id === parentId);
+                const newSub = { 
+                    id: Date.now(), 
+                    text: text, 
+                    description: description || '',
+                    completed: false 
+                };
+                const subtasks = [...(task.subtasks||[]), newSub];
+                if(state.user) await updateDoc(doc(db, 'tasks', parentId), { subtasks });
+                else { task.subtasks = subtasks; app.saveLifetime(false); renderTasks(); }
+                
+                input.value = '';
                 if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
             },
             
@@ -1157,9 +1367,394 @@
                     if (snapshot.empty) html += `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">No players yet.</td></tr>`;
                     html += `</tbody>`;
                     boardTable.innerHTML = html;
+                    
+                    // Show chat section for signed-in users
+                    if(state.user) {
+                        document.getElementById('chatSection').style.display = 'block';
+                        app.loadCommunityChat();
+                    }
                 } catch (e) {
                     console.error(e);
                     boardTable.innerHTML = `<tr><td colspan="3" style="color:var(--danger); text-align:center;">Could not load leaderboard.<br>Sign in required.</td></tr>`;
+                }
+            },
+            
+            loadCommunityChat: async () => {
+                if(!state.user) return;
+                
+                const msgsEl = document.getElementById('communityChatMsgs');
+                msgsEl.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">Loading chat...</div>';
+                
+                try {
+                    const q = query(collection(db, 'community_chat'), orderBy('timestamp', 'desc'), limit(50));
+                    const snapshot = await getDocs(q);
+                    
+                    const messages = snapshot.docs.map(d => ({id: d.id, ...d.data()})).reverse();
+                    
+                    // Get user status from Firebase user_status collection (like leaderboard)
+                    const userStatuses = await app.fetchUserStatuses();
+                    
+                    if(messages.length === 0) {
+                        msgsEl.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">No messages yet. Start the conversation!</div>';
+                    } else {
+                        msgsEl.innerHTML = messages.map(msg => {
+                            const isMe = msg.uid === state.user.uid;
+                            const time = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                            
+                            // Get user status from Firebase user_status collection
+                            const userStatus = userStatuses[msg.uid] || app.getUserStatus(msg.lastSeen || msg.timestamp);
+                            const statusDot = `<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; background: ${userStatus.color};" title="${userStatus.text}"></span>`;
+                            
+                            return `<div class="chat-msg ${isMe ? 'me' : 'them'}">
+                                <div style="font-size:10px; opacity:0.7; margin-bottom:4px;">${statusDot}${msg.username} • ${time}</div>
+                                <div>${msg.text}</div>
+                            </div>`;
+                        }).join('');
+                        msgsEl.scrollTop = msgsEl.scrollHeight;
+                    }
+                    
+                    // Update online users with real status from Firebase
+                    const participantsEl = document.getElementById('communityChatParticipants');
+                    const uniqueUserIds = [...new Set(snapshot.docs.map(d => d.data().uid))];
+                    
+                    // Fetch user status for each unique user
+                    const participantStatuses = {};
+                    for(const uid of uniqueUserIds) {
+                        participantStatuses[uid] = userStatuses[uid] || app.getUserStatus();
+                    }
+                    
+                    participantsEl.innerHTML = uniqueUserIds.map(uid => {
+                        const userMsg = snapshot.docs.find(d => d.data().uid === uid)?.data();
+                        const username = userMsg ? userMsg.username : 'Unknown';
+                        const userStatus = participantStatuses[uid];
+                        return `<div style="display: flex; align-items: center; padding: 5px; margin-bottom: 5px; border-radius: 4px;">
+                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: ${userStatus.color};" title="${userStatus.text}"></span>
+                            <span style="font-size: 12px; color: var(--text-muted);">${username}</span>
+                        </div>`;
+                    }).join('');
+                    
+                } catch(e) {
+                    console.error('Chat load error:', e);
+                    msgsEl.innerHTML = '<div style="text-align:center; color:var(--danger); padding:20px;">Could not load chat.</div>';
+                }
+            },
+            
+            fetchUserStatuses: async () => {
+                try {
+                    // Fetch from user_status collection like leaderboard
+                    const q = query(collection(db, 'user_status'), limit(100));
+                    const snapshot = await getDocs(q);
+                    const statuses = {};
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        statuses[data.uid] = app.getUserStatus(data.lastSeen);
+                    });
+                    return statuses;
+                } catch(e) {
+                    console.error('User status fetch error:', e);
+                    return {};
+                }
+            },
+            
+            updateUserStatus: async () => {
+                if(!state.user) return;
+                
+                try {
+                    const statusRef = doc(db, 'user_status', state.user.uid);
+                    await setDoc(statusRef, {
+                        uid: state.user.uid,
+                        username: state.user.email.split('@')[0],
+                        lastSeen: Date.now(),
+                        isOnline: true
+                    }, { merge: true });
+                } catch(e) {
+                    console.error('Status update error:', e);
+                }
+            },
+            
+            getUserStatus: (lastSeen) => {
+                if(!lastSeen) return { color: 'var(--warning)', text: 'Away' };
+                
+                const now = Date.now();
+                const timeDiff = now - lastSeen;
+                
+                if(timeDiff < 5 * 60 * 1000) { // Less than 5 minutes
+                    return { color: 'var(--success)', text: 'Online' };
+                } else if(timeDiff < 15 * 60 * 1000) { // Less than 15 minutes
+                    return { color: 'var(--warning)', text: 'Idle' };
+                } else {
+                    return { color: 'var(--text-muted)', text: 'Away' };
+                }
+            },
+            
+            // Habit Management Functions
+            showAddHabitModal: () => {
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;';
+                modal.innerHTML = `
+                    <div style="background:var(--bg-card);padding:30px;border-radius:12px;max-width:400px;width:90%;">
+                        <h3 style="color:var(--text-main);margin-bottom:20px;">Add New Habit</h3>
+                        <input type="text" id="habitTitle" class="main-input" placeholder="Habit name..." style="width:100%;margin-bottom:15px;padding:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text-main);">
+                        <textarea id="habitDescription" class="main-input" placeholder="Description (optional)..." rows="3" style="width:100%;margin-bottom:15px;padding:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text-main);resize:vertical;"></textarea>
+                        <select id="habitChallenge" style="width:100%;margin-bottom:15px;padding:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text-main);">
+                            <option value="7">7 Day Challenge</option>
+                            <option value="21">21 Day Challenge</option>
+                            <option value="custom">Custom Days</option>
+                        </select>
+                        <input type="number" id="habitCustomDays" placeholder="Custom days" min="1" style="width:100%;margin-bottom:20px;padding:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text-main);display:none;">
+                        <div style="display:flex;gap:10px;">
+                            <button class="btn btn-primary" onclick="app.addHabit()">Add Habit</button>
+                            <button class="btn btn-secondary" onclick="this.closest('[style*=position]').remove()">Cancel</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+                // Show custom days input when custom is selected
+                document.getElementById('habitChallenge').onchange = function() {
+                    document.getElementById('habitCustomDays').style.display = this.value === 'custom' ? 'block' : 'none';
+                };
+            },
+            
+            addHabit: async () => {
+                const title = document.getElementById('habitTitle').value.trim();
+                const description = document.getElementById('habitDescription').value.trim();
+                const challengeType = document.getElementById('habitChallenge').value;
+                const customDays = challengeType === 'custom' ? parseInt(document.getElementById('habitCustomDays').value) : parseInt(challengeType);
+                const targetDays = customDays || 7;
+                
+                if(!title) {
+                    alert('Please enter a habit name');
+                    return;
+                }
+                
+                const newHabit = {
+                    title,
+                    description,
+                    targetDays,
+                    currentStreak: 0,
+                    completedDates: [],
+                    createdAt: Date.now(),
+                    lastCompleted: null,
+                    isActive: true
+                };
+                
+                if(state.user) {
+                    await addDoc(collection(db, 'habits'), { ...newHabit, uid: state.user.uid });
+                } else {
+                    newHabit.id = 'local_' + Date.now();
+                    state.habits = state.habits || [];
+                    state.habits.push(newHabit);
+                    localStorage.setItem('habits', JSON.stringify(state.habits));
+                    app.renderHabits();
+                }
+                
+                document.querySelector('[style*=position]').remove();
+            },
+            
+            toggleHabitCompletion: async (habitId) => {
+                const habit = state.habits.find(h => h.id === habitId);
+                if(!habit) return;
+                
+                const today = new Date().toISOString().split('T')[0];
+                const isCompletedToday = habit.completedDates.includes(today);
+                
+                if(isCompletedToday) {
+                    // Uncomplete for today
+                    habit.completedDates = habit.completedDates.filter(date => date !== today);
+                    habit.currentStreak = Math.max(0, habit.currentStreak - 1);
+                } else {
+                    // Complete for today
+                    habit.completedDates.push(today);
+                    habit.currentStreak += 1;
+                    habit.lastCompleted = today;
+                }
+                
+                if(state.user) {
+                    await updateDoc(doc(db, 'habits', habitId), {
+                        completedDates: habit.completedDates,
+                        currentStreak: habit.currentStreak,
+                        lastCompleted: habit.lastCompleted
+                    });
+                } else {
+                    localStorage.setItem('habits', JSON.stringify(state.habits));
+                    app.renderHabits();
+                }
+            },
+            
+            deleteHabit: async (habitId) => {
+                if(!confirm('Permanently delete this habit?')) return;
+                
+                if(state.user) {
+                    await deleteDoc(doc(db, 'habits', habitId));
+                } else {
+                    state.habits = state.habits.filter(h => h.id !== habitId);
+                    localStorage.setItem('habits', JSON.stringify(state.habits));
+                    app.renderHabits();
+                }
+            },
+            
+            editHabit: (habitId) => {
+                const habit = state.habits.find(h => h.id === habitId);
+                if(!habit) return;
+                
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;';
+                modal.innerHTML = `
+                    <div style="background:var(--bg-card);padding:30px;border-radius:12px;max-width:400px;width:90%;">
+                        <h3 style="color:var(--text-main);margin-bottom:20px;">Edit Habit</h3>
+                        <input type="text" id="habitTitle" class="main-input" value="${habit.title}" style="width:100%;margin-bottom:15px;padding:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text-main);">
+                        <textarea id="habitDescription" class="main-input" rows="3" style="width:100%;margin-bottom:15px;padding:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text-main);resize:vertical;">${habit.description || ''}</textarea>
+                        <div style="display:flex;gap:10px;">
+                            <button class="btn btn-primary" onclick="app.updateHabit('${habitId}')">Update</button>
+                            <button class="btn btn-secondary" onclick="this.closest('[style*=position]').remove()">Cancel</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            },
+            
+            updateHabit: async (habitId) => {
+                const habit = state.habits.find(h => h.id === habitId);
+                if(!habit) return;
+                
+                const title = document.getElementById('habitTitle').value.trim();
+                const description = document.getElementById('habitDescription').value.trim();
+                
+                if(!title) {
+                    alert('Please enter a habit name');
+                    return;
+                }
+                
+                habit.title = title;
+                habit.description = description;
+                
+                if(state.user) {
+                    await updateDoc(doc(db, 'habits', habitId), { title, description });
+                } else {
+                    localStorage.setItem('habits', JSON.stringify(state.habits));
+                    app.renderHabits();
+                }
+                
+                document.querySelector('[style*=position]').remove();
+            },
+            
+            deleteFocusLog: async (logId) => {
+                if(!confirm('Delete this focus session?')) return;
+                
+                if(state.user) {
+                    // Find and delete from Firebase
+                    const q = query(collection(db, 'focus_sessions'), where('uid', '==', state.user.uid), where('timestamp', '==', parseInt(logId)));
+                    const snapshot = await getDocs(q);
+                    snapshot.forEach(async (doc) => {
+                        await deleteDoc(doc.ref);
+                    });
+                } else {
+                    // Delete from local state
+                    state.focusLogs = state.focusLogs.filter(log => log.timestamp !== parseInt(logId));
+                    localStorage.setItem('focusLogs', JSON.stringify(state.focusLogs));
+                    app.renderDashboardCharts();
+                }
+            },
+            
+            resetAllFocusLogs: async () => {
+                if(!confirm('Delete ALL focus sessions? This cannot be undone.')) return;
+                
+                if(state.user) {
+                    // Delete all user's focus sessions from Firebase
+                    const q = query(collection(db, 'focus_sessions'), where('uid', '==', state.user.uid));
+                    const snapshot = await getDocs(q);
+                    const batch = writeBatch(db);
+                    snapshot.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                } else {
+                    // Clear local focus logs
+                    state.focusLogs = [];
+                    localStorage.setItem('focusLogs', JSON.stringify(state.focusLogs));
+                    app.renderDashboardCharts();
+                }
+            },
+            
+            renderHabits: () => {
+                const list = document.getElementById('habitsList');
+                list.innerHTML = '';
+                
+                const habits = state.habits || [];
+                
+                if(habits.length === 0) {
+                    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);margin-top:40px;">No habits yet. Start building better habits today!</div>';
+                    return;
+                }
+                
+                habits.forEach(habit => {
+                    const today = new Date().toISOString().split('T')[0];
+                    const isCompletedToday = habit.completedDates.includes(today);
+                    const progress = (habit.currentStreak / habit.targetDays) * 100;
+                    const isCompleted = habit.currentStreak >= habit.targetDays;
+                    
+                    const habitCard = document.createElement('div');
+                    habitCard.className = 'task-card';
+                    habitCard.style.cssText = `border-left: 4px solid ${isCompleted ? 'var(--success)' : 'var(--accent)'}`;
+                    
+                    habitCard.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <input type="checkbox" ${isCompletedToday ? 'checked' : ''} onchange="app.toggleHabitCompletion('${habit.id}')" style="width:24px;height:24px;">
+                            <div style="flex:1;">
+                                <div style="font-weight:600; color:var(--text-main); margin-bottom:5px;">
+                                    ${habit.title} ${isCompleted ? '<i class="fas fa-trophy" style="color:var(--success); margin-left:10px;"></i>' : ''}
+                                </div>
+                                ${habit.description ? `<div style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">${habit.description}</div>` : ''}
+                                <div style="display:flex; align-items:center; gap:15px;">
+                                    <div style="font-size:12px; color:var(--text-muted);">
+                                        <i class="fas fa-fire" style="color:var(--streak-fire);"></i> ${habit.currentStreak}/${habit.targetDays} days
+                                    </div>
+                                    <div style="font-size:12px; color:var(--text-muted);">
+                                        ${Math.round(progress)}% complete
+                                    </div>
+                                </div>
+                                <div style="width:100%; height:6px; background:var(--bg-input); border-radius:3px; margin-top:8px; overflow:hidden;">
+                                    <div style="width:${progress}%; height:100%; background:${isCompleted ? 'var(--success)' : 'var(--accent)'}; transition:width 0.3s;"></div>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:5px;">
+                                <button class="btn btn-icon" onclick="app.editHabit('${habit.id}')"><i class="fas fa-pencil"></i></button>
+                                <button class="btn btn-icon btn-danger" onclick="app.deleteHabit('${habit.id}')"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    list.appendChild(habitCard);
+                });
+            },
+            
+            sendCommunityMessage: async () => {
+                if(!state.user) {
+                    alert('Please sign in to send messages.');
+                    return;
+                }
+                
+                const input = document.getElementById('communityChatInput');
+                const text = input.value.trim();
+                if(!text) return;
+                
+                try {
+                    // Update user status when sending message
+                    await app.updateUserStatus();
+                    
+                    await addDoc(collection(db, 'community_chat'), {
+                        uid: state.user.uid,
+                        username: state.user.email.split('@')[0],
+                        text: text,
+                        timestamp: Date.now(),
+                        lastSeen: Date.now()
+                    });
+                    input.value = '';
+                    app.loadCommunityChat();
+                } catch(e) {
+                    console.error('Send message error:', e);
+                    alert('Could not send message.');
                 }
             },
 
@@ -1191,6 +1786,13 @@
                 if(!filterName) {
                     const todayStr = getIsoDate(today);
                     const tasksToday = state.tasks.filter(t => t.date === todayStr);
+                    
+                    // Check if all high-priority tasks are completed for streak to continue
+                    const highPriorityTasksToday = tasksToday.filter(t => t.priority === 'high');
+                    if (highPriorityTasksToday.length > 0 && !highPriorityTasksToday.every(t => t.completed)) {
+                        return streak; // No streak if high-priority tasks exist but aren't all completed
+                    }
+                    
                     if (tasksToday.length > 0 && tasksToday.every(t => t.completed)) streak++;
                     
                     let checkDate = new Date(today);
@@ -1199,6 +1801,13 @@
                         const dateStr = getIsoDate(checkDate);
                         const tasksOnDate = state.tasks.filter(t => t.date === dateStr);
                         if (tasksOnDate.length === 0) break;
+                        
+                        // Check high-priority tasks for historical dates
+                        const highPriorityTasksOnDate = tasksOnDate.filter(t => t.priority === 'high');
+                        if (highPriorityTasksOnDate.length > 0 && !highPriorityTasksOnDate.every(t => t.completed)) {
+                            break; // Break streak if high-priority tasks existed but weren't completed
+                        }
+                        
                         if (tasksOnDate.every(t => t.completed)) {
                             streak++;
                             checkDate.setDate(checkDate.getDate() - 1);
@@ -1503,12 +2112,63 @@
                 const ctx2 = document.getElementById('tagChart').getContext('2d');
                 if(state.charts.tags) state.charts.tags.destroy();
                 const tagCounts = {};
-                filtered.forEach(t => (t.tags||[]).forEach(tag => tagCounts[tag] = (tagCounts[tag]||0)+1));
+                // Show hashtags from completed tasks only
+                filtered.filter(t => t.completed).forEach(t => (t.tags||[]).forEach(tag => tagCounts[tag] = (tagCounts[tag]||0)+1));
                 state.charts.tags = new Chart(ctx2, {
                     type: 'doughnut',
                     data: { labels: Object.keys(tagCounts), datasets: [{ data: Object.values(tagCounts), backgroundColor: ['#208084', '#10b981', '#f59e0b', '#ef4444', '#6366f1'] }] },
                     options: { maintainAspectRatio: false }
                 });
+                
+                // Render Focus Timeline with delete/reset options
+                const timelineEl = document.getElementById('focusTimeline');
+                const sortedLogs = logs
+                    .filter(log => log.duration > 0)
+                    .sort((a, b) => b.timestamp - a.timestamp)
+                    .slice(0, 10);
+                
+                if (sortedLogs.length === 0) {
+                    timelineEl.innerHTML = `<div style="font-size:12px; color:var(--text-muted); font-style:italic;">No focus sessions yet.</div>`;
+                } else {
+                    timelineEl.innerHTML = sortedLogs.map(log => {
+                        const date = new Date(log.timestamp);
+                        const dateStr = date.toLocaleDateString();
+                        const timeStr = date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                        const mins = Math.round(log.duration / 60);
+                        const hrs = Math.floor(mins / 60);
+                        const remainingMins = mins % 60;
+                        const timeDisplay = hrs > 0 ? `${hrs}h ${remainingMins}m` : `${mins}m`;
+                        
+                        let taskName = log.taskTitle || 'General Focus';
+                        if(log.taskId) {
+                            const currentTask = state.tasks.find(t => t.id === log.taskId);
+                            if(currentTask) taskName = currentTask.text;
+                        }
+                        
+                        const logId = log.id || log.timestamp;
+                        
+                        return `
+                        <div class="focus-task-row" style="display:flex; justify-content:space-between; align-items:center; padding:8px; margin-bottom:5px; background:var(--bg-body); border-radius:4px;">
+                            <div style="flex:1;">
+                                <span class="focus-task-name">${taskName.length > 20 ? taskName.substring(0,20)+'...' : taskName}</span>
+                                <span class="focus-task-time" style="margin-left:10px; color:var(--accent);">${timeDisplay}</span>
+                                <span style="font-size:10px; color:var(--text-muted); margin-left:10px;">${dateStr} ${timeStr}</span>
+                            </div>
+                            <button class="btn btn-icon btn-danger" style="width:24px;height:24px;padding:0;font-size:10px;" onclick="app.deleteFocusLog('${logId}')" title="Delete session">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>`;
+                    }).join('');
+                    
+                    // Add reset all button
+                    timelineEl.innerHTML += `
+                        <div style="margin-top:15px; padding-top:10px; border-top:1px solid var(--border);">
+                            <button class="btn btn-danger" style="width:100%;" onclick="app.resetAllFocusLogs()">
+                                <i class="fas fa-trash"></i> Reset All Focus Sessions
+                            </button>
+                        </div>
+                    `;
+                }
             },
 
             focusOnTask: (id) => { app.switchTab('focus'); document.getElementById('focusTaskSelect').value = id; },
@@ -2007,6 +2667,26 @@
                     app.renderDashboardCharts();
                 });
                 
+                // Habits Sync
+                const qHabits = query(collection(db, 'habits'), where('uid', '==', user.uid));
+                onSnapshot(qHabits, (snap) => {
+                    state.habits = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    localStorage.setItem('habits', JSON.stringify(state.habits));
+                    if(document.getElementById('habits').classList.contains('active')) app.renderHabits();
+                });
+                
+                // Update user status periodically
+                setInterval(() => app.updateUserStatus(), 30000); // Every 30 seconds
+                app.updateUserStatus(); // Initial update
+                
+                // Community Chat Sync
+                const qChat = query(collection(db, 'community_chat'), orderBy('timestamp', 'desc'), limit(50));
+                onSnapshot(qChat, (snap) => {
+                    if(document.getElementById('community').classList.contains('active') && state.user) {
+                        app.loadCommunityChat();
+                    }
+                });
+                
                 onSnapshot(doc(db, 'timers', user.uid), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
@@ -2057,14 +2737,131 @@
             const list = document.getElementById('taskList');
             list.innerHTML = "";
             const filter = state.taskFilter; 
-            const visibleTasks = state.tasks.filter(t => filter === 'completed' ? t.completed : !t.completed);
+            let visibleTasks = [];
+            
+            if(filter === 'completed') {
+                visibleTasks = state.tasks.filter(t => t.completed);
+            } else if(filter === 'overdue') {
+                const today = new Date().toISOString().split('T')[0];
+                visibleTasks = state.tasks.filter(t => !t.completed && t.date < today);
+            } else { // active
+                const today = new Date().toISOString().split('T')[0];
+                visibleTasks = state.tasks.filter(t => !t.completed && t.date >= today);
+            }
+            
+            // Group tasks by date
+            const tasksByDate = {};
             visibleTasks.forEach(task => {
-                const subsHtml = (task.subtasks||[]).map(s => `<div class="subtask-row"><input type="checkbox" ${s.completed ? 'checked' : ''} onchange="app.toggleSubtask('${task.id}', '${s.id}')"><span style="text-decoration:${s.completed?'line-through':'none'}; opacity:${s.completed?0.5:1}; flex:1; color:var(--text-muted);">${s.text}</span><button class="btn btn-icon btn-danger" style="width:20px;height:20px;padding:0;font-size:10px;" onclick="app.deleteSubtask('${task.id}', '${s.id}')"><i class="fas fa-times"></i></button></div>`).join('');
-                const tagsHtml = (task.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
-                const html = `<div class="task-card priority-${task.priority}"><div class="task-header"><input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''} onchange="app.toggleTask('${task.id}')"><div class="task-content"><div class="task-title" style="text-decoration: ${task.completed ? 'line-through' : 'none'}">${task.text.replace(/#\w+/g,'')} ${tagsHtml}</div><div class="task-meta"><i class="far fa-calendar"></i> ${task.date} • ${task.priority.toUpperCase()}</div></div><div style="display:flex;gap:5px;"><button class="btn btn-icon" onclick="app.focusOnTask('${task.id}')"><i class="fas fa-stopwatch"></i></button><button class="btn btn-icon" onclick="app.startEdit('${task.id}')"><i class="fas fa-pencil"></i></button><button class="btn btn-icon btn-danger" onclick="app.deleteTask('${task.id}')"><i class="fas fa-trash"></i></button></div></div><div class="subtasks">${subsHtml}<div class="subtask-row"><input id="sub-input-${task.id}" placeholder="+ Subtask" style="background:transparent;border:none;color:var(--text-muted);width:100%;outline:none;font-size:13px;" onkeydown="if(event.key==='Enter') app.addSubtask('${task.id}')"></div></div></div>`;
-                list.insertAdjacentHTML('beforeend', html);
+                if(!tasksByDate[task.date]) {
+                    tasksByDate[task.date] = [];
+                }
+                tasksByDate[task.date].push(task);
             });
-            if(visibleTasks.length === 0) list.innerHTML = `<div style="text-align:center;color:var(--text-muted);margin-top:20px;">No ${filter} tasks found.</div>`;
+            
+            // Sort dates in descending order
+            const sortedDates = Object.keys(tasksByDate).sort((a, b) => new Date(b) - new Date(a));
+            
+            sortedDates.forEach(date => {
+                const dateObj = new Date(date);
+                const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                const isToday = date === new Date().toISOString().split('T')[0];
+                const isOverdue = new Date(date) < new Date() && !isToday;
+                const dateId = 'date-' + date.replace(/[^a-zA-Z0-9]/g, '-');
+                const isCollapsed = localStorage.getItem('collapsed-' + dateId) === 'true';
+                
+                // Add date header with expand/collapse
+                const dateHeader = document.createElement('div');
+                let borderColor = 'var(--accent)';
+                if(filter === 'overdue') borderColor = 'var(--danger)';
+                else if(isOverdue) borderColor = 'var(--warning)';
+                
+                dateHeader.style.cssText = `margin: 20px 0 10px 0; padding: 10px; background: var(--bg-card); border-radius: 8px; border-left: 4px solid ${borderColor}; cursor: pointer;`;
+                dateHeader.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight: 600; color: var(--text-main); font-size: 14px;">
+                                ${isToday ? '(Today)' : ''} ${isOverdue ? '(Overdue)' : ''} ${dateStr}
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                                ${tasksByDate[date].length} task${tasksByDate[date].length !== 1 ? 's' : ''}
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-${isCollapsed ? 'right' : 'down'}" style="color: var(--text-muted); transition: transform 0.2s;"></i>
+                    </div>
+                `;
+                
+                dateHeader.onclick = () => {
+                    const content = document.getElementById('content-' + dateId);
+                    const icon = dateHeader.querySelector('i');
+                    
+                    if(isCollapsed) {
+                        content.style.display = 'block';
+                        icon.className = 'fas fa-chevron-down';
+                        localStorage.removeItem('collapsed-' + dateId);
+                    } else {
+                        content.style.display = 'none';
+                        icon.className = 'fas fa-chevron-right';
+                        localStorage.setItem('collapsed-' + dateId, 'true');
+                    }
+                };
+                
+                list.appendChild(dateHeader);
+                
+                // Add tasks for this date in collapsible container
+                const contentContainer = document.createElement('div');
+                contentContainer.id = 'content-' + dateId;
+                contentContainer.style.display = isCollapsed ? 'none' : 'block';
+                
+                tasksByDate[date].forEach(task => {
+                    const subsHtml = (task.subtasks||[]).map(s => {
+                        const descHtml = s.description ? `<div style="font-size:11px; color:var(--text-muted); margin-left:20px; font-style:italic;">${s.description}</div>` : '';
+                        return `<div class="subtask-row">
+                            <input type="checkbox" ${s.completed ? 'checked' : ''} onchange="app.toggleSubtask('${task.id}', '${s.id}')">
+                            <span style="text-decoration:${s.completed?'line-through':'none'}; opacity:${s.completed?0.5:1}; flex:1; color:var(--text-muted);">${s.text}</span>
+                            ${descHtml}
+                            <button class="btn btn-icon btn-danger" style="width:20px;height:20px;padding:0;font-size:10px;" onclick="app.deleteSubtask('${task.id}', '${s.id}')"><i class="fas fa-times"></i></button>
+                        </div>`;
+                    }).join('');
+                    
+                    const tagsHtml = (task.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
+                    const descHtml = task.description ? `<div style="font-size:12px; color:var(--text-muted); margin:5px 0; padding:8px; background:var(--bg-body); border-radius:6px; border-left:3px solid var(--accent);">${task.description}</div>` : '';
+                    
+                    const html = `<div class="task-card priority-${task.priority}">
+                        <div class="task-header">
+                            <input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''} onchange="app.toggleTask('${task.id}')">
+                            <div class="task-content">
+                                <div class="task-title" style="text-decoration: ${task.completed ? 'line-through' : 'none'}">${task.text} ${tagsHtml}</div>
+                                ${descHtml}
+                                <div class="task-meta"><i class="far fa-calendar"></i> ${task.date} • ${task.priority.toUpperCase()}</div>
+                            </div>
+                            <div style="display:flex;gap:5px;">
+                                <button class="btn btn-icon" onclick="app.focusOnTask('${task.id}')"><i class="fas fa-stopwatch"></i></button>
+                                <button class="btn btn-icon" onclick="app.startEdit('${task.id}')"><i class="fas fa-pencil"></i></button>
+                                <button class="btn btn-icon btn-danger" onclick="app.deleteTask('${task.id}')"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="subtasks">
+                            <h5 style="color: var(--text-muted); font-size: 12px; margin-bottom: 8px; text-transform: uppercase;">Subtasks</h5>
+                            ${subsHtml}
+                            <div class="subtask-row">
+                                <input id="sub-input-${task.id}" placeholder="+ Subtask" style="background:transparent;border:none;color:var(--text-muted);width:100%;outline:none;font-size:13px;" onkeydown="if(event.key==='Enter') app.addSubtask('${task.id}')">
+                                <button class="btn btn-icon" style="padding: 4px 8px; font-size: 11px;" onclick="app.addSubtaskWithDesc('${task.id}')" title="Add with description">+Desc</button>
+                            </div>
+                        </div>
+                    </div>`;
+                    contentContainer.insertAdjacentHTML('beforeend', html);
+                });
+                
+                list.appendChild(contentContainer);
+            });
+            
+            if(visibleTasks.length === 0) {
+                let emptyMessage = `No ${filter} tasks found.`;
+                if(filter === 'overdue') emptyMessage = 'No overdue tasks. Great job staying on track!';
+                if(filter === 'active') emptyMessage = 'No active tasks for today or future dates.';
+                if(filter === 'completed') emptyMessage = 'No completed tasks yet.';
+                list.innerHTML = `<div style="text-align:center;color:var(--text-muted);margin-top:20px;">${emptyMessage}</div>`;
+            }
         }
 
         function renderCalendar() {
@@ -2093,14 +2890,5 @@
         app.init();
         renderSuggestions();
     </script>
-    <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('Service Worker registered!', reg))
-        .catch(err => console.log('Registration failed!', err));
-    });
-  }
-</script> 
 </body>
 </html>
