@@ -707,10 +707,6 @@
             .cal-cell { min-height: 50px; }
             .cal-task-dot { display: none; }
             .cal-mobile-list { display: block; }
-            .chat-layout { height: 100%; flex-direction: column; }
-            .chat-sidebar-panel { width: 100%; height: 120px; border-bottom: 1px solid var(--border); display: block; }
-            .community-grid { grid-template-columns: 1fr; gap: 20px; height: auto; }
-            .leaderboard-section, .chat-section { min-height: 400px; }
         }
         
         .chat-msg { 
@@ -831,6 +827,11 @@
             flex-direction: column;
         }
         
+        .chat-section {
+            display: flex;
+            flex-direction: column;
+        }
+        
         @media (max-width: 1023px) {
             .community-grid {
                 grid-template-columns: 1fr;
@@ -839,6 +840,16 @@
             }
             .leaderboard-section, .chat-section {
                 min-height: 400px;
+            }
+            .chat-layout {
+                height: 100%;
+                flex-direction: column;
+            }
+            .chat-sidebar-panel {
+                width: 100%;
+                height: 120px;
+                border-bottom: 1px solid var(--border);
+                display: block;
             }
         }
         
