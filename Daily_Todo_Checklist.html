@@ -804,14 +804,14 @@
         /* Community Layout */
         .community-grid {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: 2fr 1fr;
             gap: 20px;
             height: auto;
         }
         
         @media (min-width: 1024px) {
             .community-grid {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 2fr 1fr;
                 gap: 30px;
                 height: 600px;
             }
@@ -1117,6 +1117,28 @@
                     <option value="high">High</option>
                     <option value="low">Low</option>
                 </select>
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span style="font-size:12px; color:var(--text-muted);">Repeat:</span>
+                    <input type="number" id="repeatInterval" class="select-input" style="width:60px;" min="1" max="999" value="1" placeholder="1">
+                    <select id="repeatUnit" class="select-input" style="width: auto;">
+                        <option value="">No Repeat</option>
+                        <option value="day">Day(s)</option>
+                        <option value="week">Week(s)</option>
+                        <option value="month">Month(s)</option>
+                        <option value="year">Year(s)</option>
+                        <option value="weekday">Weekday(s)</option>
+                    </select>
+                    <select id="weekdaySelect" class="select-input" style="width: auto; display:none;">
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                        <option value="0">Sunday</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="app.removeRepeat()" style="padding:4px 8px; font-size:11px;">Remove</button>
+                </div>
                 <button class="btn btn-primary" id="addUpdateBtn" onclick="app.handleTaskSubmit()"><i class="fas fa-plus"></i> Add</button>
                 <button class="btn btn-secondary" id="cancelEditBtn" style="display:none;" onclick="app.cancelEdit()">Cancel</button>
             </div>
@@ -1125,8 +1147,8 @@
             </div>
             <div style="margin-bottom:15px; display:flex; gap:10px;">
                 <button class="btn btn-secondary" onclick="app.setTaskFilter('active')" id="filterActive">Active</button>
-                <button class="btn btn-secondary" onclick="app.setTaskFilter('overdue')" id="filterOverdue">Overdue</button>
-                <button class="btn btn-secondary" onclick="app.setTaskFilter('completed')" id="filterCompleted">Completed</button>
+                <button class="btn btn-secondary" onclick="app.setTaskFilter('overdue')" id="filterOverdue" style="background:var(--danger); border-color:var(--danger);">Overdue</button>
+                <button class="btn btn-secondary" onclick="app.setTaskFilter('completed')" id="filterCompleted" style="background:var(--success); border-color:var(--success);">Completed</button>
             </div>
             <div id="taskList" class="task-list"></div>
         </div>
@@ -1240,44 +1262,6 @@
 
         <div id="community" class="view-container">
             <div class="community-grid">
-                <div class="leaderboard-section">
-                    <div class="section-header">
-                        <h3><i class="fas fa-trophy"></i> Leaderboard</h3>
-                        <button class="btn btn-secondary btn-sm" onclick="app.syncLeaderboard()">
-                            <i class="fas fa-sync"></i> Refresh
-                        </button>
-                    </div>
-                    <div class="leaderboard-stats">
-                        <div class="stat-item">
-                            <span class="stat-number" id="totalPlayers">0</span>
-                            <span class="stat-label">Players</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number" id="topScore">0</span>
-                            <span class="stat-label">Top Score</span>
-                        </div>
-                    </div>
-                    <div id="commBoard">
-                        <table class="leaderboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Username</th>
-                                    <th>Score</th>
-                                </tr>
-                            </thead>
-                            <tbody id="leaderboardBody">
-                                <tr>
-                                    <td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">
-                                        Loading leaderboard...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                </div>
-                
                 <div class="chat-section">
                     <div class="section-header">
                         <h3><i class="fas fa-comments"></i> Group Chat</h3>
@@ -1327,12 +1311,49 @@
                             </div>
                         </div>
                         <div class="chat-sidebar-panel">
-                            <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">ONLINE USERS</div>
+                            <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:5px;">USERS</div>
+                            <button onclick="app.updateUserStatusList()" style="font-size:10px; margin-bottom:5px; background:var(--accent); color:white; border:none; padding:2px 6px; border-radius:3px; cursor:pointer;">Refresh Users</button>
                             <div id="chatParticipants"></div>
                         </div>
                     </div>
                 </div>
-            </div>
+                
+                <div class="leaderboard-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-trophy"></i> Leaderboard</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="app.syncLeaderboard()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="leaderboard-stats">
+                        <div class="stat-item">
+                            <span class="stat-number" id="totalPlayers">0</span>
+                            <span class="stat-label">Players</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="topScore">0</span>
+                            <span class="stat-label">Top Score</span>
+                        </div>
+                    </div>
+                    <div id="commBoard">
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Username</th>
+                                    <th>Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboardBody">
+                                <tr>
+                                    <td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">
+                                        Loading leaderboard...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -1729,6 +1750,7 @@
                     completed: false,
                     date: document.getElementById('dateInput').value,
                     priority: document.getElementById('prioInput').value,
+                    repeat: app.getRepeatValue(),
                     tags: (text.match(/#\w+/g) || []).map(t => t.replace('#','')),
                     subtasks: [],
                     description: descInput.value.trim() || '',
@@ -1766,6 +1788,7 @@
                 document.getElementById('taskDescInput').value = task.description || '';
                 document.getElementById('dateInput').value = task.date;
                 document.getElementById('prioInput').value = task.priority;
+                app.setRepeatValue(task.repeat);
                 document.getElementById('editTaskId').value = task.id;
                 const btn = document.getElementById('addUpdateBtn');
                 btn.innerHTML = 'Update';
@@ -1777,20 +1800,28 @@
                 const text = document.getElementById('taskInput').value;
                 const date = document.getElementById('dateInput').value;
                 const priority = document.getElementById('prioInput').value;
+                const repeat = app.getRepeatValue();
                 const tags = (text.match(/#\w+/g) || []).map(t => t.replace('#',''));
                 const description = document.getElementById('taskDescInput').value.trim() || '';
                 
                 const oldTask = state.tasks.find(t => t.id === id);
                 const subtasks = oldTask ? (oldTask.subtasks || []) : [];
+                const oldRepeat = oldTask ? oldTask.repeat : null;
 
                 if(state.user) {
                     try {
-                        await updateDoc(doc(db, 'tasks', id), { text, date, priority, tags, description, subtasks });
+                        await updateDoc(doc(db, 'tasks', id), { text, date, priority, repeat, tags, description, subtasks });
                         // Update local state
                         const idx = state.tasks.findIndex(t => t.id === id);
                         if(idx !== -1) {
-                            state.tasks[idx] = { ...state.tasks[idx], text, date, priority, tags, description, subtasks };
+                            state.tasks[idx] = { ...state.tasks[idx], text, date, priority, repeat, tags, description, subtasks };
                         }
+                        
+                        // If repeat was removed, remove future tasks
+                        if(oldRepeat && !repeat) {
+                            await app.removeRepeatFromFutureTasks(id);
+                        }
+                        
                         console.log('Task updated successfully');
                     } catch(e) {
                         console.error('Error updating task:', e);
@@ -1800,7 +1831,13 @@
                 } else {
                     const idx = state.tasks.findIndex(t => t.id === id);
                     if(idx !== -1) { 
-                        state.tasks[idx] = { ...state.tasks[idx], text, date, priority, tags, description }; 
+                        state.tasks[idx] = { ...state.tasks[idx], text, date, priority, repeat, tags, description }; 
+                        
+                        // If repeat was removed, remove future tasks
+                        if(oldRepeat && !repeat) {
+                            app.removeRepeatFromFutureTasks(id);
+                        }
+                        
                         app.saveLifetime(false); 
                         renderTasks(); 
                     }
@@ -1814,11 +1851,187 @@
                 document.getElementById('taskDescInput').value = '';
                 document.getElementById('dateInput').valueAsDate = new Date();
                 document.getElementById('prioInput').value = 'medium';
+                app.removeRepeat();
                 document.getElementById('editTaskId').value = '';
                 const btn = document.getElementById('addUpdateBtn');
                 btn.innerHTML = '<i class="fas fa-plus"></i> Add';
                 btn.classList.replace('btn-secondary', 'btn-primary');
                 document.getElementById('cancelEditBtn').style.display = 'none';
+            },
+
+            init: () => {
+                app.updateClock();
+                setInterval(app.updateClock, 1000 * 60);
+                app.fetchWeather();
+                document.getElementById('dateInput').valueAsDate = new Date();
+                document.getElementById('dailyGoalInput').value = state.dailyGoal;
+                
+                // Show/hide weekday dropdown based on unit selection
+                document.getElementById('repeatUnit').addEventListener('change', (e) => {
+                    const weekdaySelect = document.getElementById('weekdaySelect');
+                    if(e.target.value === 'weekday') {
+                        weekdaySelect.style.display = 'block';
+                    } else {
+                        weekdaySelect.style.display = 'none';
+                    }
+                });
+                
+                if(state.customDesign) document.getElementById('dynamic-theme-style').textContent = state.customDesign;
+                
+                if(!state.user) {
+                    state.notes = JSON.parse(localStorage.getItem('local_notes')) || [];
+                    app.renderNotes();
+                }
+
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'local_tasks' && !state.user) {
+                        state.tasks = JSON.parse(e.newValue || "[]");
+                        renderTasks();
+                        if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
+                    }
+                });
+
+                if("Notification" in window && Notification.permission !== 'granted') {
+                    Notification.requestPermission();
+                }
+            },
+
+            getRepeatValue: () => {
+                const interval = document.getElementById('repeatInterval').value;
+                const unit = document.getElementById('repeatUnit').value;
+                
+                if(!unit || !interval || interval < 1) return null;
+                
+                if(unit === 'weekday') {
+                    const weekday = document.getElementById('weekdaySelect').value;
+                    return `${interval}weekday:${weekday}`;
+                }
+                
+                return `${interval}${unit}`;
+            },
+
+            setRepeatValue: (repeatValue) => {
+                if(!repeatValue) {
+                    document.getElementById('repeatInterval').value = '1';
+                    document.getElementById('repeatUnit').value = '';
+                    document.getElementById('weekdaySelect').style.display = 'none';
+                    return;
+                }
+                
+                // Parse existing repeat values (for backward compatibility)
+                const repeatMap = {
+                    'daily': '1day',
+                    '2daily': '2day',
+                    'weekly': '1week',
+                    '2weekly': '2week',
+                    'monthly': '1month',
+                    '2monthly': '2month',
+                    '3monthly': '3month',
+                    'yearly': '1year',
+                    '2yearly': '2year'
+                };
+                
+                const value = repeatMap[repeatValue] || repeatValue;
+                
+                // Extract number and unit
+                const match = value.match(/^(\d+)(day|week|month|year|weekday):?(\d+)?$/);
+                if(match) {
+                    document.getElementById('repeatInterval').value = match[1];
+                    document.getElementById('repeatUnit').value = match[2];
+                    
+                    if(match[2] === 'weekday' && match[3]) {
+                        document.getElementById('weekdaySelect').value = match[3];
+                        document.getElementById('weekdaySelect').style.display = 'block';
+                    } else {
+                        document.getElementById('weekdaySelect').style.display = 'none';
+                    }
+                }
+            },
+
+            removeRepeat: () => {
+                document.getElementById('repeatInterval').value = '1';
+                document.getElementById('repeatUnit').value = '';
+                document.getElementById('weekdaySelect').style.display = 'none';
+            },
+
+            createNextOccurrence: (task) => {
+                if(!task.repeat || task.repeat === 'remove') return null;
+                
+                const currentDate = new Date(task.date);
+                let nextDate = new Date(currentDate);
+                
+                // Parse custom repeat format (e.g., "2day", "1week", "3month", "1weekday:2")
+                const match = task.repeat.match(/^(\d+)(day|week|month|year|weekday):?(\d+)?$/);
+                if(!match) return null;
+                
+                const interval = parseInt(match[1]);
+                const unit = match[2];
+                
+                switch(unit) {
+                    case 'day':
+                        nextDate.setDate(nextDate.getDate() + interval);
+                        break;
+                    case 'week':
+                        nextDate.setDate(nextDate.getDate() + (interval * 7));
+                        break;
+                    case 'month':
+                        nextDate.setMonth(nextDate.getMonth() + interval);
+                        break;
+                    case 'year':
+                        nextDate.setFullYear(nextDate.getFullYear() + interval);
+                        break;
+                    case 'weekday':
+                        const targetWeekday = parseInt(match[3] || 0); // Default to Sunday if not specified
+                        // Find next occurrence of the specified weekday
+                        do {
+                            nextDate.setDate(nextDate.getDate() + interval * 7);
+                        } while(nextDate.getDay() !== targetWeekday);
+                        break;
+                    default:
+                        return null;
+                }
+                
+                return {
+                    text: task.text,
+                    completed: false,
+                    date: nextDate.toISOString().split('T')[0],
+                    priority: task.priority,
+                    repeat: task.repeat,
+                    tags: task.tags || [],
+                    subtasks: [],
+                    description: task.description || '',
+                    createdAt: Date.now(),
+                    parentTaskId: task.id // Reference to original task
+                };
+            },
+
+            removeRepeatFromFutureTasks: async (parentTaskId) => {
+                if(!parentTaskId) return;
+                
+                if(state.user) {
+                    try {
+                        // Find all future tasks with this parent
+                        const q = query(collection(db, 'tasks'), where('uid', '==', state.user.uid), where('parentTaskId', '==', parentTaskId));
+                        const snapshot = await getDocs(q);
+                        const batch = writeBatch(db);
+                        
+                        snapshot.docs.forEach(doc => {
+                            batch.delete(doc.ref);
+                        });
+                        
+                        await batch.commit();
+                        
+                        // Update local state
+                        state.tasks = state.tasks.filter(t => t.parentTaskId !== parentTaskId);
+                        console.log('Future repeat tasks removed successfully');
+                    } catch(e) {
+                        console.error('Error removing future repeat tasks:', e);
+                    }
+                } else {
+                    // Local storage case
+                    state.tasks = state.tasks.filter(t => t.parentTaskId !== parentTaskId);
+                    app.saveLifetime(false);
+                }
             },
 
             toggleTask: async (id) => {
@@ -1832,6 +2045,21 @@
                         task.completed = newVal;
                         console.log('Task status updated successfully');
                         
+                        // Create next occurrence if task is completed and has repeat
+                        if(newVal && task.repeat && task.repeat !== 'remove') {
+                            const nextTask = app.createNextOccurrence(task);
+                            if(nextTask) {
+                                try {
+                                    const docRef = await addDoc(collection(db, 'tasks'), { ...nextTask, uid: state.user.uid });
+                                    nextTask.id = docRef.id;
+                                    state.tasks.push(nextTask);
+                                    console.log('Next occurrence created successfully with ID:', docRef.id);
+                                } catch(e) {
+                                    console.error('Error creating next occurrence:', e);
+                                }
+                            }
+                        }
+                        
                         // Update leaderboard when task is completed
                         if(newVal) {
                             app.syncLeaderboard();
@@ -1843,6 +2071,17 @@
                     }
                 } else { 
                     task.completed = newVal; 
+                    
+                    // Create next occurrence if task is completed and has repeat
+                    if(newVal && task.repeat && task.repeat !== 'remove') {
+                        const nextTask = app.createNextOccurrence(task);
+                        if(nextTask) {
+                            nextTask.id = Date.now().toString();
+                            state.tasks.push(nextTask);
+                            console.log('Next occurrence created successfully with ID:', nextTask.id);
+                        }
+                    }
+                    
                     app.saveLifetime(false); 
                     renderTasks();
                     
@@ -2700,18 +2939,16 @@
                 if(!state.user) return;
                 
                 try {
-                    console.log('Setting user status:', status);
                     await setDoc(doc(db, 'user_status', state.user.uid), {
                         uid: state.user.uid,
                         username: state.user.email.split('@')[0],
                         status: status, // 'online', 'idle', 'away'
                         lastSeen: Date.now(),
-                        inChat: document.getElementById('community').classList.contains('active') // Check if community tab is active
+                        inChat: document.getElementById('community').classList.contains('active'), // Check if community tab is active
+                        lastActivity: Date.now() // Track last activity for idle detection
                     }, { merge: true });
-                    console.log('Status set successfully');
                 } catch(e) {
                     console.error('Status update error:', e);
-                    console.error('Status error details:', e.code, e.message);
                     // Don't show alert for status errors, just log them
                     // Status failures shouldn't block chat functionality
                 }
@@ -2721,89 +2958,166 @@
                 const participantsEl = document.getElementById('chatParticipants');
                 if(!participantsEl) return;
                 
-                // Get all user statuses from Firebase
-                const q = query(collection(db, 'user_status'));
-                getDocs(q).then(snapshot => {
-                    const users = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-                    
-                    // Sort by status priority: online > idle > away
-                    const statusPriority = { online: 0, idle: 1, away: 2 };
-                    users.sort((a, b) => {
-                        const aPriority = statusPriority[a.status] || 3;
-                        const bPriority = statusPriority[b.status] || 3;
-                        if(aPriority !== bPriority) return aPriority - bPriority;
-                        return b.lastSeen - a.lastSeen; // Most recent first within same status
+                try {
+                    // Get users from status collection
+                    const q = query(collection(db, 'user_status'));
+                    getDocs(q).then(snapshot => {
+                        const statusUsers = snapshot.docs.map(d => d.data());
+                        
+                        // Also get users from chat messages to include offline users
+                        const chatQ = query(collection(db, 'community_chat'), orderBy('timestamp', 'desc'), limit(50));
+                        getDocs(chatQ).then(chatSnapshot => {
+                            const chatUsers = {};
+                            chatSnapshot.docs.forEach(doc => {
+                                const data = doc.data();
+                                if(!chatUsers[data.username]) {
+                                    chatUsers[data.username] = {
+                                        uid: data.uid,
+                                        username: data.username,
+                                        lastMessage: data.timestamp
+                                    };
+                                }
+                            });
+                            
+                            // Also get users from leaderboard to include them as offline
+                            const leaderboardQ = query(collection(db, 'leaderboard'), limit(50));
+                            getDocs(leaderboardQ).then(leaderboardSnapshot => {
+                                const leaderboardUsers = {};
+                                leaderboardSnapshot.docs.forEach(doc => {
+                                    const data = doc.data();
+                                    if(!leaderboardUsers[data.username]) {
+                                        leaderboardUsers[data.username] = {
+                                            uid: data.uid,
+                                            username: data.username,
+                                            lastSeen: data.lastSeen || Date.now() - 86400000 // Default to 1 day ago if no lastSeen
+                                        };
+                                    }
+                                });
+                                
+                                // Merge status users with chat users and leaderboard users
+                                const allUsers = {};
+                                
+                                // Add users from status collection
+                                statusUsers.forEach(user => {
+                                    allUsers[user.username] = user;
+                                });
+                                
+                                // Add users from chat messages (offline users)
+                                Object.keys(chatUsers).forEach(username => {
+                                    if(!allUsers[username]) {
+                                        allUsers[username] = {
+                                            ...chatUsers[username],
+                                            status: 'offline',
+                                            lastSeen: chatUsers[username].lastMessage
+                                        };
+                                    }
+                                });
+                                
+                                // Add users from leaderboard (offline users)
+                                Object.keys(leaderboardUsers).forEach(username => {
+                                    if(!allUsers[username]) {
+                                        allUsers[username] = {
+                                            ...leaderboardUsers[username],
+                                            status: 'offline',
+                                            lastSeen: leaderboardUsers[username].lastSeen
+                                        };
+                                    }
+                                });
+                                
+                                const users = Object.values(allUsers);
+                                
+                                // Sort by status priority: online > idle > away > offline
+                                const statusPriority = { online: 0, idle: 1, away: 2, offline: 3 };
+                                users.sort((a, b) => {
+                                    const aPriority = statusPriority[a.status] || 3;
+                                    const bPriority = statusPriority[b.status] || 3;
+                                    if(aPriority !== bPriority) return aPriority - bPriority;
+                                    return (b.lastSeen || 0) - (a.lastSeen || 0);
+                                });
+                                
+                                // Group users by status for Discord-style sections
+                                const onlineUsers = users.filter(u => u.status === 'online' || u.status === 'idle' || u.status === 'away');
+                                const offlineUsers = users.filter(u => u.status === 'offline');
+                                
+                                let html = '';
+                                
+                                // Online section
+                                if(onlineUsers.length > 0) {
+                                    html += `<div style="font-size:10px; font-weight:bold; color:var(--text-muted); margin:10px 5px 5px 5px; text-transform:uppercase; letter-spacing:0.5px;">ONLINE — ${onlineUsers.length}</div>`;
+                                    html += onlineUsers.map(user => {
+                                        const isMe = user.uid === state.user?.uid;
+                                        const statusColor = {
+                                            online: 'var(--success)',
+                                            idle: 'var(--warning)', 
+                                            away: 'var(--text-muted)'
+                                        }[user.status] || 'var(--text-muted)';
+                                        
+                                        const statusIcon = {
+                                            online: 'fa-circle',
+                                            idle: 'fa-moon',
+                                            away: 'fa-times-circle'
+                                        }[user.status] || 'fa-circle';
+                                        
+                                        const lastSeenTime = user.lastSeen ? new Date(user.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+                                        
+                                        return `
+                                        <div style="padding:5px; font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:8px; ${isMe ? 'font-weight:bold;color:var(--accent);' : ''}">
+                                            <i class="fas ${statusIcon}" style="color: ${statusColor}; font-size:8px;"></i>
+                                            <div style="flex:1;">
+                                                <div>${user.username} ${isMe ? '(You)' : ''}</div>
+                                                <div style="font-size:9px; opacity:0.7;">${user.status} ${lastSeenTime ? '• ' + lastSeenTime : ''}</div>
+                                            </div>
+                                        </div>`;
+                                    }).join('');
+                                }
+                                
+                                // Offline section
+                                if(offlineUsers.length > 0) {
+                                    html += `<div style="font-size:10px; font-weight:bold; color:var(--text-muted); margin:15px 5px 5px 5px; text-transform:uppercase; letter-spacing:0.5px;">OFFLINE — ${offlineUsers.length}</div>`;
+                                    html += offlineUsers.map(user => {
+                                        const isMe = user.uid === state.user?.uid;
+                                        const lastSeenTime = user.lastSeen ? new Date(user.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+                                        
+                                        return `
+                                        <div style="padding:5px; font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:8px; opacity:0.6; ${isMe ? 'font-weight:bold;color:var(--accent);' : ''}">
+                                            <i class="fas fa-circle" style="color: var(--text-muted); font-size:8px;"></i>
+                                            <div style="flex:1;">
+                                                <div>${user.username} ${isMe ? '(You)' : ''}</div>
+                                                <div style="font-size:9px; opacity:0.7;">offline ${lastSeenTime ? '• ' + lastSeenTime : ''}</div>
+                                            </div>
+                                        </div>`;
+                                    }).join('');
+                                }
+                                
+                                participantsEl.innerHTML = html;
+                                
+                                // Update online count
+                                const onlineCount = users.filter(u => u.status === 'online').length;
+                                const offlineCount = users.filter(u => u.status === 'offline').length;
+                                if(offlineCount > 0) {
+                                    document.getElementById('onlineCount').textContent = `${onlineCount} online, ${offlineCount} offline`;
+                                } else {
+                                    document.getElementById('onlineCount').textContent = `${onlineCount} online`;
+                                }
+                                
+                            }).catch(e => {
+                                console.error('Error loading leaderboard users:', e);
+                            });
+                            
+                        }).catch(e => {
+                            console.error('Error loading chat users:', e);
+                        });
+                        
+                    }).catch(e => {
+                        console.error('Error loading user statuses:', e);
+                        
+                        // Show error message if Firebase fails
+                        participantsEl.innerHTML = '<div style="padding:10px; text-align:center; color:var(--text-muted); font-size:11px;">Could not load users</div>';
+                        document.getElementById('onlineCount').textContent = 'Error loading users';
                     });
-                    
-                    if(users.length === 0) {
-                        // No users in status system yet, show current user as online
-                        if(state.user) {
-                            const currentTime = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                            participantsEl.innerHTML = `
-                            <div style="padding:5px; font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:8px; font-weight:bold;color:var(--accent);">
-                                <i class="fas fa-circle" style="color: var(--success); font-size:8px;"></i>
-                                <div style="flex:1;">
-                                    <div>${state.user.email.split('@')[0]} (You)</div>
-                                    <div style="font-size:9px; opacity:0.7;">online • ${currentTime}</div>
-                                </div>
-                            </div>`;
-                            document.getElementById('onlineCount').textContent = '1 online';
-                        } else {
-                            participantsEl.innerHTML = '<div style="padding:10px; text-align:center; color:var(--text-muted); font-size:11px;">No users online</div>';
-                            document.getElementById('onlineCount').textContent = '0 online';
-                        }
-                        return;
-                    }
-                    
-                    participantsEl.innerHTML = users.map(user => {
-                        const isMe = user.uid === state.user?.uid;
-                        const statusColor = {
-                            online: 'var(--success)',
-                            idle: 'var(--warning)', 
-                            away: 'var(--text-muted)'
-                        }[user.status] || 'var(--text-muted)';
-                        
-                        const statusIcon = {
-                            online: 'fa-circle',
-                            idle: 'fa-moon',
-                            away: 'fa-times-circle'
-                        }[user.status] || 'fa-circle';
-                        
-                        const lastSeenTime = user.lastSeen ? new Date(user.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-                        
-                        return `
-                        <div style="padding:5px; font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:8px; ${isMe ? 'font-weight:bold;color:var(--accent);' : ''}">
-                            <i class="fas ${statusIcon}" style="color: ${statusColor}; font-size:8px;"></i>
-                            <div style="flex:1;">
-                                <div>${user.username} ${isMe ? '(You)' : ''}</div>
-                                <div style="font-size:9px; opacity:0.7;">${user.status} • ${lastSeenTime}</div>
-                            </div>
-                        </div>`;
-                    }).join('');
-                    
-                    // Update online count
-                    const onlineCount = users.filter(u => u.status === 'online').length;
-                    document.getElementById('onlineCount').textContent = `${onlineCount} online`;
-                    
-                }).catch(e => {
-                    console.error('Error loading user statuses:', e);
-                    // Fallback: show current user as online
-                    if(state.user) {
-                        const currentTime = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                        participantsEl.innerHTML = `
-                        <div style="padding:5px; font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:8px; font-weight:bold;color:var(--accent);">
-                            <i class="fas fa-circle" style="color: var(--success); font-size:8px;"></i>
-                            <div style="flex:1;">
-                                <div>${state.user.email.split('@')[0]} (You)</div>
-                                <div style="font-size:9px; opacity:0.7;">online • ${currentTime}</div>
-                            </div>
-                        </div>`;
-                        document.getElementById('onlineCount').textContent = '1 online';
-                    } else {
-                        participantsEl.innerHTML = '<div style="padding:10px; text-align:center; color:var(--text-muted); font-size:11px;">Sign in to see users</div>';
-                        document.getElementById('onlineCount').textContent = '0 online';
-                    }
-                });
+                } catch(e) {
+                    console.error('Error in updateUserStatusList:', e);
+                }
             },
             
             startStatusTracking: () => {
@@ -2820,13 +3134,64 @@
                     } else {
                         app.setUserStatus('idle');
                     }
-                }, 30000);
+                }, 30000); // Every 30 seconds
+                
+                // Check for idle users every 2 minutes
+                if(app.idleCheckInterval) clearInterval(app.idleCheckInterval);
+                app.idleCheckInterval = setInterval(() => {
+                    app.checkIdleUsers();
+                }, 120000); // Every 2 minutes
+            },
+            
+            checkIdleUsers: async () => {
+                try {
+                    const q = query(collection(db, 'user_status'));
+                    const snapshot = await getDocs(q);
+                    const users = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+                    
+                    const now = Date.now();
+                    const idleThreshold = 5 * 60 * 1000; // 5 minutes
+                    const awayThreshold = 15 * 60 * 1000; // 15 minutes
+                    
+                    for(const user of users) {
+                        const lastActivity = user.lastActivity || user.lastSeen || 0;
+                        const timeSinceActivity = now - lastActivity;
+                        
+                        let newStatus = user.status;
+                        
+                        if(timeSinceActivity > awayThreshold && user.status !== 'away') {
+                            newStatus = 'away';
+                            console.log(`Setting ${user.username} as away (${Math.round(timeSinceActivity/60000)} minutes inactive)`);
+                        } else if(timeSinceActivity > idleThreshold && user.status === 'online') {
+                            newStatus = 'idle';
+                            console.log(`Setting ${user.username} as idle (${Math.round(timeSinceActivity/60000)} minutes inactive)`);
+                        }
+                        
+                        if(newStatus !== user.status) {
+                            await setDoc(doc(db, 'user_status', user.uid), {
+                                ...user,
+                                status: newStatus,
+                                lastSeen: now
+                            }, { merge: true });
+                        }
+                    }
+                    
+                    // Refresh user list after status updates
+                    app.updateUserStatusList();
+                    
+                } catch(e) {
+                    console.error('Error checking idle users:', e);
+                }
             },
             
             stopStatusTracking: () => {
                 if(app.statusInterval) {
                     clearInterval(app.statusInterval);
                     app.statusInterval = null;
+                }
+                if(app.idleCheckInterval) {
+                    clearInterval(app.idleCheckInterval);
+                    app.idleCheckInterval = null;
                 }
                 // Don't set as away - let the natural status tracking handle it
                 // app.setUserStatus('away'); // REMOVED - This was causing the bug
@@ -4097,6 +4462,34 @@
         });
 
         // RENDERING
+        // Global collapse state
+        let collapsedDates = new Set(JSON.parse(localStorage.getItem('collapsedDates') || '[]'));
+        
+        function toggleAllDates(expand) {
+            const allContents = document.querySelectorAll('[id^="content-"]');
+            const allIcons = document.querySelectorAll('.date-header i');
+            
+            allContents.forEach(content => {
+                content.style.display = expand ? 'block' : 'none';
+            });
+            
+            allIcons.forEach(icon => {
+                icon.className = expand ? 'fas fa-chevron-down' : 'fas fa-chevron-right';
+            });
+            
+            // Update state
+            if(expand) {
+                collapsedDates.clear();
+            } else {
+                document.querySelectorAll('.date-header').forEach(header => {
+                    const dateId = header.getAttribute('data-date-id');
+                    if(dateId) collapsedDates.add(dateId);
+                });
+            }
+            
+            localStorage.setItem('collapsedDates', JSON.stringify([...collapsedDates]));
+        }
+        
         function renderTasks() {
             const list = document.getElementById('taskList');
             list.innerHTML = "";
@@ -4131,7 +4524,6 @@
                 const isToday = date === new Date().toISOString().split('T')[0];
                 const isOverdue = new Date(date) < new Date() && !isToday;
                 const dateId = 'date-' + date.replace(/[^a-zA-Z0-9]/g, '-');
-                const isCollapsed = localStorage.getItem('collapsed-' + dateId) === 'true';
                 
                 // Add date header with expand/collapse
                 const dateHeader = document.createElement('div');
@@ -4139,6 +4531,8 @@
                 if(filter === 'overdue') borderColor = 'var(--danger)';
                 else if(isOverdue) borderColor = 'var(--warning)';
                 
+                dateHeader.className = 'date-header';
+                dateHeader.setAttribute('data-date-id', dateId);
                 dateHeader.style.cssText = `margin: 20px 0 10px 0; padding: 10px; background: var(--bg-card); border-radius: 8px; border-left: 4px solid ${borderColor}; cursor: pointer;`;
                 dateHeader.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -4150,7 +4544,7 @@
                                 ${tasksByDate[date].length} task${tasksByDate[date].length !== 1 ? 's' : ''}
                             </div>
                         </div>
-                        <i class="fas fa-chevron-${isCollapsed ? 'right' : 'down'}" style="color: var(--text-muted); transition: transform 0.2s;"></i>
+                        <i class="fas fa-chevron-${collapsedDates.has(dateId) ? 'right' : 'down'}" style="color: var(--text-muted); transition: transform 0.2s;"></i>
                     </div>
                 `;
                 
@@ -4158,15 +4552,17 @@
                     const content = document.getElementById('content-' + dateId);
                     const icon = dateHeader.querySelector('i');
                     
-                    if(isCollapsed) {
+                    if(collapsedDates.has(dateId)) {
                         content.style.display = 'block';
                         icon.className = 'fas fa-chevron-down';
-                        localStorage.removeItem('collapsed-' + dateId);
+                        collapsedDates.delete(dateId);
                     } else {
                         content.style.display = 'none';
                         icon.className = 'fas fa-chevron-right';
-                        localStorage.setItem('collapsed-' + dateId, 'true');
+                        collapsedDates.add(dateId);
                     }
+                    
+                    localStorage.setItem('collapsedDates', JSON.stringify([...collapsedDates]));
                 };
                 
                 list.appendChild(dateHeader);
@@ -4174,7 +4570,7 @@
                 // Add tasks for this date in collapsible container
                 const contentContainer = document.createElement('div');
                 contentContainer.id = 'content-' + dateId;
-                contentContainer.style.display = isCollapsed ? 'none' : 'block';
+                contentContainer.style.display = collapsedDates.has(dateId) ? 'none' : 'block';
                 
                 tasksByDate[date].forEach(task => {
                     const subsHtml = (task.subtasks||[]).map(s => {
@@ -4188,7 +4584,30 @@
                     }).join('');
                     const tagsHtml = (task.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
                     const descHtml = task.description ? `<div style="font-size:12px; color:var(--text-muted); margin:5px 0; padding:8px; background:var(--bg-body); border-radius:6px; border-left:3px solid var(--accent); cursor:pointer;" onclick="app.editTaskDescription('${task.id}')">${task.description}</div>` : '';
-                    const html = `<div class="task-card priority-${task.priority}"><div class="task-header"><input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''} onchange="app.toggleTask('${task.id}')"><div class="task-content"><div class="task-title" style="text-decoration: ${task.completed ? 'line-through' : 'none'}">${task.text.replace(/#\w+/g,'')} ${tagsHtml}</div>${descHtml}<div class="task-meta"><i class="far fa-calendar"></i> ${task.date} • ${task.priority.toUpperCase()}</div></div><div style="display:flex;gap:5px;"><button class="btn btn-icon" onclick="app.focusOnTask('${task.id}')"><i class="fas fa-stopwatch"></i></button><button class="btn btn-icon" onclick="app.startEdit('${task.id}')"><i class="fas fa-pencil"></i></button><button class="btn btn-icon btn-danger" onclick="app.deleteTask('${task.id}')"><i class="fas fa-trash"></i></button></div></div><div class="subtasks">${subsHtml}<div class="subtask-row"><input id="sub-input-${task.id}" placeholder="+ Subtask" style="background:transparent;border:none;color:var(--text-muted);width:100%;outline:none;font-size:13px;" onkeydown="if(event.key==='Enter') app.addSubtask('${task.id}')"></div><div class="subtask-row"><button class="btn btn-icon" style="padding: 4px 8px; font-size: 11px;" onclick="app.addSubtaskWithDesc('${task.id}')" title="Add with description">+Desc</button></div></div></div>`;
+                    
+                    let repeatText = '';
+                    if(task.repeat) {
+                        // Parse custom repeat format (e.g., "2day", "1week", "3month", "1weekday:2")
+                        const match = task.repeat.match(/^(\d+)(day|week|month|year|weekday):?(\d+)?$/);
+                        if(match) {
+                            const interval = parseInt(match[1]);
+                            const unit = match[2];
+                            
+                            if(unit === 'weekday' && match[3]) {
+                                const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                                const weekdayName = weekdays[parseInt(match[3])];
+                                const plural = interval > 1 ? 's' : '';
+                                repeatText = `Every ${interval} ${weekdayName}${plural}`;
+                            } else {
+                                const unitLabel = unit.charAt(0).toUpperCase() + unit.slice(1);
+                                const plural = interval > 1 ? 's' : '';
+                                repeatText = `Every ${interval} ${unitLabel}${plural}`;
+                            }
+                        }
+                    }
+                    
+                    const repeatHtml = repeatText ? `<span style="background:var(--accent); color:white; padding:2px 6px; border-radius:10px; font-size:10px; margin-left:5px;"><i class="fas fa-redo"></i> ${repeatText}</span>` : '';
+                    const html = `<div class="task-card priority-${task.priority}"><div class="task-header"><input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''} onchange="app.toggleTask('${task.id}')"><div class="task-content"><div class="task-title" style="text-decoration: ${task.completed ? 'line-through' : 'none'}">${task.text.replace(/#\w+/g,'')} ${tagsHtml}</div>${descHtml}<div class="task-meta"><i class="far fa-calendar"></i> ${task.date} • ${task.priority.toUpperCase()}${repeatHtml}</div></div><div style="display:flex;gap:5px;"><button class="btn btn-icon" onclick="app.focusOnTask('${task.id}')"><i class="fas fa-stopwatch"></i></button><button class="btn btn-icon" onclick="app.startEdit('${task.id}')"><i class="fas fa-pencil"></i></button><button class="btn btn-icon btn-danger" onclick="app.deleteTask('${task.id}')"><i class="fas fa-trash"></i></button></div></div><div class="subtasks">${subsHtml}<div class="subtask-row"><input id="sub-input-${task.id}" placeholder="+ Subtask" style="background:transparent;border:none;color:var(--text-muted);width:100%;outline:none;font-size:13px;" onkeydown="if(event.key==='Enter') app.addSubtask('${task.id}')"></div><div class="subtask-row"><button class="btn btn-icon" style="padding: 4px 8px; font-size: 11px;" onclick="app.addSubtaskWithDesc('${task.id}')" title="Add with description">+Desc</button></div></div></div>`;
                     contentContainer.insertAdjacentHTML('beforeend', html);
                 });
                 
