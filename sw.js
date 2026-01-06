@@ -57,20 +57,24 @@ self.addEventListener('fetch', (e) => {
   // Cache strategy for static assets (styles, scripts, fonts)
   if (request.destination === 'style' || request.destination === 'script' || request.destination === 'font') {
     e.respondWith(
-      caches.match(request).then((response) => {
-        if (response) {
-          return response;
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
         }
-        return fetch(request).then((fetchResponse) => {
-          // Cache successful responses
-          if (fetchResponse && fetchResponse.status === 200) {
-            const responseToCache = fetchResponse.clone();
+        return fetch(request).then((networkResponse) => {
+          // Only cache successful responses
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseToCache);
+              cache.put(request, responseClone).catch(err => {
+                console.warn('Cache put failed:', err);
+              });
             });
           }
-          return fetchResponse;
-        }).catch(() => new Response('Offline', { status: 503 }));
+          return networkResponse;
+        }).catch(() => {
+          return new Response('Offline', { status: 503 });
+        });
       })
     );
     return;
@@ -79,15 +83,17 @@ self.addEventListener('fetch', (e) => {
   // Network-first strategy for HTML pages
   if (request.destination === 'document') {
     e.respondWith(
-      fetch(request).then((response) => {
-        // Cache successful HTML responses
-        if (response && response.status === 200) {
-          const responseToCache = response.clone();
+      fetch(request).then((networkResponse) => {
+        // Only cache successful HTML responses
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
+            cache.put(request, responseClone).catch(err => {
+              console.warn('Cache put failed:', err);
+            });
           });
         }
-        return response;
+        return networkResponse;
       }).catch(() => {
         // Fallback to cached version if network fails
         return caches.match(request).then((cachedResponse) => {
@@ -98,23 +104,27 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Default: try network first, then cache
+  // Default: try cache first, then network
   e.respondWith(
-    fetch(request)
-      .then((response) => {
-        // Cache successful responses
-        if (response && response.status === 200) {
-          const responseToCache = response.clone();
+    caches.match(request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(request).then((networkResponse) => {
+        // Only cache successful responses
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
+            cache.put(request, responseClone).catch(err => {
+              console.warn('Cache put failed:', err);
+            });
           });
         }
-        return response;
-      })
-      .catch(() => {
-        // Fallback to cache if network fails
-        return caches.match(request) || new Response('Offline', { status: 503 });
-      })
+        return networkResponse;
+      }).catch(() => {
+        return new Response('Offline', { status: 503 });
+      });
+    })
   );
 });
 
