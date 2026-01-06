@@ -58,16 +58,20 @@ self.addEventListener('fetch', (e) => {
   if (request.destination === 'style' || request.destination === 'script' || request.destination === 'font') {
     e.respondWith(
       caches.match(request).then((response) => {
-        return response || fetch(request).then((fetchResponse) => {
+        if (response) {
+          return response;
+        }
+        return fetch(request).then((fetchResponse) => {
           // Cache successful responses
           if (fetchResponse && fetchResponse.status === 200) {
+            const responseToCache = fetchResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, fetchResponse.clone());
+              cache.put(request, responseToCache);
             });
           }
           return fetchResponse;
-        });
-      }).catch(() => new Response('Offline', { status: 503 }))
+        }).catch(() => new Response('Offline', { status: 503 }));
+      })
     );
     return;
   }
@@ -78,8 +82,9 @@ self.addEventListener('fetch', (e) => {
       fetch(request).then((response) => {
         // Cache successful HTML responses
         if (response && response.status === 200) {
+          const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, response.clone());
+            cache.put(request, responseToCache);
           });
         }
         return response;
@@ -99,8 +104,9 @@ self.addEventListener('fetch', (e) => {
       .then((response) => {
         // Cache successful responses
         if (response && response.status === 200) {
+          const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, response.clone());
+            cache.put(request, responseToCache);
           });
         }
         return response;
