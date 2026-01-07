@@ -859,6 +859,110 @@
             min-height: 60px;
             width: 100%;
         }
+
+        /* Enhanced Features CSS */
+        .suggestions {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .suggestion-chip {
+            padding: 6px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+        }
+
+        .suggestion-chip:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .weather-widget {
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+            color: var(--text-muted);
+        }
+
+        .weather-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .typing-indicator {
+            padding: 8px 15px;
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: translateY(0);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-10px);
+            }
+        }
+
+        .emoji-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .emoji-btn:hover {
+            color: var(--accent);
+            background: rgba(32, 128, 132, 0.1);
+        }
     </style>
 </head>
 
@@ -927,8 +1031,12 @@
             <button class="menu-btn" onclick="app.toggleSidebar()" style="display: none; background: none; border: none; color: var(--text-main); font-size: 20px; cursor: pointer; padding: 5px;">
                 <i class="fas fa-bars"></i>
             </button>
-            <h2 id="pageTitle">Dashboard</h2>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <h2 id="pageTitle">Dashboard</h2>
+                <div id="clock" style="font-size: 14px; color: var(--text-muted);"></div>
+            </div>
             <div class="header-actions">
+                <div id="weatherWidget" style="margin-right: 15px;"></div>
                 <button class="icon-btn-header" onclick="app.toggleTheme()" title="Toggle Theme">
                     <i class="fas fa-moon" id="themeIcon2"></i>
                 </button>
@@ -1008,6 +1116,8 @@
                     <i class="fas fa-plus"></i> Add
                 </button>
             </div>
+
+            <div id="taskSuggestions" style="margin-bottom: 15px;"></div>
 
             <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
                 <button class="btn btn-secondary" onclick="app.setTaskFilter('all')">All</button>
@@ -1176,12 +1286,33 @@
                         <i class="fas fa-comments"></i> Group Chat
                     </h3>
                     <div id="chatMessages" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; min-height: 200px; margin-bottom: 10px; padding-right: 10px;"></div>
+                    <div id="typingIndicator" style="margin-bottom: 5px;"></div>
                     <div class="chat-input-area" style="gap: 8px; padding: 8px; margin: 0; border-top: 1px solid var(--border);">
                         
-<input type="text" id="chatInput" class="main-input" placeholder="Type a message..." style="padding: 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px;">
+<input type="text" id="chatInput" class="main-input" placeholder="Type a message..." style="padding: 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px;" oninput="app.handleTyping()">
+                        <button class="emoji-btn" onclick="app.toggleEmojiPicker()" title="Add emoji">😊</button>
                         <button class="btn btn-primary" onclick="app.sendMessage()" style="padding: 8px 16px; margin: 0;">
                             <i class="fas fa-paper-plane"></i>
                         </button>
+                    </div>
+                    <div id="emojiPicker" style="display: none; grid-template-columns: repeat(8, 1fr); gap: 5px; padding: 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin-top: 5px;">
+                        <!-- Common emojis -->
+                        <button class="emoji-btn" onclick="app.addEmoji('😀')">😀</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('😂')">😂</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('❤️')">❤️</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('👍')">👍</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('🎉')">🎉</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('🔥')">🔥</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('💪')">💪</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('🚀')">🚀</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('😊')">😊</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('🤔')">🤔</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('😎')">😎</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('🤝')">🤝</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('💯')">💯</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('⚡')">⚡</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('🌟')">🌟</button>
+                        <button class="emoji-btn" onclick="app.addEmoji('✨')">✨</button>
                     </div>
                 </div>
 
@@ -1276,12 +1407,22 @@
             taskFilter: "all",
             idleStartTime: Date.now(),
             idleInterval: null,
+            
+            // Enhanced features from Daily_TaskPro
+            taskHistory: JSON.parse(localStorage.getItem("taskHistory") || "[]"),
+            dailyGoal: parseInt(localStorage.getItem("dailyGoal") || "5"),
+            weatherData: null,
+            typingUsers: new Set(),
+            emojiPickerVisible: false,
 
             // ===== INITIALIZATION =====
             async init() {
                 this.applyTheme();
                 this.setupEventListeners();
                 this.startIdleTimer();
+                this.fetchWeather();
+                this.updateClock();
+                setInterval(() => this.updateClock(), 60000);
 
                 // Check authentication
                 const { data: { session } } = await supabase.auth.getSession();
@@ -1320,6 +1461,92 @@
                     document.getElementById("idleDisplay").textContent = 
                         `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
                 }, 1000);
+            },
+
+            // Enhanced utility functions
+            updateClock() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateString = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+                
+                const clockEl = document.getElementById('clock');
+                if (clockEl) {
+                    clockEl.innerHTML = `${timeString} <span style="font-size:11px; opacity:0.7;">${dateString}</span>`;
+                }
+            },
+
+            async fetchWeather() {
+                // Simple weather simulation - replace with real API if needed
+                const weatherConditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Rain'];
+                const temperatures = [18, 22, 25, 28, 30];
+                
+                this.weatherData = {
+                    condition: weatherConditions[Math.floor(Math.random() * weatherConditions.length)],
+                    temp: temperatures[Math.floor(Math.random() * temperatures.length)],
+                    location: 'Your Location'
+                };
+                
+                this.updateWeatherDisplay();
+            },
+
+            updateWeatherDisplay() {
+                const weatherEl = document.getElementById('weatherWidget');
+                if (weatherEl && this.weatherData) {
+                    const weatherIcons = {
+                        'Sunny': '☀️',
+                        'Partly Cloudy': '⛅',
+                        'Cloudy': '☁️',
+                        'Light Rain': '🌧️'
+                    };
+                    
+                    weatherEl.innerHTML = `
+                        <div class="weather-widget">
+                            <div class="weather-info">
+                                ${weatherIcons[this.weatherData.condition] || '🌡️'} ${this.weatherData.temp}°C
+                            </div>
+                            <div style="font-size: 10px; color: var(--text-muted);">
+                                ${this.weatherData.condition}
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+
+            loadTaskSuggestions() {
+                const container = document.getElementById('taskSuggestions');
+                if (!container) return;
+                
+                if (this.taskHistory.length === 0) {
+                    container.innerHTML = '';
+                    return;
+                }
+                
+                container.innerHTML = `
+                    <div class="suggestions">
+                        ${this.taskHistory.slice(0, 5).map(task => `
+                            <div class="suggestion-chip" onclick="app.addSuggestedTask('${task.replace(/'/g, "\\'")}')">
+                                <i class="fas fa-history"></i> ${task}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            },
+
+            addSuggestedTask(taskText) {
+                const input = document.getElementById('taskInput');
+                input.value = taskText;
+                input.focus();
+            },
+
+            addToTaskHistory(taskText) {
+                if (!this.taskHistory.includes(taskText)) {
+                    this.taskHistory.unshift(taskText);
+                    if (this.taskHistory.length > 8) {
+                        this.taskHistory.pop();
+                    }
+                    localStorage.setItem('taskHistory', JSON.stringify(this.taskHistory));
+                    this.loadTaskSuggestions();
+                }
             },
 
             // ===== AUTHENTICATION =====
@@ -1514,6 +1741,9 @@
                     return;
                 }
 
+                // Add to task history
+                this.addToTaskHistory(title);
+
                 try {
                     const { data, error } = await supabase
                         .from("tasks")
@@ -1525,7 +1755,10 @@
                             priority,
                             completed: false,
                             description: "",
-                            created_at: new Date().toISOString()
+                            created_at: new Date().toISOString(),
+                            // Enhanced fields
+                            tags: (title.match(/#\w+/g) || []).map(t => t.replace('#','')),
+                            subtasks: []
                         })
                         .select();
 
@@ -1537,6 +1770,7 @@
                     document.getElementById("dateInput").value = "";
                     this.renderTasks();
                     this.updateDashboard();
+                    this.loadTaskSuggestions();
                 } catch (error) {
                     alert("Error adding task: " + error.message);
                 }
@@ -1683,6 +1917,8 @@
                 const message = input.value.trim();
                 if (!message) return;
 
+                this.stopTyping();
+
                 try {
                     const { data, error } = await supabase
                         .from("chat_messages")
@@ -1690,7 +1926,10 @@
                             user_id: this.currentUser.id,
                             username: this.currentUser.email.split("@")[0],
                             message,
-                            created_at: new Date().toISOString()
+                            created_at: new Date().toISOString(),
+                            // Enhanced fields
+                            edited: false,
+                            reactions: []
                         })
                         .select();
 
@@ -1704,14 +1943,148 @@
                 }
             },
 
+            handleTyping() {
+                if (!this.currentUser) return;
+                
+                // Broadcast typing indicator
+                this.typingUsers.add(this.currentUser.id);
+                this.updateTypingIndicator();
+                
+                // Stop typing after 3 seconds
+                clearTimeout(this.typingTimeout);
+                this.typingTimeout = setTimeout(() => {
+                    this.stopTyping();
+                }, 3000);
+            },
+
+            stopTyping() {
+                if (!this.currentUser) return;
+                
+                this.typingUsers.delete(this.currentUser.id);
+                this.updateTypingIndicator();
+                clearTimeout(this.typingTimeout);
+            },
+
+            updateTypingIndicator() {
+                const indicator = document.getElementById('typingIndicator');
+                if (!indicator) return;
+                
+                const otherTypingUsers = Array.from(this.typingUsers).filter(uid => uid !== this.currentUser?.id);
+                
+                if (otherTypingUsers.length > 0) {
+                    const usernames = otherTypingUsers.map(uid => {
+                        const user = this.chatMessages.find(msg => msg.user_id === uid);
+                        return user ? user.username : 'Someone';
+                    });
+                    
+                    indicator.innerHTML = `
+                        <div class="typing-indicator">
+                            <div class="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            ${usernames.join(', ')} ${usernames.length === 1 ? 'is' : 'are'} typing...
+                        </div>
+                    `;
+                } else {
+                    indicator.innerHTML = '';
+                }
+            },
+
+            toggleEmojiPicker() {
+                this.emojiPickerVisible = !this.emojiPickerVisible;
+                const picker = document.getElementById('emojiPicker');
+                if (picker) {
+                    picker.style.display = this.emojiPickerVisible ? 'grid' : 'none';
+                }
+            },
+
+            addEmoji(emoji) {
+                const input = document.getElementById("chatInput");
+                input.value += emoji;
+                input.focus();
+                this.toggleEmojiPicker();
+            },
+
+            async editChatMessage(msgId, currentText) {
+                const newText = prompt('Edit your message:', currentText);
+                if (newText === null || newText.trim() === currentText.trim()) return;
+                
+                const trimmedText = newText.trim();
+                if (!trimmedText) {
+                    alert('Message cannot be empty');
+                    return;
+                }
+                
+                try {
+                    const { error } = await supabase
+                        .from("chat_messages")
+                        .update({ 
+                            message: trimmedText, 
+                            edited: true,
+                            edited_at: new Date().toISOString()
+                        })
+                        .eq("id", msgId);
+                    
+                    if (error) throw error;
+                    
+                    // Update local message
+                    const msgIndex = this.chatMessages.findIndex(m => m.id === msgId);
+                    if (msgIndex !== -1) {
+                        this.chatMessages[msgIndex].message = trimmedText;
+                        this.chatMessages[msgIndex].edited = true;
+                        this.renderChat();
+                    }
+                } catch (error) {
+                    alert("Error editing message: " + error.message);
+                }
+            },
+
+            async deleteChatMessage(msgId) {
+                if (!confirm('Delete this message?')) return;
+                
+                try {
+                    const { error } = await supabase
+                        .from("chat_messages")
+                        .delete()
+                        .eq("id", msgId);
+                    
+                    if (error) throw error;
+                    
+                    // Remove from local messages
+                    this.chatMessages = this.chatMessages.filter(m => m.id !== msgId);
+                    this.renderChat();
+                } catch (error) {
+                    alert("Error deleting message: " + error.message);
+                }
+            },
+
             renderChat() {
                 const container = document.getElementById("chatMessages");
                 container.innerHTML = this.chatMessages.map(msg => {
                     const isOwn = msg.user_id === this.currentUser.id;
+                    const time = new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                    const editedText = msg.edited ? '<span style="color:var(--text-muted); font-size:9px; font-style:italic; margin-left:5px;">edited</span>' : '';
+                    
                     return `
-                        <div class="chat-msg ${isOwn ? "me" : "them"}">
-                            <div style="font-size: 11px; opacity: 0.7; margin-bottom: 4px;">${msg.username}</div>
-                            <div>${msg.message}</div>
+                        <div class="chat-msg ${isOwn ? "me" : "them"}" id="msg-${msg.id}">
+                            <div style="font-size: 11px; opacity: 0.7; margin-bottom: 4px; display:flex; justify-content:space-between; align-items:center;">
+                                <span>${msg.username} • ${time}</span>
+                                ${isOwn ? `
+                                <div style="display:flex; gap:8px; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px;">
+                                    <button onclick="app.editChatMessage('${msg.id}', '${msg.message.replace(/'/g, "\\'")}')" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:11px; padding:2px 4px; border-radius:2px;" title="Edit message">
+                                        <i class="fas fa-pencil"></i> Edit
+                                    </button>
+                                    <button onclick="app.deleteChatMessage('${msg.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:11px; padding:2px 4px; border-radius:2px;" title="Delete message">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>` : ''}
+                            </div>
+                            <div class="msg-content">${msg.message}</div>
+                            <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">
+                                ${editedText}
+                            </div>
                         </div>
                     `;
                 }).join("");
@@ -2230,6 +2603,8 @@
                 this.renderHabits();
                 this.renderCalendar();
                 this.updateDashboard();
+                this.loadTaskSuggestions();
+                this.updateWeatherDisplay();
             },
 
             // ===== UI UTILITIES =====
