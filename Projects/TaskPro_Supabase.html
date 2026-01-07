@@ -1098,13 +1098,9 @@
         <!-- TASKS VIEW -->
         <div id="tasks" class="view-container">
             <div class="input-group">
-                <input type="text" id="taskInput" class="main-input" placeholder="Add a task...">
-                <select id="hashtagSelect" class="select-input" style="width: auto;">
-                    <option value="">Tags</option>
-                    <option value="work">Work</option>
-                    <option value="personal">Personal</option>
-                    <option value="health">Health</option>
-                    <option value="learning">Learning</option>
+                <input type="text" id="taskInput" class="main-input" placeholder="Add a task... (Use #tag)">
+                <select id="hashtagSelect" class="select-input" style="width: auto; margin-left: 5px;" onchange="app.addSelectedHashtag()">
+                    <option value=""># Tags</option>
                 </select>
                 <input type="date" id="dateInput" class="date-input">
                 <select id="prioInput" class="select-input" style="width: auto;">
@@ -1115,6 +1111,7 @@
                 
                 <!-- Advanced Repeat Options -->
                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <span style="font-size:12px; color:var(--text-muted);">Repeat:</span>
                     <input type="number" id="repeatInterval" class="main-input" value="1" min="1" max="999" style="width: 80px;" placeholder="Interval">
                     <select id="repeatUnit" class="select-input" style="width: auto;">
                         <option value="">No repeat</option>
@@ -1139,6 +1136,9 @@
                 <button class="btn btn-primary" onclick="app.handleTaskSubmit()">
                     <i class="fas fa-plus"></i> Add
                 </button>
+            </div>
+            <div class="input-group" style="margin-top: 10px;">
+                <textarea id="taskDescInput" class="main-input" placeholder="Task description (optional)..." style="resize:vertical; min-height:60px; width:100%;"></textarea>
             </div>
 
             <div id="taskSuggestions" style="margin-bottom: 15px;"></div>
@@ -1357,12 +1357,12 @@
             <h2>Welcome to TaskPro</h2>
             <p style="color: var(--text-muted); margin-bottom: 20px;">Sign in or create an account</p>
 
-            <div id="authForm">
-                <input type="email" id="authEmail" placeholder="Email">
-                <input type="password" id="authPassword" placeholder="Password">
-                <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="app.handleSignIn()">Sign In</button>
-                <button class="btn btn-secondary" style="width: 100%;" onclick="app.handleSignUp()">Sign Up</button>
-            </div>
+            <form id="authForm" onsubmit="event.preventDefault(); app.handleSignIn();">
+                <input type="email" id="authEmail" placeholder="Email" required>
+                <input type="password" id="authPassword" placeholder="Password" required>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">Sign In</button>
+                <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="app.handleSignUp()">Sign Up</button>
+            </form>
 
             <div id="authLoading" class="hidden" style="text-align: center; color: var(--text-muted);">
                 <i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i>
@@ -1378,6 +1378,217 @@
 
         const { createClient } = window.supabase;
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ===== AUDIO ENGINE =====
+        const AudioEngine = {
+            ctx: null,
+            activeNodes: [],
+            gainNode: null,
+            alarmInterval: null,
+            alarmOsc: null,
+
+            init: () => {
+                if(!AudioEngine.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    AudioEngine.ctx = new AudioContext();
+                }
+                if(AudioEngine.ctx.state === 'suspended') {
+                    AudioEngine.ctx.resume();
+                }
+            },
+
+            playBeep: (type) => {
+                AudioEngine.init();
+                const t = AudioEngine.ctx.currentTime;
+                const osc = AudioEngine.ctx.createOscillator();
+                const gain = AudioEngine.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(AudioEngine.ctx.destination);
+
+                if (type === 'start') {
+                    osc.frequency.setValueAtTime(440, t);
+                    osc.frequency.exponentialRampToValueAtTime(880, t + 0.1);
+                    gain.gain.setValueAtTime(0.1, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                    osc.start(t);
+                    osc.stop(t + 0.5);
+                }
+            },
+
+            playAlarm: () => {
+                AudioEngine.init();
+                if(AudioEngine.alarmInterval) clearInterval(AudioEngine.alarmInterval);
+                
+                const playPulse = () => {
+                    const t = AudioEngine.ctx.currentTime;
+                    const osc = AudioEngine.ctx.createOscillator();
+                    const gain = AudioEngine.ctx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(AudioEngine.ctx.destination);
+                    
+                    osc.frequency.setValueAtTime(880, t);
+                    osc.frequency.setValueAtTime(1100, t + 0.2);
+                    
+                    gain.gain.setValueAtTime(0.2, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                    
+                    osc.type = 'square';
+                    osc.start(t);
+                    osc.stop(t + 0.5);
+                };
+
+                playPulse();
+                AudioEngine.alarmInterval = setInterval(playPulse, 1000);
+            },
+
+            stopAlarm: () => {
+                if(AudioEngine.alarmInterval) {
+                    clearInterval(AudioEngine.alarmInterval);
+                    AudioEngine.alarmInterval = null;
+                }
+            },
+
+            createNoiseBuffer: () => {
+                const bufferSize = AudioEngine.ctx.sampleRate * 2; 
+                const buffer = AudioEngine.ctx.createBuffer(1, bufferSize, AudioEngine.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                return buffer;
+            },
+
+            playBackground: (type) => {
+                AudioEngine.stopBackground();
+                if(type === 'none') return;
+                AudioEngine.init();
+                const t = AudioEngine.ctx.currentTime;
+                
+                AudioEngine.gainNode = AudioEngine.ctx.createGain();
+                AudioEngine.gainNode.gain.setValueAtTime(0.1, t);
+                AudioEngine.gainNode.connect(AudioEngine.ctx.destination);
+
+                if (['white', 'wind', 'rain', 'brown', 'ocean', 'fan'].includes(type)) {
+                    const noise = AudioEngine.ctx.createBufferSource();
+                    noise.buffer = AudioEngine.createNoiseBuffer();
+                    noise.loop = true;
+                    
+                    let finalNode = noise;
+
+                    if (type === 'wind' || type === 'rain') { 
+                        const filter = AudioEngine.ctx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.value = type === 'wind' ? 400 : 800; 
+                        noise.connect(filter);
+                        finalNode = filter;
+                    } 
+                    if (type === 'brown') {
+                         const filter = AudioEngine.ctx.createBiquadFilter();
+                         filter.type = 'lowpass';
+                         filter.frequency.value = 150;
+                         noise.connect(filter);
+                         finalNode = filter;
+                    }
+                    if (type === 'ocean') {
+                        const filter = AudioEngine.ctx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.Q.value = 1;
+                        noise.connect(filter);
+                        const lfo = AudioEngine.ctx.createOscillator();
+                        lfo.type = 'sine';
+                        lfo.frequency.value = 0.1; 
+                        const lfoGain = AudioEngine.ctx.createGain();
+                        lfoGain.gain.value = 300;
+                        lfo.connect(lfoGain);
+                        lfoGain.connect(filter.frequency);
+                        filter.frequency.setValueAtTime(400, t);
+                        lfo.start();
+                        AudioEngine.activeNodes.push(lfo);
+                        finalNode = filter;
+                    }
+                    if (type === 'fan') {
+                        const filter = AudioEngine.ctx.createBiquadFilter();
+                        filter.type = 'bandpass';
+                        filter.frequency.value = 150;
+                        filter.Q.value = 2;
+                        noise.connect(filter);
+                        finalNode = filter;
+                    }
+
+                    finalNode.connect(AudioEngine.gainNode);
+                    noise.start();
+                    AudioEngine.activeNodes.push(noise);
+                } 
+                
+                if (type === 'beats') {
+                    const osc1 = AudioEngine.ctx.createOscillator();
+                    const osc2 = AudioEngine.ctx.createOscillator();
+                    osc1.frequency.value = 200;
+                    osc2.frequency.value = 205; 
+                    osc1.connect(AudioEngine.gainNode);
+                    osc2.connect(AudioEngine.gainNode);
+                    osc1.start(); osc2.start();
+                    AudioEngine.activeNodes.push(osc1, osc2);
+                }
+
+                if (type === 'forest') {
+                    const noise = AudioEngine.ctx.createBufferSource();
+                    noise.buffer = AudioEngine.createNoiseBuffer();
+                    noise.loop = true;
+                    const filter = AudioEngine.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 500;
+                    noise.connect(filter);
+                    const noiseGain = AudioEngine.ctx.createGain();
+                    noiseGain.gain.value = 0.3;
+                    filter.connect(noiseGain);
+                    noiseGain.connect(AudioEngine.gainNode);
+                    noise.start();
+                    AudioEngine.activeNodes.push(noise);
+
+                    const playChirp = () => {
+                        if(AudioEngine.activeNodes.length === 0) return;
+                        const osc = AudioEngine.ctx.createOscillator();
+                        const g = AudioEngine.ctx.createGain();
+                        osc.frequency.setValueAtTime(1500 + Math.random()*1000, AudioEngine.ctx.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(1000 + Math.random()*500, AudioEngine.ctx.currentTime + 0.1);
+                        g.gain.setValueAtTime(0, AudioEngine.ctx.currentTime);
+                        g.gain.linearRampToValueAtTime(0.1, AudioEngine.ctx.currentTime + 0.05);
+                        g.gain.linearRampToValueAtTime(0, AudioEngine.ctx.currentTime + 0.2);
+                        osc.connect(g);
+                        g.connect(AudioEngine.gainNode);
+                        osc.start(); osc.stop(AudioEngine.ctx.currentTime + 0.2);
+                        setTimeout(playChirp, 1000 + Math.random() * 4000);
+                    };
+                    playChirp();
+                }
+
+                if (type === 'night') {
+                    const car = AudioEngine.ctx.createOscillator();
+                    car.frequency.value = 4500;
+                    const mod = AudioEngine.ctx.createOscillator();
+                    mod.type = 'square';
+                    mod.frequency.value = 10;
+                    const modGain = AudioEngine.ctx.createGain();
+                    modGain.gain.value = 1000;
+                    
+                    const masterG = AudioEngine.ctx.createGain();
+                    masterG.gain.value = 0.05;
+                    
+                    mod.connect(masterG.gain);
+                    car.connect(masterG);
+                    masterG.connect(AudioEngine.gainNode);
+                    
+                    car.start(); mod.start();
+                    AudioEngine.activeNodes.push(car, mod);
+                }
+            },
+
+            stopBackground: () => {
+                AudioEngine.activeNodes.forEach(n => { try{n.stop();}catch(e){}});
+                AudioEngine.activeNodes = [];
+                if(AudioEngine.gainNode) { AudioEngine.gainNode.disconnect(); AudioEngine.gainNode = null; }
+            }
+        };
 
         // ===== APPLICATION STATE =====
         const app = {
@@ -2157,6 +2368,9 @@
 
             // ===== INITIALIZATION =====
             async init() {
+                // Initialize Audio Engine
+                AudioEngine.init();
+                
                 this.applyTheme();
                 this.setupEventListeners();
                 this.startIdleTimer();
@@ -2489,6 +2703,9 @@
                 this.addToTaskHistory(title);
 
                 try {
+                    const descInput = document.getElementById("taskDescInput");
+                    const description = descInput ? descInput.value.trim() : "";
+                    
                     const { data, error } = await supabase
                         .from("tasks")
                         .insert({
@@ -2499,7 +2716,7 @@
                             priority,
                             repeat: repeat,
                             completed: false,
-                            description: "",
+                            description: description,
                             created_at: new Date().toISOString(),
                             // Enhanced fields
                             tags: (title.match(/#\w+/g) || []).map(t => t.replace('#','')),
@@ -2511,6 +2728,7 @@
 
                     this.tasks.unshift(data[0]);
                     document.getElementById("taskInput").value = "";
+                    if (descInput) descInput.value = "";
                     document.getElementById("hashtagSelect").value = "";
                     document.getElementById("dateInput").value = "";
                     this.removeRepeat(); // Clear repeat after adding
@@ -2543,19 +2761,74 @@
                 const task = this.tasks.find(t => t.id === id);
                 if (task) {
                     try {
+                        const newVal = !task.completed;
                         const { error } = await supabase
                             .from("tasks")
-                            .update({ completed: !task.completed })
+                            .update({ completed: newVal })
                             .eq("id", id);
 
                         if (error) throw error;
 
-                        task.completed = !task.completed;
+                        // Handle repeat: create next occurrence when completing a repeated task
+                        if (newVal && task.repeat && task.repeat !== 'remove') {
+                            const nextTask = this.createNextOccurrence(task);
+                            if (nextTask) {
+                                const sbNextTask = {
+                                    ...nextTask,
+                                    user_id: this.currentUser.id,
+                                    title: nextTask.title || nextTask.text || task.title
+                                };
+                                delete sbNextTask.text;
+                                await supabase.from("tasks").insert(sbNextTask);
+                            }
+                        }
+
+                        task.completed = newVal;
                         this.renderTasks();
                         this.updateDashboard();
                     } catch (error) {
                         alert("Error updating task: " + error.message);
                     }
+                }
+            },
+
+            // ===== SUBTASK MANAGEMENT =====
+            async addSubtask(parentId, subText) {
+                const task = this.tasks.find(t => t.id === parentId);
+                if (!task) return;
+                const newSub = {
+                    id: Date.now(),
+                    text: subText,
+                    description: '',
+                    completed: false
+                };
+                const nextSubs = [...(task.subtasks || []), newSub];
+                const { error } = await supabase.from('tasks').update({ subtasks: nextSubs }).eq('id', parentId).eq('user_id', this.currentUser.id);
+                if (!error) {
+                    task.subtasks = nextSubs;
+                    this.renderTasks();
+                }
+            },
+
+            async toggleSubtask(parentId, subId) {
+                const task = this.tasks.find(t => t.id === parentId);
+                if (!task) return;
+                const nextSubs = (task.subtasks || []).map(s => s.id == subId ? { ...s, completed: !s.completed } : s);
+                const { error } = await supabase.from('tasks').update({ subtasks: nextSubs }).eq('id', parentId).eq('user_id', this.currentUser.id);
+                if (!error) {
+                    task.subtasks = nextSubs;
+                    this.renderTasks();
+                }
+            },
+
+            async deleteSubtask(parentId, subId) {
+                const task = this.tasks.find(t => t.id === parentId);
+                if (!task) return;
+                const nextSubs = (task.subtasks || []).filter(s => s.id != subId);
+                const { error } = await supabase.from('tasks').update({ subtasks: nextSubs }).eq('id', parentId).eq('user_id', this.currentUser.id);
+                if (!error) {
+                    task.subtasks = nextSubs;
+                    this.renderTasks();
                 }
             },
 
@@ -2640,6 +2913,41 @@
                 document.getElementById('repeatInterval').value = '1';
                 document.getElementById('repeatUnit').value = '';
                 document.getElementById('weekdaySelect').style.display = 'none';
+            },
+            
+            loadHashtagSelect: function() {
+                const select = document.getElementById('hashtagSelect');
+                if (!select) return;
+                
+                const currentValue = select.value;
+                const completedTasks = this.tasks.filter(t => t.completed);
+                const completedTags = new Set();
+                
+                completedTasks.forEach(t => {
+                    if (t.tags && Array.isArray(t.tags)) {
+                        t.tags.forEach(tag => completedTags.add(tag));
+                    }
+                });
+                
+                select.innerHTML = '<option value=""># Tags</option>';
+                completedTags.forEach(tag => {
+                    const option = document.createElement('option');
+                    option.value = tag;
+                    option.textContent = '#' + tag;
+                    if(tag === currentValue) option.selected = true;
+                    select.appendChild(option);
+                });
+            },
+            
+            addSelectedHashtag: function() {
+                const select = document.getElementById('hashtagSelect');
+                const taskInput = document.getElementById('taskInput');
+                if (!select || !taskInput) return;
+                
+                const selectedTag = select.value;
+                if (selectedTag && !taskInput.value.includes('#' + selectedTag)) {
+                    taskInput.value = taskInput.value.trim() + ' #' + selectedTag;
+                }
             },
 
             createNextOccurrence: function(task) {
@@ -2776,16 +3084,39 @@
                     filtered = this.tasks.filter(t => !t.completed);
                 }
 
-                container.innerHTML = filtered.map(task => `
+                container.innerHTML = filtered.map(task => {
+                    const tagsHtml = (task.tags || []).map(t => `<span class="tag">#${t}</span>`).join('');
+                    const descHtml = task.description ? `<div style="font-size:12px; color:var(--text-muted); margin-top:5px; padding:5px; background:var(--bg-input); border-radius:4px;">${task.description}</div>` : '';
+                    const repeatHtml = task.repeat ? `<span style="background:var(--accent); color:white; padding:2px 6px; border-radius:10px; font-size:10px; margin-left:5px;"><i class="fas fa-redo"></i> ${task.repeat}</span>` : '';
+                    
+                    const subtasksHtml = (task.subtasks || []).length > 0 ? `
+                        <div class="subtasks" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+                            ${(task.subtasks || []).map(sub => `
+                                <div style="display:flex; align-items:center; gap:8px; padding:5px; margin:3px 0;">
+                                    <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="app.toggleSubtask('${task.id}', '${sub.id}')" style="width:16px; height:16px;">
+                                    <span style="font-size:13px; ${sub.completed ? 'text-decoration:line-through; opacity:0.6;' : ''}">${sub.text}</span>
+                                    <button class="btn btn-icon" onclick="app.deleteSubtask('${task.id}', '${sub.id}')" style="margin-left:auto; padding:2px 6px; font-size:10px;"><i class="fas fa-times"></i></button>
+                                </div>
+                            `).join('')}
+                            <div style="margin-top:8px;">
+                                <input type="text" id="sub-input-${task.id}" placeholder="+ Add subtask" style="width:100%; padding:6px; background:var(--bg-input); border:1px solid var(--border); border-radius:4px; font-size:12px; color:var(--text-main);" onkeydown="if(event.key==='Enter') { const val = this.value.trim(); if(val) { app.addSubtask('${task.id}', val); this.value=''; } }">
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="subtasks" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+                            <input type="text" id="sub-input-${task.id}" placeholder="+ Add subtask" style="width:100%; padding:6px; background:var(--bg-input); border:1px solid var(--border); border-radius:4px; font-size:12px; color:var(--text-main);" onkeydown="if(event.key==='Enter') { const val = this.value.trim(); if(val) { app.addSubtask('${task.id}', val); this.value=''; } }">
+                        </div>
+                    `;
+                    
+                    return `
                     <div class="task-card priority-${task.priority}">
                         <div class="task-header">
                             <input type="checkbox" class="checkbox" ${task.completed ? "checked" : ""} onchange="app.toggleTask('${task.id}')" >
-                            <div class="task-content">
-                                <div class="task-title" style="${task.completed ? "text-decoration: line-through; opacity: 0.6;" : ""}">${task.title}</div>
-                                <div class="task-meta">
-                                    ${task.tag ? `<span class="tag">${task.tag}</span>` : ""}
-                                    
-                                    <span>${new Date(task.date).toLocaleDateString()}</span>
+                            <div class="task-content" style="flex:1;">
+                                <div class="task-title" style="${task.completed ? "text-decoration: line-through; opacity: 0.6;" : ""}">${task.title.replace(/#\w+/g,'')} ${tagsHtml} ${repeatHtml}</div>
+                                ${descHtml}
+                                <div class="task-meta" style="margin-top:8px;">
+                                    <span>${task.date ? new Date(task.date).toLocaleDateString() : 'No date'}</span>
                                     <span>${task.priority.toUpperCase()}</span>
                                 </div>
                             </div>
@@ -2796,8 +3127,10 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
+                        ${subtasksHtml}
                     </div>
-                `).join("");
+                `;
+                }).join("");
 
                 // Update badge
                 const activeTasks = this.tasks.filter(t => !t.completed).length;
@@ -2879,8 +3212,6 @@
                             username: this.currentUser.email.split('@')[0],
                             score: score,
                             last_updated: new Date().toISOString()
-                        }, {
-                            onConflict: 'user_id'
                         });
                     
                     if (error) {
@@ -2949,8 +3280,6 @@
                             status: 'online',
                             last_seen: new Date().toISOString(),
                             current_tab: this.currentTab
-                        }, {
-                            onConflict: 'user_id'
                         });
                     
                     if (error) {
@@ -3209,7 +3538,8 @@
                     const { error } = await supabase
                         .from("habits")
                         .delete()
-                        .eq("id", id);
+                        .eq("id", id)
+                        .eq("user_id", this.currentUser.id);
 
                     if (error) throw error;
 
@@ -3227,7 +3557,8 @@
                         const { error } = await supabase
                             .from("habits")
                             .update({ completed_today: !habit.completed_today })
-                            .eq("id", id);
+                            .eq("id", id)
+                            .eq("user_id", this.currentUser.id);
 
                         if (error) throw error;
 
@@ -3462,8 +3793,12 @@
                 const tm = Math.floor((totalTime % 3600000) / 60000);
                 const ts = Math.floor((totalTime % 60000) / 1000);
 
-                document.getElementById("totalStopwatchTime").textContent = 
-                    `${th.toString().padStart(2, "0")}:${tm.toString().padStart(2, "0")}:${ts.toString().padStart(2, "0")}`;
+                // Update total stopwatch time display if element exists
+                const totalTimeEl = document.getElementById("totalStopwatchTime");
+                if (totalTimeEl) {
+                    totalTimeEl.textContent = 
+                        `${th.toString().padStart(2, "0")}:${tm.toString().padStart(2, "0")}:${ts.toString().padStart(2, "0")}`;
+                }
 
                 document.getElementById("btnStartStopwatch").textContent = this.stopwatchData.isRunning ? "Pause" : "Start";
                 document.getElementById("btnLapStopwatch").style.display = this.stopwatchData.isRunning ? "inline-flex" : "none";
@@ -3615,26 +3950,143 @@
 
             // ===== DASHBOARD =====
             updateDashboard() {
-                const total = this.tasks.length;
+                // Count tasks including subtasks
+                let totalTasks = this.tasks.length;
+                this.tasks.forEach(t => {
+                    if (t.subtasks && Array.isArray(t.subtasks)) {
+                        totalTasks += t.subtasks.length;
+                    }
+                });
+                
                 const completed = this.tasks.filter(t => t.completed).length;
-                const pending = total - completed;
+                const pending = this.tasks.length - completed;
 
-                document.getElementById("dashTotal").textContent = total;
-                document.getElementById("dashDone").textContent = completed;
-                document.getElementById("dashPending").textContent = pending;
-                document.getElementById("streakCount").textContent = this.focusData.sessionCount;
+                const dashTotalEl = document.getElementById("dashTotal");
+                const dashDoneEl = document.getElementById("dashDone");
+                const dashPendingEl = document.getElementById("dashPending");
+                
+                if (dashTotalEl) dashTotalEl.textContent = totalTasks;
+                if (dashDoneEl) dashDoneEl.textContent = completed;
+                if (dashPendingEl) dashPendingEl.textContent = pending;
+                
+                const streakEl = document.getElementById("streakCount");
+                if (streakEl) streakEl.textContent = this.focusData.sessionCount;
 
                 const focusHours = Math.floor(this.focusData.totalFocusTime / 3600000);
                 const focusMinutes = Math.floor((this.focusData.totalFocusTime % 3600000) / 60000);
-                document.getElementById("focusTimeDisplay").textContent = `${focusHours}h ${focusMinutes}m`;
+                const focusTimeEl = document.getElementById("focusTimeDisplay");
+                if (focusTimeEl) focusTimeEl.textContent = `${focusHours}h ${focusMinutes}m`;
 
-                document.getElementById("totalSessionsDisplay").textContent = this.focusData.sessionCount;
+                const sessionsEl = document.getElementById("totalSessionsDisplay");
+                if (sessionsEl) sessionsEl.textContent = this.focusData.sessionCount;
 
                 const goal = 3 * 3600000; // 3 hours
                 const percent = Math.min(100, Math.floor((this.focusData.totalFocusTime / goal) * 100));
-                document.getElementById("goalPercentDisplay").textContent = `${percent}%`;
+                const goalPercentEl = document.getElementById("goalPercentDisplay");
+                if (goalPercentEl) goalPercentEl.textContent = `${percent}%`;
 
-                this.renderChart();
+                this.renderDashboardCharts();
+            },
+            
+            renderDashboardCharts() {
+                // Update tag filter dropdown
+                const allTags = new Set();
+                this.tasks.forEach(t => {
+                    if (t.tags && Array.isArray(t.tags)) {
+                        t.tags.forEach(tag => allTags.add(tag));
+                    }
+                });
+                
+                const tagSelect = document.getElementById('dashFilterTag');
+                if (tagSelect && tagSelect.options.length === 1) {
+                    allTags.forEach(tag => {
+                        const opt = document.createElement('option');
+                        opt.value = tag;
+                        opt.textContent = '#' + tag;
+                        tagSelect.appendChild(opt);
+                    });
+                }
+                
+                // Productivity Trend Chart (Last 7 days)
+                const chartEl1 = document.getElementById('mainChart') || document.getElementById('dashboardChart');
+                if (chartEl1) {
+                    const ctx1 = chartEl1.getContext('2d');
+                    if (this.charts && this.charts.main) this.charts.main.destroy();
+                    
+                    const labels = [];
+                    const dataPoints = [];
+                    for(let i = 6; i >= 0; i--) {
+                        const d = new Date();
+                        d.setDate(d.getDate() - i);
+                        const k = d.toISOString().split('T')[0];
+                        labels.push(k.slice(5));
+                        dataPoints.push(this.tasks.filter(t => t.date === k && t.completed).length);
+                    }
+                    
+                    if (!this.charts) this.charts = {};
+                    this.charts.main = new Chart(ctx1, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Completed Tasks',
+                                data: dataPoints,
+                                borderColor: getComputedStyle(document.body).getPropertyValue('--accent') || '#208084',
+                                backgroundColor: 'rgba(32, 128, 132, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                }
+                
+                // Hashtag Analysis Chart (use dashboardChart if tagChart doesn't exist)
+                const chartEl2 = document.getElementById('tagChart') || document.getElementById('dashboardChart');
+                if (chartEl2) {
+                    const ctx2 = chartEl2.getContext('2d');
+                    if (this.charts && this.charts.tags) this.charts.tags.destroy();
+                    
+                    const tagCounts = {};
+                    this.tasks.forEach(t => {
+                        if (t.tags && Array.isArray(t.tags)) {
+                            t.tags.forEach(tag => {
+                                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                            });
+                        }
+                    });
+                    
+                    if (!this.charts) this.charts = {};
+                    this.charts.tags = new Chart(ctx2, {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(tagCounts),
+                            datasets: [{
+                                data: Object.values(tagCounts),
+                                backgroundColor: ['#208084', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#8b5cf6']
+                            }]
+                        },
+                        options: {
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: getComputedStyle(document.body).getPropertyValue('--text-main') || '#f8fafc'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
             },
 
             renderChart() {
@@ -3679,14 +4131,15 @@
             },
 
             renderAllData() {
-                this.renderTasks();
-                this.renderNotes();
-                this.renderChat();
-                this.renderHabits();
-                this.renderCalendar();
-                this.updateDashboard();
-                this.loadTaskSuggestions();
-                this.updateWeatherDisplay();
+                    this.renderTasks();
+                    this.renderNotes();
+                    this.renderChat();
+                    this.renderHabits();
+                    this.renderCalendar();
+                    this.updateDashboard();
+                    this.loadTaskSuggestions();
+                    this.loadHashtagSelect();
+                    this.updateWeatherDisplay();
             },
 
             // ===== UI UTILITIES =====

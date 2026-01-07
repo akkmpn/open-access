@@ -1,5 +1,12 @@
 // Enhanced Service Worker for Supabase Integration
 const CACHE_NAME = 'taskpro-supabase-v9-cache';
+const ASSETS_TO_CACHE = [
+  './',
+  './TaskPro_Supabase.html',
+  './manifest.json',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js'
+];
 
 // Quota monitoring
 let supabaseRequests = 0;
@@ -8,6 +15,9 @@ let lastLogTime = Date.now();
 
 self.addEventListener('install', (event) => {
   console.log('SW Installed for Supabase TaskPro');
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS_TO_CACHE)).catch(() => {})
+  );
   self.skipWaiting();
 });
 
