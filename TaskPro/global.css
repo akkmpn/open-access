@@ -1,0 +1,49 @@
+/* Import Component Styles */
+@import url('modules/login/login.css');
+@import url('modules/dashboard/dashboard.css');
+@import url('modules/tasks/tasks.css');
+@import url('modules/habits/habits.css');
+@import url('modules/notes/notes.css');
+@import url('modules/calendar/calendar.css');
+@import url('modules/pomodoro/pomodoro.css');
+@import url('modules/timer/timer.css');
+@import url('modules/community/community.css');
+@import url('modules/backup/backup.css');
+
+/* SPA Layout */
+#main-app {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 250px;
+    background: #2c3e50;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+#content-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    background: #f4f7f6;
+    padding: 30px;
+}
+
+/* Visibility Control */
+.app-section {
+    display: none; /* All hidden by default */
+}
+
+.app-section.active {
+    display: block; /* Only active shown */
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

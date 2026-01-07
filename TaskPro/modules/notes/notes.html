@@ -1,0 +1,23 @@
+<section id="notes-section" class="app-section">
+    <div class="section-header">
+        <h2>My Notes</h2>
+        <button id="add-note-btn" onclick="openNoteModal()" class="btn-primary">+ New Note</button>
+    </div>
+
+    <div id="notes-list" class="notes-grid">
+        <p class="empty-state">No notes yet. Click the button to add one!</p>
+    </div>
+</section>
+
+<div id="note-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3>Quick Note</h3>
+        <form id="note-form">
+            <textarea id="note-content" placeholder="Start typing your thoughts..." required rows="6"></textarea>
+            <div class="modal-actions">
+                <button type="button" onclick="closeNoteModal()">Discard</button>
+                <button type="submit" class="btn-save">Save Note</button>
+            </div>
+        </form>
+    </div>
+</div>

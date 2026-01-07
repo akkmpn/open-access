@@ -1,0 +1,73 @@
+.community-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    height: 70vh;
+}
+
+/* Chat Styles */
+.chat-container {
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.chat-messages {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f9f9f9;
+}
+
+.message {
+    margin-bottom: 15px;
+    max-width: 80%;
+}
+
+.message.mine {
+    margin-left: auto;
+    text-align: right;
+}
+
+.msg-user {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #555;
+    display: block;
+}
+
+.msg-text {
+    background: white;
+    padding: 10px 15px;
+    border-radius: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    margin-top: 4px;
+}
+
+.message.mine .msg-text {
+    background: #4a90e2;
+    color: white;
+}
+
+/* Leaderboard Styles */
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.rank {
+    font-weight: bold;
+    color: #f39c12;
+    width: 30px;
+}
+
+.user-score {
+    margin-left: auto;
+    font-weight: bold;
+    color: #27ae60;
+}

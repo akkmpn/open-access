@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskPro - Production</title>
+    <link rel="stylesheet" href="global.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="taskpro-theme">
+
+    <div id="auth-screen">
+        <div id="auth-container" class="auth-wrapper">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h2 id="auth-title">Welcome to TaskPro</h2>
+                    <p id="auth-subtitle">Login to sync your productivity</p>
+                </div>
+                <form id="auth-form">
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="auth-email" placeholder="name@company.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="auth-password" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" id="auth-submit-btn" class="btn-auth">Sign In</button>
+                </form>
+                <div class="auth-footer">
+                    <p id="toggle-text">Don't have an account? <a href="#" onclick="toggleAuthMode()">Sign Up</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-app" style="display:none;">
+        <nav class="sidebar">
+            <div class="logo">TaskPro</div>
+            <ul class="nav-links">
+                <li class="nav-link" onclick="showSection('dashboard')">Dashboard</li>
+                <li class="nav-link" onclick="showSection('tasks')">Tasks</li>
+                <li class="nav-link" onclick="showSection('habits')">Habits</li>
+                <li class="nav-link" onclick="showSection('notes')">Notes</li>
+                <li class="nav-link" onclick="showSection('calendar')">Calendar</li>
+                <li class="nav-link" onclick="showSection('pomodoro')">Focus</li>
+                <li class="nav-link" onclick="showSection('timer')">Timer</li>
+                <li class="nav-link" onclick="showSection('community')">Community</li>
+                <li class="nav-link" onclick="showSection('backup')">Settings</li>
+            </ul>
+            <button onclick="handleLogout()" class="logout-btn">Logout</button>
+        </nav>
+
+        <main id="content-area">
+            
+            <div id="dashboard-section" class="app-section">
+                <div class="dashboard-welcome">
+                    <h1>Welcome back, <span id="dash-username">User</span>!</h1>
+                    <p id="dash-date">Thursday, January 8, 2026</p>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3 id="dash-tasks-count">0</h3>
+                            <p>Tasks Today</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔥</div>
+                        <div class="stat-info">
+                            <h3 id="dash-habit-streak">0</h3>
+                            <p>Best Habit Streak</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏱️</div>
+                        <div class="stat-info">
+                            <h3 id="dash-focus-hours">0h 0m</h3>
+                            <p>Focus Time</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-content">
+                    <div class="dash-widget">
+                        <h3>Focus This Week</h3>
+                        <div id="dash-upcoming-list" class="dash-list"></div>
+                    </div>
+                    <div class="dash-widget">
+                        <h3>Productivity Trends</h3>
+                        <div class="chart-container">
+                            <div class="placeholder-chart">
+                                <p>Visualizing your progress...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tasks-section" class="app-section">
+                <div class="section-header">
+                    <h2>My Tasks</h2>
+                    <button id="add-task-btn" onclick="openTaskModal()" class="btn-primary">+ Add New Task</button>
+                </div>
+                <div class="task-filters">
+                    <button class="filter-btn active" onclick="filterTasks('all')">All</button>
+                    <button class="filter-btn" onclick="filterTasks('pending')">Pending</button>
+                    <button class="filter-btn" onclick="filterTasks('completed')">Completed</button>
+                </div>
+                <div id="tasks-list" class="tasks-grid"></div>
+                <div id="task-modal" class="modal" style="display:none;">
+                    <div class="modal-content">
+                        <h3 id="modal-title">Task Details</h3>
+                        <form id="task-form">
+                            <input type="hidden" id="task-id">
+                            <input type="text" id="task-title" placeholder="What needs to be done?" required>
+                            <input type="date" id="task-date" required>
+                            <select id="task-priority">
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                            <input type="text" id="task-tag" placeholder="Tag (e.g. Work)">
+                            <button type="submit" class="btn-save">Save Task</button>
+                            <button type="button" onclick="closeTaskModal()">Cancel</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="habits-section" class="app-section">
+                <div class="section-header">
+                    <h2>Habit Tracker</h2>
+                    <button id="add-habit-btn" onclick="openHabitModal()" class="btn-primary">+ New Habit</button>
+                </div>
+                <div id="habits-list" class="habits-grid"></div>
+                <div id="habit-modal" class="modal" style="display:none;">
+                    <div class="modal-content">
+                        <h3>Track New Habit</h3>
+                        <form id="habit-form">
+                            <input type="text" id="habit-name" placeholder="E.g., Morning Meditating, Gym, Reading" required>
+                            <div class="modal-actions">
+                                <button type="button" onclick="closeHabitModal()">Cancel</button>
+                                <button type="submit" class="btn-save">Start Tracking</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="notes-section" class="app-section">
+                <div class="section-header">
+                    <h2>My Notes</h2>
+                    <button id="add-note-btn" onclick="openNoteModal()" class="btn-primary">+ New Note</button>
+                </div>
+                <div id="notes-list" class="notes-grid">
+                    <p class="empty-state">No notes yet. Click the button to add one!</p>
+                </div>
+                <div id="note-modal" class="modal" style="display:none;">
+                    <div class="modal-content">
+                        <h3>Quick Note</h3>
+                        <form id="note-form">
+                            <textarea id="note-content" placeholder="Start typing your thoughts..." required rows="6"></textarea>
+                            <div class="modal-actions">
+                                <button type="button" onclick="closeNoteModal()">Discard</button>
+                                <button type="submit" class="btn-save">Save Note</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="calendar-section" class="app-section">
+                <div class="calendar-controls">
+                    <button onclick="changeMonth(-1)">❮</button>
+                    <h2 id="current-month-year">Month Year</h2>
+                    <button onclick="changeMonth(1)">❯</button>
+                </div>
+                <div class="calendar-wrapper">
+                    <div class="calendar-weekdays">
+                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div>
+                        <div>Thu</div><div>Fri</div><div>Sat</div>
+                    </div>
+                    <div id="calendar-grid" class="calendar-days"></div>
+                </div>
+                <div id="calendar-preview" class="task-preview-popup" style="display:none;">
+                    <ul id="preview-task-list"></ul>
+                </div>
+            </div>
+
+            <div id="pomodoro-section" class="app-section">
+                <div class="pomodoro-container">
+                    <div class="timer-modes">
+                        <button class="mode-btn active" data-time="1500" onclick="setMode('focus')">Focus</button>
+                        <button class="mode-btn" data-time="300" onclick="setMode('short')">Short Break</button>
+                        <button class="mode-btn" data-time="900" onclick="setMode('long')">Long Break</button>
+                    </div>
+                    <div class="timer-display">
+                        <h1 id="timer-countdown">25:00</h1>
+                        <p id="timer-status">Ready to work?</p>
+                    </div>
+                    <div class="timer-controls">
+                        <button id="start-btn" class="btn-primary" onclick="toggleTimer()">Start</button>
+                        <button id="reset-btn" class="btn-secondary" onclick="resetTimer()">Reset</button>
+                    </div>
+                </div>
+                <div class="pomodoro-stats">
+                    <span>Today's Focus: <strong id="today-focus-time">0</strong> mins</span>
+                </div>
+            </div>
+
+            <div id="timer-section" class="app-section">
+                <div class="timer-container">
+                    <div class="timer-header">
+                        <h2>Stopwatch</h2>
+                        <span class="session-label">Current Session</span>
+                    </div>
+                    <div class="stopwatch-display">
+                        <h1 id="sw-display">00:00:00</h1>
+                    </div>
+                    <div class="timer-controls">
+                        <button id="sw-start-btn" class="btn-primary" onclick="toggleStopwatch()">Start</button>
+                        <button id="sw-lap-btn" class="btn-secondary" onclick="recordLap()">Lap</button>
+                        <button id="sw-reset-btn" class="btn-outline" onclick="resetStopwatch()">Reset</button>
+                    </div>
+                    <div class="laps-container">
+                        <ul id="laps-list"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="community-section" class="app-section">
+                <div class="community-grid">
+                    <div class="chat-container">
+                        <div class="chat-header">
+                            <h3>Global Chat</h3>
+                            <span id="online-count">0 users online</span>
+                        </div>
+                        <div id="chat-box" class="chat-messages"></div>
+                        <form id="chat-form" class="chat-input-area">
+                            <input type="text" id="chat-input" placeholder="Type a message..." required>
+                            <button type="submit" class="btn-send">Send</button>
+                        </form>
+                    </div>
+                    <div class="leaderboard-container">
+                        <h3>Leaderboard</h3>
+                        <div id="leaderboard-list" class="leaderboard-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="backup-section" class="app-section">
+                <div class="backup-card">
+                    <div class="backup-info">
+                        <h3>Export Personal Data</h3>
+                        <p>Download a copy of all your tasks, notes, habits, and focus sessions in JSON format.</p>
+                    </div>
+                    <div class="backup-actions">
+                        <button id="export-btn" class="btn-primary" onclick="exportUserData()">
+                            📥 Generate Export
+                        </button>
+                        <span id="export-status"></span>
+                    </div>
+                </div>
+                <div class="sync-status">
+                    <p>Cloud Sync: <span class="status-online">● Connected to Supabase</span></p>
+                    <small>Last synced: <span id="last-sync-time">Just now</span></small>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    
+    <script src="modules/login/login.js"></script>
+    <script src="modules/dashboard/dashboard.js"></script>
+    <script src="modules/tasks/tasks.js"></script>
+    <script src="modules/habits/habits.js"></script>
+    <script src="modules/notes/notes.js"></script>
+    <script src="modules/calendar/calendar.js"></script>
+    <script src="modules/pomodoro/pomodoro.js"></script>
+    <script src="modules/timer/timer.js"></script>
+    <script src="modules/community/community.js"></script>
+    <script src="modules/backup/backup.js"></script>
+
+    <script src="app.js"></script>
+
+</body>
+</html>

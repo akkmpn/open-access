@@ -1,0 +1,23 @@
+<section id="stopwatch-section" class="app-section">
+    <div class="timer-container">
+        <div class="timer-header">
+            <h2>Stopwatch</h2>
+            <span class="session-label">Current Session</span>
+        </div>
+
+        <div class="stopwatch-display">
+            <h1 id="sw-display">00:00:00</h1>
+        </div>
+
+        <div class="timer-controls">
+            <button id="sw-start-btn" class="btn-primary" onclick="toggleStopwatch()">Start</button>
+            <button id="sw-lap-btn" class="btn-secondary" onclick="recordLap()">Lap</button>
+            <button id="sw-reset-btn" class="btn-outline" onclick="resetStopwatch()">Reset</button>
+        </div>
+
+        <div class="laps-container">
+            <ul id="laps-list">
+                </ul>
+        </div>
+    </div>
+</section>

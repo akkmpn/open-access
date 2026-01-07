@@ -1,0 +1,20 @@
+<section id="backup-section" class="app-section">
+    <div class="backup-card">
+        <div class="backup-info">
+            <h3>Export Personal Data</h3>
+            <p>Download a copy of all your tasks, notes, habits, and focus sessions in JSON format.</p>
+        </div>
+        
+        <div class="backup-actions">
+            <button id="export-btn" class="btn-primary" onclick="exportUserData()">
+                📥 Generate Export
+            </button>
+            <span id="export-status"></span>
+        </div>
+    </div>
+
+    <div class="sync-status">
+        <p>Cloud Sync: <span class="status-online">● Connected to Supabase</span></p>
+        <small>Last synced: <span id="last-sync-time">Just now</span></small>
+    </div>
+</section>

@@ -1,0 +1,48 @@
+.stopwatch-display {
+    background: #2d3436;
+    color: #55efc4; /* Neon green "Matrix" feel */
+    padding: 30px;
+    border-radius: 15px;
+    margin: 20px 0;
+    font-family: 'Courier New', Courier, monospace;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+.stopwatch-display h1 {
+    font-size: 3.5rem;
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+.laps-container {
+    margin-top: 20px;
+    max-height: 150px;
+    overflow-y: auto;
+    border-top: 1px solid #eee;
+}
+
+#laps-list {
+    list-style: none;
+    padding: 0;
+}
+
+#laps-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f9f9f9;
+    color: #636e72;
+    display: flex;
+    justify-content: space-between;
+}
+
+.timer-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid #dcdde1;
+    cursor: pointer;
+    border-radius: 8px;
+}
