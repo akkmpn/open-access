@@ -859,110 +859,6 @@
             min-height: 60px;
             width: 100%;
         }
-
-        /* Enhanced Features CSS */
-        .suggestions {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-        }
-
-        .suggestion-chip {
-            padding: 6px 14px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            font-size: 12px;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-muted);
-        }
-
-        .suggestion-chip:hover {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-
-        .weather-widget {
-            font-size: 11px;
-            display: flex;
-            flex-direction: column;
-            text-align: right;
-            color: var(--text-muted);
-        }
-
-        .weather-info {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--text-main);
-            font-weight: 600;
-        }
-
-        .typing-indicator {
-            padding: 8px 15px;
-            font-size: 12px;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 5px;
-        }
-
-        .typing-dots {
-            display: flex;
-            gap: 4px;
-        }
-
-        .typing-dots span {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--text-muted);
-            animation: typing 1.4s infinite;
-        }
-
-        .typing-dots span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .typing-dots span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes typing {
-            0%, 60%, 100% {
-                opacity: 0.3;
-                transform: translateY(0);
-            }
-            30% {
-                opacity: 1;
-                transform: translateY(-10px);
-            }
-        }
-
-        .emoji-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 18px;
-            padding: 5px;
-            border-radius: 50%;
-            transition: all 0.2s;
-        }
-
-        .emoji-btn:hover {
-            color: var(--accent);
-            background: rgba(32, 128, 132, 0.1);
-        }
     </style>
 </head>
 
@@ -1031,12 +927,8 @@
             <button class="menu-btn" onclick="app.toggleSidebar()" style="display: none; background: none; border: none; color: var(--text-main); font-size: 20px; cursor: pointer; padding: 5px;">
                 <i class="fas fa-bars"></i>
             </button>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <h2 id="pageTitle">Dashboard</h2>
-                <div id="clock" style="font-size: 14px; color: var(--text-muted);"></div>
-            </div>
+            <h2 id="pageTitle">Dashboard</h2>
             <div class="header-actions">
-                <div id="weatherWidget" style="margin-right: 15px;"></div>
                 <button class="icon-btn-header" onclick="app.toggleTheme()" title="Toggle Theme">
                     <i class="fas fa-moon" id="themeIcon2"></i>
                 </button>
@@ -1098,9 +990,13 @@
         <!-- TASKS VIEW -->
         <div id="tasks" class="view-container">
             <div class="input-group">
-                <input type="text" id="taskInput" class="main-input" placeholder="Add a task... (Use #tag)">
-                <select id="hashtagSelect" class="select-input" style="width: auto; margin-left: 5px;" onchange="app.addSelectedHashtag()">
-                    <option value=""># Tags</option>
+                <input type="text" id="taskInput" class="main-input" placeholder="Add a task...">
+                <select id="hashtagSelect" class="select-input" style="width: auto;">
+                    <option value="">Tags</option>
+                    <option value="work">Work</option>
+                    <option value="personal">Personal</option>
+                    <option value="health">Health</option>
+                    <option value="learning">Learning</option>
                 </select>
                 <input type="date" id="dateInput" class="date-input">
                 <select id="prioInput" class="select-input" style="width: auto;">
@@ -1108,40 +1004,10 @@
                     <option value="high">High</option>
                     <option value="low">Low</option>
                 </select>
-                
-                <!-- Advanced Repeat Options -->
-                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <span style="font-size:12px; color:var(--text-muted);">Repeat:</span>
-                    <input type="number" id="repeatInterval" class="main-input" value="1" min="1" max="999" style="width: 80px;" placeholder="Interval">
-                    <select id="repeatUnit" class="select-input" style="width: auto;">
-                        <option value="">No repeat</option>
-                        <option value="day">Day(s)</option>
-                        <option value="week">Week(s)</option>
-                        <option value="month">Month(s)</option>
-                        <option value="year">Year(s)</option>
-                        <option value="weekday">Weekday</option>
-                    </select>
-                    <select id="weekdaySelect" class="select-input" style="width: auto; display: none;">
-                        <option value="0">Sunday</option>
-                        <option value="1">Monday</option>
-                        <option value="2">Tuesday</option>
-                        <option value="3">Wednesday</option>
-                        <option value="4">Thursday</option>
-                        <option value="5">Friday</option>
-                        <option value="6">Saturday</option>
-                    </select>
-                    <button class="btn btn-secondary" onclick="app.removeRepeat()" style="min-width: 80px;">Clear Repeat</button>
-                </div>
-                
                 <button class="btn btn-primary" onclick="app.handleTaskSubmit()">
                     <i class="fas fa-plus"></i> Add
                 </button>
             </div>
-            <div class="input-group" style="margin-top: 10px;">
-                <textarea id="taskDescInput" class="main-input" placeholder="Task description (optional)..." style="resize:vertical; min-height:60px; width:100%;"></textarea>
-            </div>
-
-            <div id="taskSuggestions" style="margin-bottom: 15px;"></div>
 
             <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
                 <button class="btn btn-secondary" onclick="app.setTaskFilter('all')">All</button>
@@ -1245,15 +1111,8 @@
         <!-- STOPWATCH/TIMER VIEW -->
         <div id="stopwatch" class="view-container">
             <div class="timer-container">
-                <!-- Clock Display -->
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <div id="stopwatchClock" style="font-size: 24px; font-weight: 600; color: var(--text-main); font-family: 'Roboto Mono', monospace;"></div>
-                    <div id="stopwatchDate" style="font-size: 12px; color: var(--text-muted); margin-top: 5px;"></div>
-                </div>
+                <h2 style="color: var(--text-main); margin-bottom: 20px;">Stopwatch & Timer</h2>
 
-                <h2 style="color: var(--text-main); margin-bottom: 20px;">Advanced Stopwatch & Timer</h2>
-
-                <!-- Task Selection -->
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">Select Task (Optional)</label>
                     <select id="stopwatchTaskSelect" class="select-input" style="width: 100%; max-width: 300px;">
@@ -1261,22 +1120,42 @@
                     </select>
                 </div>
 
-                <!-- Stopwatch Section -->
-                <div style="background: var(--bg-card); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 20px;">
-                    <h3 style="color: var(--text-main); margin-bottom: 15px;">Stopwatch</h3>
-                    
-                    <!-- Stopwatch Display -->
-                    <div class="timer-circle" id="stopwatchCircle" style="border-color: var(--accent);">
-                        <span class="timer-time" id="stopwatchDisplay">00:00:00.00</span>
-                        <span class="timer-label">Stopwatch</span>
-                    </div>
+                <div class="timer-circle" id="stopwatchCircle" style="border-color: var(--accent);">
+                    <span class="timer-time" id="stopwatchDisplay">00:00:00</span>
+                    <span class="timer-label">Stopwatch</span>
+                </div>
 
-                    <!-- Progress Bar -->
-                    <div id="stopwatchProgress" style="display: none; margin: 15px 0;">
-                        <div style="background: var(--bg-input); height: 8px; border-radius: 4px; overflow: hidden;">
-                            <div id="stopwatchProgressBar" style="height: 100%; width: 0%; background: var(--accent); transition: width 0.3s;"></div>
-                        </div>
-                        <div id="stopwatchProgressText" style="text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 5px; display: none;"></div>
+                <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" id="btnStartStopwatch" onclick="app.toggleStopwatch()" style="min-width: 110px;">
+                        <i class="fas fa-play"></i> Start
+                    </button>
+                    <button class="btn btn-secondary" id="btnLapStopwatch" onclick="app.addLap()" style="min-width: 80px; display: none;">Lap</button>
+                    <button class="btn btn-danger" onclick="app.resetStopwatch()" style="min-width: 110px;">Reset</button>
+                </div>
+
+                <div id="lapsList" style="margin-top: 20px; max-height: 200px; overflow-y: auto; padding-right: 10px;"></div>
+
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid var(--border);">
+
+                <div class="timer-circle" id="timerCircle2" style="border-color: var(--success);">
+                    <span class="timer-time" id="timerDisplay2">00:00:00</span>
+                    <span class="timer-label">Timer</span>
+                </div>
+
+                <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; margin-top: 20px;">
+                    <input type="number" id="timerInput" class="select-input" placeholder="Seconds" style="width: 100px; text-align: center;">
+                    <button class="btn btn-primary" id="btnStartTimer" onclick="app.startCustomTimer()" style="min-width: 110px;">
+                        <i class="fas fa-play"></i> Start
+                    </button>
+                    <button class="btn btn-danger" onclick="app.resetTimer()" style="min-width: 110px;">Reset</button>
+                </div>
+
+                <div style="margin-top: 30px; padding: 15px; background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                    <div>
+                        <div style="font-size: 18px; font-weight: 700; color: var(--text-main);" id="totalStopwatchTime">00:00:00</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Total Stopwatch Time</div>
+                    </div>
+                    <div>
                         <div style="font-size: 18px; font-weight: 700; color: var(--text-main);" id="totalTimerTime">00:00:00</div>
                         <div style="font-size: 11px; color: var(--text-muted);">Total Timer Time</div>
                     </div>
@@ -1297,33 +1176,12 @@
                         <i class="fas fa-comments"></i> Group Chat
                     </h3>
                     <div id="chatMessages" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; min-height: 200px; margin-bottom: 10px; padding-right: 10px;"></div>
-                    <div id="typingIndicator" style="margin-bottom: 5px;"></div>
                     <div class="chat-input-area" style="gap: 8px; padding: 8px; margin: 0; border-top: 1px solid var(--border);">
                         
-<input type="text" id="chatInput" class="main-input" placeholder="Type a message..." style="padding: 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px;" oninput="app.handleTyping()">
-                        <button class="emoji-btn" onclick="app.toggleEmojiPicker()" title="Add emoji">😊</button>
+<input type="text" id="chatInput" class="main-input" placeholder="Type a message..." style="padding: 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px;">
                         <button class="btn btn-primary" onclick="app.sendMessage()" style="padding: 8px 16px; margin: 0;">
                             <i class="fas fa-paper-plane"></i>
                         </button>
-                    </div>
-                    <div id="emojiPicker" style="display: none; grid-template-columns: repeat(8, 1fr); gap: 5px; padding: 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin-top: 5px;">
-                        <!-- Common emojis -->
-                        <button class="emoji-btn" onclick="app.addEmoji('😀')">😀</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('😂')">😂</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('❤️')">❤️</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('👍')">👍</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('🎉')">🎉</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('🔥')">🔥</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('💪')">💪</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('🚀')">🚀</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('😊')">😊</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('🤔')">🤔</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('😎')">😎</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('🤝')">🤝</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('💯')">💯</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('⚡')">⚡</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('🌟')">🌟</button>
-                        <button class="emoji-btn" onclick="app.addEmoji('✨')">✨</button>
                     </div>
                 </div>
 
@@ -1357,12 +1215,12 @@
             <h2>Welcome to TaskPro</h2>
             <p style="color: var(--text-muted); margin-bottom: 20px;">Sign in or create an account</p>
 
-            <form id="authForm" onsubmit="event.preventDefault(); app.handleSignIn();">
-                <input type="email" id="authEmail" placeholder="Email" autocomplete="username" required>
-                <input type="password" id="authPassword" placeholder="Password" autocomplete="current-password" required>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">Sign In</button>
-                <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="app.handleSignUp()">Sign Up</button>
-            </form>
+            <div id="authForm">
+                <input type="email" id="authEmail" placeholder="Email">
+                <input type="password" id="authPassword" placeholder="Password">
+                <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="app.handleSignIn()">Sign In</button>
+                <button class="btn btn-secondary" style="width: 100%;" onclick="app.handleSignUp()">Sign Up</button>
+            </div>
 
             <div id="authLoading" class="hidden" style="text-align: center; color: var(--text-muted);">
                 <i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i>
@@ -1378,217 +1236,6 @@
 
         const { createClient } = window.supabase;
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // ===== AUDIO ENGINE =====
-        const AudioEngine = {
-            ctx: null,
-            activeNodes: [],
-            gainNode: null,
-            alarmInterval: null,
-            alarmOsc: null,
-
-            init: () => {
-                if(!AudioEngine.ctx) {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    AudioEngine.ctx = new AudioContext();
-                }
-                if(AudioEngine.ctx.state === 'suspended') {
-                    AudioEngine.ctx.resume();
-                }
-            },
-
-            playBeep: (type) => {
-                AudioEngine.init();
-                const t = AudioEngine.ctx.currentTime;
-                const osc = AudioEngine.ctx.createOscillator();
-                const gain = AudioEngine.ctx.createGain();
-                osc.connect(gain);
-                gain.connect(AudioEngine.ctx.destination);
-
-                if (type === 'start') {
-                    osc.frequency.setValueAtTime(440, t);
-                    osc.frequency.exponentialRampToValueAtTime(880, t + 0.1);
-                    gain.gain.setValueAtTime(0.1, t);
-                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-                    osc.start(t);
-                    osc.stop(t + 0.5);
-                }
-            },
-
-            playAlarm: () => {
-                AudioEngine.init();
-                if(AudioEngine.alarmInterval) clearInterval(AudioEngine.alarmInterval);
-                
-                const playPulse = () => {
-                    const t = AudioEngine.ctx.currentTime;
-                    const osc = AudioEngine.ctx.createOscillator();
-                    const gain = AudioEngine.ctx.createGain();
-                    
-                    osc.connect(gain);
-                    gain.connect(AudioEngine.ctx.destination);
-                    
-                    osc.frequency.setValueAtTime(880, t);
-                    osc.frequency.setValueAtTime(1100, t + 0.2);
-                    
-                    gain.gain.setValueAtTime(0.2, t);
-                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-                    
-                    osc.type = 'square';
-                    osc.start(t);
-                    osc.stop(t + 0.5);
-                };
-
-                playPulse();
-                AudioEngine.alarmInterval = setInterval(playPulse, 1000);
-            },
-
-            stopAlarm: () => {
-                if(AudioEngine.alarmInterval) {
-                    clearInterval(AudioEngine.alarmInterval);
-                    AudioEngine.alarmInterval = null;
-                }
-            },
-
-            createNoiseBuffer: () => {
-                const bufferSize = AudioEngine.ctx.sampleRate * 2; 
-                const buffer = AudioEngine.ctx.createBuffer(1, bufferSize, AudioEngine.ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-                return buffer;
-            },
-
-            playBackground: (type) => {
-                AudioEngine.stopBackground();
-                if(type === 'none') return;
-                AudioEngine.init();
-                const t = AudioEngine.ctx.currentTime;
-                
-                AudioEngine.gainNode = AudioEngine.ctx.createGain();
-                AudioEngine.gainNode.gain.setValueAtTime(0.1, t);
-                AudioEngine.gainNode.connect(AudioEngine.ctx.destination);
-
-                if (['white', 'wind', 'rain', 'brown', 'ocean', 'fan'].includes(type)) {
-                    const noise = AudioEngine.ctx.createBufferSource();
-                    noise.buffer = AudioEngine.createNoiseBuffer();
-                    noise.loop = true;
-                    
-                    let finalNode = noise;
-
-                    if (type === 'wind' || type === 'rain') { 
-                        const filter = AudioEngine.ctx.createBiquadFilter();
-                        filter.type = 'lowpass';
-                        filter.frequency.value = type === 'wind' ? 400 : 800; 
-                        noise.connect(filter);
-                        finalNode = filter;
-                    } 
-                    if (type === 'brown') {
-                         const filter = AudioEngine.ctx.createBiquadFilter();
-                         filter.type = 'lowpass';
-                         filter.frequency.value = 150;
-                         noise.connect(filter);
-                         finalNode = filter;
-                    }
-                    if (type === 'ocean') {
-                        const filter = AudioEngine.ctx.createBiquadFilter();
-                        filter.type = 'lowpass';
-                        filter.Q.value = 1;
-                        noise.connect(filter);
-                        const lfo = AudioEngine.ctx.createOscillator();
-                        lfo.type = 'sine';
-                        lfo.frequency.value = 0.1; 
-                        const lfoGain = AudioEngine.ctx.createGain();
-                        lfoGain.gain.value = 300;
-                        lfo.connect(lfoGain);
-                        lfoGain.connect(filter.frequency);
-                        filter.frequency.setValueAtTime(400, t);
-                        lfo.start();
-                        AudioEngine.activeNodes.push(lfo);
-                        finalNode = filter;
-                    }
-                    if (type === 'fan') {
-                        const filter = AudioEngine.ctx.createBiquadFilter();
-                        filter.type = 'bandpass';
-                        filter.frequency.value = 150;
-                        filter.Q.value = 2;
-                        noise.connect(filter);
-                        finalNode = filter;
-                    }
-
-                    finalNode.connect(AudioEngine.gainNode);
-                    noise.start();
-                    AudioEngine.activeNodes.push(noise);
-                } 
-                
-                if (type === 'beats') {
-                    const osc1 = AudioEngine.ctx.createOscillator();
-                    const osc2 = AudioEngine.ctx.createOscillator();
-                    osc1.frequency.value = 200;
-                    osc2.frequency.value = 205; 
-                    osc1.connect(AudioEngine.gainNode);
-                    osc2.connect(AudioEngine.gainNode);
-                    osc1.start(); osc2.start();
-                    AudioEngine.activeNodes.push(osc1, osc2);
-                }
-
-                if (type === 'forest') {
-                    const noise = AudioEngine.ctx.createBufferSource();
-                    noise.buffer = AudioEngine.createNoiseBuffer();
-                    noise.loop = true;
-                    const filter = AudioEngine.ctx.createBiquadFilter();
-                    filter.type = 'lowpass';
-                    filter.frequency.value = 500;
-                    noise.connect(filter);
-                    const noiseGain = AudioEngine.ctx.createGain();
-                    noiseGain.gain.value = 0.3;
-                    filter.connect(noiseGain);
-                    noiseGain.connect(AudioEngine.gainNode);
-                    noise.start();
-                    AudioEngine.activeNodes.push(noise);
-
-                    const playChirp = () => {
-                        if(AudioEngine.activeNodes.length === 0) return;
-                        const osc = AudioEngine.ctx.createOscillator();
-                        const g = AudioEngine.ctx.createGain();
-                        osc.frequency.setValueAtTime(1500 + Math.random()*1000, AudioEngine.ctx.currentTime);
-                        osc.frequency.exponentialRampToValueAtTime(1000 + Math.random()*500, AudioEngine.ctx.currentTime + 0.1);
-                        g.gain.setValueAtTime(0, AudioEngine.ctx.currentTime);
-                        g.gain.linearRampToValueAtTime(0.1, AudioEngine.ctx.currentTime + 0.05);
-                        g.gain.linearRampToValueAtTime(0, AudioEngine.ctx.currentTime + 0.2);
-                        osc.connect(g);
-                        g.connect(AudioEngine.gainNode);
-                        osc.start(); osc.stop(AudioEngine.ctx.currentTime + 0.2);
-                        setTimeout(playChirp, 1000 + Math.random() * 4000);
-                    };
-                    playChirp();
-                }
-
-                if (type === 'night') {
-                    const car = AudioEngine.ctx.createOscillator();
-                    car.frequency.value = 4500;
-                    const mod = AudioEngine.ctx.createOscillator();
-                    mod.type = 'square';
-                    mod.frequency.value = 10;
-                    const modGain = AudioEngine.ctx.createGain();
-                    modGain.gain.value = 1000;
-                    
-                    const masterG = AudioEngine.ctx.createGain();
-                    masterG.gain.value = 0.05;
-                    
-                    mod.connect(masterG.gain);
-                    car.connect(masterG);
-                    masterG.connect(AudioEngine.gainNode);
-                    
-                    car.start(); mod.start();
-                    AudioEngine.activeNodes.push(car, mod);
-                }
-            },
-
-            stopBackground: () => {
-                AudioEngine.activeNodes.forEach(n => { try{n.stop();}catch(e){}});
-                AudioEngine.activeNodes = [];
-                if(AudioEngine.gainNode) { AudioEngine.gainNode.disconnect(); AudioEngine.gainNode = null; }
-            }
-        };
 
         // ===== APPLICATION STATE =====
         const app = {
@@ -1629,787 +1276,12 @@
             taskFilter: "all",
             idleStartTime: Date.now(),
             idleInterval: null,
-            
-            // Enhanced features from Daily_TaskPro
-            taskHistory: JSON.parse(localStorage.getItem("taskHistory") || "[]"),
-            dailyGoal: parseInt(localStorage.getItem("dailyGoal") || "5"),
-            weatherData: null,
-            typingUsers: new Set(),
-            emojiPickerVisible: false,
-            charts: { main: null, tags: null },
-
-            // ===== ADVANCED STOPWATCH & TIMER SYSTEM =====
-            stopwatchTimer: {
-                // Clock functionality
-                clockInterval: null,
-                
-                // Stopwatch state
-                stopwatchStartTime: 0,
-                stopwatchElapsedTime: 0,
-                stopwatchRunning: false,
-                stopwatchInterval: null,
-                stopwatchLaps: [],
-                stopwatchMaxDuration: 60000, // 60 seconds limit
-                stopwatchTargetDuration: 0, // Target duration for preset times
-                
-                // Timer state
-                timerStartTime: 0,
-                timerDuration: 0,
-                timerRemaining: 0,
-                timerRunning: false,
-                timerInterval: null,
-                
-                // Statistics
-                stats: {
-                    totalStopwatchTime: 0,
-                    totalTimerTime: 0,
-                    sessionCount: 0
-                },
-
-                // Session recording
-                currentStopwatchSession: null,
-                currentTimerSession: null,
-
-                init: function() {
-                    this.loadStats();
-                    this.loadSessions();
-                    this.startClock();
-                    this.updateDisplays();
-                    this.populateTaskDropdowns();
-                    
-                    // Update tab title periodically
-                    setInterval(() => this.updateTabTitle(), 1000);
-                },
-
-                // Task management functions
-                populateTaskDropdowns: function() {
-                    const stopwatchSelect = document.getElementById('stopwatchTaskSelect');
-                    const timerSelect = document.getElementById('timerTaskSelect');
-                    
-                    if (stopwatchSelect && timerSelect) {
-                        // Clear existing options except the first one
-                        stopwatchSelect.innerHTML = '<option value="">No Task Selected</option>';
-                        timerSelect.innerHTML = '<option value="">No Task Selected</option>';
-                        
-                        // Get tasks from app.tasks
-                        if (app.tasks && app.tasks.length > 0) {
-                            app.tasks.forEach(task => {
-                                const option1 = document.createElement('option');
-                                option1.value = task.id;
-                                option1.textContent = task.text;
-                                stopwatchSelect.appendChild(option1);
-                                
-                                const option2 = document.createElement('option');
-                                option2.value = task.id;
-                                option2.textContent = task.text;
-                                timerSelect.appendChild(option2);
-                            });
-                        }
-                    }
-                },
-
-                getSelectedTask: function(selectId) {
-                    const select = document.getElementById(selectId);
-                    if (select && select.value) {
-                        return app.tasks.find(task => task.id === select.value) || null;
-                    }
-                    return null;
-                },
-
-                startClock: function() {
-                    const updateClock = () => {
-                        const now = new Date();
-                        const hours = now.getHours().toString().padStart(2, '0');
-                        const minutes = now.getMinutes().toString().padStart(2, '0');
-                        const seconds = now.getSeconds().toString().padStart(2, '0');
-                        
-                        const clockEl = document.getElementById('stopwatchClock');
-                        const dateEl = document.getElementById('stopwatchDate');
-                        
-                        if(clockEl) clockEl.textContent = `${hours}:${minutes}:${seconds}`;
-                        if(dateEl) dateEl.textContent = now.toLocaleDateString('en-US', { 
-                            weekday: 'long', 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                        });
-                    };
-                    
-                    updateClock();
-                    this.clockInterval = setInterval(updateClock, 1000);
-                },
-
-                // Stopwatch functions
-                setStopwatchTime: function(seconds) {
-                    this.stopwatchTargetDuration = seconds * 1000;
-                    this.stopwatchMaxDuration = this.stopwatchTargetDuration;
-                    this.stopwatchElapsedTime = 0;
-                    
-                    // Show progress indicator if target is set
-                    const progressEl = document.getElementById('stopwatchProgress');
-                    const progressTextEl = document.getElementById('stopwatchProgressText');
-                    if (this.stopwatchTargetDuration > 0) {
-                        progressEl.style.display = 'block';
-                        progressTextEl.style.display = 'block';
-                    } else {
-                        progressEl.style.display = 'none';
-                        progressTextEl.style.display = 'none';
-                    }
-                    
-                    this.updateStopwatchDisplay();
-                    this.updateStopwatchProgress();
-                },
-
-                startStopwatch: function() {
-                    if (!this.stopwatchRunning) {
-                        this.stopwatchStartTime = Date.now() - this.stopwatchElapsedTime;
-                        this.stopwatchRunning = true;
-                        
-                        // Get selected task
-                        const selectedTask = this.getSelectedTask('stopwatchTaskSelect');
-                        
-                        // Create new session record
-                        this.currentStopwatchSession = {
-                            id: Date.now().toString(),
-                            type: 'stopwatch',
-                            startTime: this.stopwatchStartTime,
-                            targetDuration: this.stopwatchTargetDuration,
-                            duration: 0,
-                            laps: [],
-                            status: 'running',
-                            taskId: selectedTask ? selectedTask.id : null,
-                            taskText: selectedTask ? selectedTask.text : null,
-                            taskPriority: selectedTask ? selectedTask.priority : null
-                        };
-                        
-                        this.stopwatchInterval = setInterval(() => {
-                            this.stopwatchElapsedTime = Date.now() - this.stopwatchStartTime;
-                            this.currentStopwatchSession.duration = this.stopwatchElapsedTime;
-                            
-                            // Check if reached target duration
-                            if (this.stopwatchTargetDuration > 0 && this.stopwatchElapsedTime >= this.stopwatchTargetDuration) {
-                                this.stopwatchComplete();
-                            } else {
-                                this.updateStopwatchDisplay();
-                                this.updateStopwatchProgress();
-                            }
-                        }, 10);
-                        
-                        const btnStart = document.getElementById('btnStartStopwatch');
-                        const btnPause = document.getElementById('btnPauseStopwatch');
-                        const btnLap = document.getElementById('btnLap');
-                        if (btnStart) btnStart.style.display = 'none';
-                        if (btnPause) btnPause.style.display = 'inline-flex';
-                        if (btnLap) btnLap.style.display = 'inline-flex';
-                    }
-                },
-
-                pauseStopwatch: function() {
-                    if (this.stopwatchRunning) {
-                        clearInterval(this.stopwatchInterval);
-                        this.stopwatchRunning = false;
-                        
-                        // Update session status
-                        if (this.currentStopwatchSession) {
-                            this.currentStopwatchSession.status = 'paused';
-                            this.saveSession(this.currentStopwatchSession);
-                        }
-                        
-                        const btnStart = document.getElementById('btnStartStopwatch');
-                        const btnPause = document.getElementById('btnPauseStopwatch');
-                        if (btnStart) btnStart.style.display = 'inline-flex';
-                        if (btnPause) btnPause.style.display = 'none';
-                    }
-                },
-
-                lapStopwatch: function() {
-                    if (this.stopwatchRunning && this.currentStopwatchSession) {
-                        const lap = {
-                            time: this.stopwatchElapsedTime,
-                            timestamp: Date.now()
-                        };
-                        this.currentStopwatchSession.laps.push(lap);
-                        this.stopwatchLaps.push(lap);
-                        this.renderLaps();
-                    }
-                },
-
-                stopStopwatch: function() {
-                    if (this.stopwatchRunning || this.currentStopwatchSession) {
-                        clearInterval(this.stopwatchInterval);
-                        this.stopwatchRunning = false;
-                        
-                        // Complete the session and save
-                        if (this.currentStopwatchSession) {
-                            this.currentStopwatchSession.status = 'stopped';
-                            this.currentStopwatchSession.completedAt = Date.now();
-                            this.saveSession(this.currentStopwatchSession);
-                            
-                            // Update statistics
-                            this.stats.totalStopwatchTime += this.stopwatchElapsedTime;
-                            this.stats.sessionCount++;
-                            this.saveStats();
-                            this.updateStatsDisplay();
-                        }
-                        
-                        this.currentStopwatchSession = null;
-                        
-                        // Reset button states
-                        const btnStart = document.getElementById('btnStartStopwatch');
-                        const btnPause = document.getElementById('btnPauseStopwatch');
-                        const btnLap = document.getElementById('btnLap');
-                        if (btnStart) btnStart.style.display = 'inline-flex';
-                        if (btnPause) btnPause.style.display = 'none';
-                        if (btnLap) btnLap.style.display = 'none';
-                    }
-                },
-
-                resetStopwatch: function() {
-                    clearInterval(this.stopwatchInterval);
-                    this.stopwatchRunning = false;
-                    
-                    // Save session before reset if it exists
-                    if (this.currentStopwatchSession && this.currentStopwatchSession.elapsedTime > 0) {
-                        this.currentStopwatchSession.status = 'reset';
-                        this.saveSession(this.currentStopwatchSession);
-                    }
-                    
-                    this.stopwatchElapsedTime = 0;
-                    this.stopwatchLaps = [];
-                    this.currentStopwatchSession = null;
-                    
-                    this.updateStopwatchDisplay();
-                    this.renderLaps();
-                    
-                        const btnStart = document.getElementById('btnStartStopwatch');
-                        const btnPause = document.getElementById('btnPauseStopwatch');
-                        const btnLap = document.getElementById('btnLap');
-                        if (btnStart) btnStart.style.display = 'inline-flex';
-                        if (btnPause) btnPause.style.display = 'none';
-                        if (btnLap) btnLap.style.display = 'none';
-                },
-
-                stopwatchComplete: function() {
-                    clearInterval(this.stopwatchInterval);
-                    this.stopwatchRunning = false;
-                    
-                    // Update statistics
-                    this.stats.totalStopwatchTime += this.stopwatchElapsedTime;
-                    this.stats.sessionCount++;
-                    this.saveStats();
-                    this.updateStatsDisplay();
-                    
-                    // Save completed session
-                    if (this.currentStopwatchSession) {
-                        this.currentStopwatchSession.status = 'completed';
-                        this.currentStopwatchSession.completedAt = Date.now();
-                        this.saveSession(this.currentStopwatchSession);
-                    }
-                    
-                    // Show completion notification
-                    this.showNotification('Stopwatch Complete!', 'success');
-                    
-                    // Reset button states
-                        const btnStart = document.getElementById('btnStartStopwatch');
-                        const btnPause = document.getElementById('btnPauseStopwatch');
-                        const btnLap = document.getElementById('btnLap');
-                        if (btnStart) btnStart.style.display = 'inline-flex';
-                        if (btnPause) btnPause.style.display = 'none';
-                        if (btnLap) btnLap.style.display = 'none';
-                },
-
-                updateStopwatchDisplay: function() {
-                    const display = document.getElementById('stopwatchDisplay');
-                    if (display) {
-                        const time = this.stopwatchElapsedTime;
-                        const h = Math.floor(time / 3600000);
-                        const m = Math.floor((time % 3600000) / 60000);
-                        const s = Math.floor((time % 60000) / 1000);
-                        const ms = Math.floor((time % 1000) / 10);
-                        
-                        display.textContent = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}.${ms.toString().padStart(2,'0')}`;
-                    }
-                },
-
-                updateStopwatchProgress: function() {
-                    if (this.stopwatchTargetDuration > 0) {
-                        const progressBar = document.getElementById('stopwatchProgressBar');
-                        const progressText = document.getElementById('stopwatchProgressText');
-                        
-                        if (progressBar && progressText) {
-                            const progress = Math.min(100, (this.stopwatchElapsedTime / this.stopwatchTargetDuration) * 100);
-                            progressBar.style.width = progress + '%';
-                            
-                            const elapsedStr = this.formatTime(this.stopwatchElapsedTime);
-                            progressText.textContent = `${Math.round(progress)}% - ${elapsedStr} elapsed`;
-                            
-                            // Change color based on progress
-                            if (progress >= 100) {
-                                progressBar.style.background = 'var(--success)';
-                            } else if (progress >= 80) {
-                                progressBar.style.background = 'var(--warning)';
-                            } else {
-                                progressBar.style.background = 'var(--accent)';
-                            }
-                        }
-                    }
-                },
-
-                // Timer functions
-                setTimerTime: function(seconds) {
-                    this.timerDuration = seconds * 1000;
-                    this.timerRemaining = this.timerDuration;
-                    
-                    this.updateTimerDisplay();
-                    this.updateTimerProgress();
-                },
-
-                startTimer: function() {
-                    if (!this.timerRunning) {
-                        this.timerStartTime = Date.now();
-                        this.timerRunning = true;
-                        
-                        // Get selected task
-                        const selectedTask = this.getSelectedTask('timerTaskSelect');
-                        
-                        // Create new session record
-                        this.currentTimerSession = {
-                            id: Date.now().toString(),
-                            type: 'timer',
-                            startTime: this.timerStartTime,
-                            targetDuration: this.timerDuration,
-                            duration: 0,
-                            status: 'running',
-                            taskId: selectedTask ? selectedTask.id : null,
-                            taskText: selectedTask ? selectedTask.text : null,
-                            taskPriority: selectedTask ? selectedTask.priority : null
-                        };
-                        
-                        // Force initial display update
-                        this.updateTimerDisplay();
-                        this.updateTimerProgress();
-                        
-                        this.timerInterval = setInterval(() => {
-                            const elapsed = Date.now() - this.timerStartTime;
-                            this.timerRemaining = Math.max(0, this.timerDuration - elapsed);
-                            
-                            // Update session
-                            if (this.currentTimerSession) {
-                                this.currentTimerSession.remainingTime = this.timerRemaining;
-                                this.currentTimerSession.elapsedTime = elapsed;
-                            }
-                            
-                            this.updateTimerDisplay();
-                            this.updateTimerProgress();
-                            this.updateTabTitle();
-                            
-                            if (this.timerRemaining === 0) {
-                                this.timerComplete();
-                            }
-                        }, 10);
-                        
-                        const btnStartTimer = document.getElementById('btnStartTimer');
-                        const btnPauseTimer = document.getElementById('btnPauseTimer');
-                        const btnStopTimer = document.getElementById('btnStopTimer');
-                        if (btnStartTimer) btnStartTimer.style.display = 'none';
-                        if (btnPauseTimer) btnPauseTimer.style.display = 'inline-flex';
-                        if (btnStopTimer) btnStopTimer.style.display = 'inline-flex';
-                    }
-                },
-
-                pauseTimer: function() {
-                    if (this.timerRunning) {
-                        clearInterval(this.timerInterval);
-                        this.timerRunning = false;
-                        this.timerDuration = this.timerRemaining;
-                        
-                        // Update session status
-                        if (this.currentTimerSession) {
-                            this.currentTimerSession.status = 'paused';
-                            this.currentTimerSession.remainingTime = this.timerRemaining;
-                            this.saveSession(this.currentTimerSession);
-                        }
-                        
-                        const btnStartTimer = document.getElementById('btnStartTimer');
-                        const btnPauseTimer = document.getElementById('btnPauseTimer');
-                        const btnStopTimer = document.getElementById('btnStopTimer');
-                        if (btnStartTimer) btnStartTimer.style.display = 'inline-flex';
-                        if (btnPauseTimer) btnPauseTimer.style.display = 'none';
-                        if (btnStopTimer) btnStopTimer.style.display = 'none';
-                    }
-                },
-
-                stopTimer: function() {
-                    if (this.timerRunning || this.currentTimerSession) {
-                        clearInterval(this.timerInterval);
-                        this.timerRunning = false;
-                        
-                        // Complete the session and save
-                        if (this.currentTimerSession) {
-                            this.currentTimerSession.status = 'stopped';
-                            this.currentTimerSession.remainingTime = this.timerRemaining;
-                            this.currentTimerSession.completedAt = Date.now();
-                            this.saveSession(this.currentTimerSession);
-                            
-                            // Update statistics
-                            this.stats.totalTimerTime += (this.timerDuration - this.timerRemaining);
-                            this.stats.sessionCount++;
-                            this.saveStats();
-                            this.updateStatsDisplay();
-                        }
-                        
-                        this.currentTimerSession = null;
-                        
-                        // Reset button states
-                        const btnStartTimer = document.getElementById('btnStartTimer');
-                        const btnPauseTimer = document.getElementById('btnPauseTimer');
-                        const btnStopTimer = document.getElementById('btnStopTimer');
-                        if (btnStartTimer) btnStartTimer.style.display = 'inline-flex';
-                        if (btnPauseTimer) btnPauseTimer.style.display = 'none';
-                        if (btnStopTimer) btnStopTimer.style.display = 'none';
-                        
-                        this.updateTabTitle();
-                    }
-                },
-
-                resetTimer: function() {
-                    clearInterval(this.timerInterval);
-                    this.timerRunning = false;
-                    
-                    // Save session before reset if it exists
-                    if (this.currentTimerSession && this.currentTimerSession.elapsedTime > 0) {
-                        this.currentTimerSession.status = 'reset';
-                        this.saveSession(this.currentTimerSession);
-                    }
-                    
-                    this.timerRemaining = this.timerDuration;
-                    this.currentTimerSession = null;
-                    
-                    this.updateTimerDisplay();
-                    this.updateTabTitle();
-                    
-                    const btnStartTimer = document.getElementById('btnStartTimer');
-                    const btnPauseTimer = document.getElementById('btnPauseTimer');
-                    const btnStopTimer = document.getElementById('btnStopTimer');
-                    if (btnStartTimer) btnStartTimer.style.display = 'inline-flex';
-                    if (btnPauseTimer) btnPauseTimer.style.display = 'none';
-                    if (btnStopTimer) btnStopTimer.style.display = 'none';
-                },
-
-                timerComplete: function() {
-                    clearInterval(this.timerInterval);
-                    this.timerRunning = false;
-                    
-                    // Update statistics
-                    this.stats.totalTimerTime += this.timerDuration;
-                    this.stats.sessionCount++;
-                    this.saveStats();
-                    this.updateStatsDisplay();
-                    
-                    // Save completed session
-                    if (this.currentTimerSession) {
-                        this.currentTimerSession.status = 'completed';
-                        this.currentTimerSession.remainingTime = 0;
-                        this.currentTimerSession.completedAt = Date.now();
-                        this.saveSession(this.currentTimerSession);
-                    }
-                    
-                    // Show completion notification
-                    this.showNotification('Timer Complete!', 'success');
-                    
-                    // Reset button states
-                    const btnStartTimer = document.getElementById('btnStartTimer');
-                    const btnPauseTimer = document.getElementById('btnPauseTimer');
-                    const btnStopTimer = document.getElementById('btnStopTimer');
-                    if (btnStartTimer) btnStartTimer.style.display = 'inline-flex';
-                    if (btnPauseTimer) btnPauseTimer.style.display = 'none';
-                    if (btnStopTimer) btnStopTimer.style.display = 'none';
-                    
-                    this.updateTabTitle();
-                },
-
-                updateTimerDisplay: function() {
-                    const display = document.getElementById('timerDisplay');
-                    if (display) {
-                        const remainingTimeStr = this.formatTime(this.timerRemaining);
-                        const totalTimeStr = this.formatTime(this.timerDuration);
-                        
-                        let newText;
-                        if (this.timerDuration > 0) {
-                            // Show remaining time / total time
-                            newText = `${remainingTimeStr} / ${totalTimeStr}`;
-                        } else {
-                            // Show only remaining time if no target set
-                            newText = remainingTimeStr;
-                        }
-                        
-                        display.textContent = newText;
-                    }
-                },
-
-                updateTimerProgress: function() {
-                    if (this.timerDuration > 0) {
-                        const progressBar = document.getElementById('timerProgressBar');
-                        const progressText = document.getElementById('timerProgressText');
-                        
-                        if (progressBar && progressText) {
-                            const progress = Math.max(0, (this.timerRemaining / this.timerDuration) * 100);
-                            progressBar.style.width = progress + '%';
-                            
-                            const elapsedStr = this.formatTime(this.timerDuration - this.timerRemaining);
-                            progressText.textContent = `${Math.round(progress)}% remaining - ${elapsedStr} elapsed`;
-                            
-                            // Change color based on remaining time
-                            if (progress <= 0) {
-                                progressBar.style.background = 'var(--success)';
-                            } else if (progress <= 20) {
-                                progressBar.style.background = 'var(--danger)';
-                            } else if (progress <= 50) {
-                                progressBar.style.background = 'var(--warning)';
-                            } else {
-                                progressBar.style.background = 'var(--accent)';
-                            }
-                        }
-                    }
-                },
-
-                // Utility functions
-                formatTime: function(milliseconds, showMilliseconds = false) {
-                    const totalSeconds = Math.floor(milliseconds / 1000);
-                    const hours = Math.floor(totalSeconds / 3600);
-                    const minutes = Math.floor((totalSeconds % 3600) / 60);
-                    const seconds = totalSeconds % 60;
-                    
-                    if (showMilliseconds) {
-                        const ms = Math.floor((milliseconds % 1000) / 10);
-                        return `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}.${ms.toString().padStart(2,'0')}`;
-                    }
-                    
-                    return `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
-                },
-
-                updateTabTitle: function() {
-                    let title = 'TaskPro';
-                    
-                    if (this.stopwatchRunning) {
-                        const timeStr = this.formatTime(this.stopwatchElapsedTime);
-                        title = `⏱️ ${timeStr} - TaskPro`;
-                    } else if (this.timerRunning) {
-                        const timeStr = this.formatTime(this.timerRemaining);
-                        title = `⏰ ${timeStr} - TaskPro`;
-                    }
-                    
-                    document.title = title;
-                },
-
-                // Session management
-                saveSession: async function(session) {
-                    try {
-                        // Save to Supabase if user is logged in
-                        if (app.currentUser) {
-                            const { error } = await supabase
-                                .from('timer_sessions')
-                                .insert({
-                                    user_id: app.currentUser.id,
-                                    ...session,
-                                    created_at: new Date().toISOString()
-                                });
-                            
-                            if (error) throw error;
-                        }
-                        
-                        // Also save to local storage for backup
-                        const sessions = JSON.parse(localStorage.getItem('timerSessions') || '[]');
-                        sessions.push(session);
-                        localStorage.setItem('timerSessions', JSON.stringify(sessions));
-                        
-                    } catch (error) {
-                        console.error('Error saving session:', error);
-                    }
-                },
-
-                loadSessions: async function() {
-                    try {
-                        // Load from Supabase if user is logged in
-                        if (app.currentUser) {
-                            const { data, error } = await supabase
-                                .from('timer_sessions')
-                                .select('*')
-                                .eq('user_id', app.currentUser.id)
-                                .order('created_at', { ascending: false });
-                            
-                            if (error) throw error;
-                            
-                            // Merge with local sessions
-                            const localSessions = JSON.parse(localStorage.getItem('timerSessions') || '[]');
-                            const allSessions = new Map();
-                            
-                            // Add local sessions
-                            localSessions.forEach(session => {
-                                allSessions.set(session.id, session);
-                            });
-                            
-                            // Add/override with Supabase sessions
-                            data.forEach(session => {
-                                allSessions.set(session.id, session);
-                            });
-                            
-                            // Convert back to array and sort by date
-                            const mergedSessions = Array.from(allSessions.values())
-                                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                            
-                            // Update local storage
-                            localStorage.setItem('timerSessions', JSON.stringify(mergedSessions));
-                        }
-                    } catch (error) {
-                        console.error('Error loading sessions:', error);
-                    }
-                },
-
-                saveStats: async function() {
-                    try {
-                        // Save to local storage
-                        localStorage.setItem('timerStats', JSON.stringify(this.stats));
-                        
-                        // Save to Supabase if user is logged in
-                        if (app.currentUser) {
-                            const { error } = await supabase
-                                .from('timer_stats')
-                                .upsert({
-                                    user_id: app.currentUser.id,
-                                    total_stopwatch_time: this.stats.totalStopwatchTime,
-                                    total_timer_time: this.stats.totalTimerTime,
-                                    session_count: this.stats.sessionCount,
-                                    updated_at: new Date().toISOString()
-                                });
-                            
-                            if (error) throw error;
-                        }
-                    } catch (error) {
-                        console.error('Error saving stats:', error);
-                    }
-                },
-
-                loadStats: async function() {
-                    try {
-                        // Load from local storage first
-                        const localStats = localStorage.getItem('timerStats');
-                        if (localStats) {
-                            this.stats = JSON.parse(localStats);
-                        }
-                        
-                        // Load from Supabase if user is logged in
-                        if (app.currentUser) {
-                            const { data, error } = await supabase
-                                .from('timer_stats')
-                                .select('*')
-                                .eq('user_id', app.currentUser.id)
-                                .single();
-                            
-                            if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-                                throw error;
-                            }
-                            
-                            if (data) {
-                                // Supabase data takes precedence over local
-                                this.stats = {
-                                    totalStopwatchTime: data.total_stopwatch_time || 0,
-                                    totalTimerTime: data.total_timer_time || 0,
-                                    sessionCount: data.session_count || 0
-                                };
-                                this.saveStats(); // Update local storage with Supabase data
-                            }
-                        }
-                        
-                        this.updateStatsDisplay();
-                    } catch (error) {
-                        console.error('Error loading stats:', error);
-                    }
-                },
-
-                updateStatsDisplay: function() {
-                    const statsEl = document.getElementById('timerStats');
-                    if (statsEl) {
-                        statsEl.innerHTML = `
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                                <div style="background: var(--bg-card); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
-                                    <div style="font-size: 12px; color: var(--text-muted);">Total Stopwatch Time</div>
-                                    <div style="font-size: 18px; font-weight: 600; color: var(--text-main);">${this.formatTime(this.stats.totalStopwatchTime)}</div>
-                                </div>
-                                <div style="background: var(--bg-card); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
-                                    <div style="font-size: 12px; color: var(--text-muted);">Total Timer Time</div>
-                                    <div style="font-size: 18px; font-weight: 600; color: var(--text-main);">${this.formatTime(this.stats.totalTimerTime)}</div>
-                                </div>
-                                <div style="background: var(--bg-card); padding: 10px; border-radius: 8px; border: 1px solid var(--border); grid-column: 1 / -1;">
-                                    <div style="font-size: 12px; color: var(--text-muted);">Total Sessions</div>
-                                    <div style="font-size: 18px; font-weight: 600; color: var(--text-main);">${this.stats.sessionCount}</div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                },
-
-                renderLaps: function() {
-                    const lapsList = document.getElementById('lapsList');
-                    if (lapsList) {
-                        lapsList.innerHTML = this.stopwatchLaps.map((lap, index) => {
-                            const timeStr = this.formatTime(lap.time, true);
-                            return `
-                                <div style="display: flex; justify-content: space-between; padding: 5px 10px; background: var(--bg-card); border-radius: 4px; margin-bottom: 5px;">
-                                    <span style="color: var(--text-muted);">Lap ${index + 1}</span>
-                                    <span style="font-family: 'Roboto Mono', monospace; color: var(--text-main);">${timeStr}</span>
-                                </div>
-                            `;
-                        }).join('');
-                    }
-                },
-
-                updateDisplays: function() {
-                    this.updateStopwatchDisplay();
-                    this.updateTimerDisplay();
-                    this.updateStatsDisplay();
-                },
-
-                showNotification: function(message, type = 'info') {
-                    // Create a simple notification
-                    const notification = document.createElement('div');
-                    notification.style.cssText = `
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        background: ${type === 'success' ? 'var(--success)' : 'var(--accent)'};
-                        color: white;
-                        padding: 15px 20px;
-                        border-radius: 8px;
-                        box-shadow: var(--shadow);
-                        z-index: 10000;
-                        animation: slideIn 0.3s ease;
-                    `;
-                    notification.textContent = message;
-                    
-                    document.body.appendChild(notification);
-                    
-                    setTimeout(() => {
-                        notification.style.animation = 'slideOut 0.3s ease';
-                        setTimeout(() => notification.remove(), 300);
-                    }, 3000);
-                }
-            },
 
             // ===== INITIALIZATION =====
             async init() {
-                // Initialize Audio Engine
-                AudioEngine.init();
-                
                 this.applyTheme();
                 this.setupEventListeners();
                 this.startIdleTimer();
-                this.fetchWeather();
-                this.updateClock();
-                setInterval(() => this.updateClock(), 60000);
-                
-                // Initialize advanced stopwatch timer
-                this.initStopwatchTimer();
 
                 // Check authentication
                 const { data: { session } } = await supabase.auth.getSession();
@@ -2448,92 +1320,6 @@
                     document.getElementById("idleDisplay").textContent = 
                         `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
                 }, 1000);
-            },
-
-            // Enhanced utility functions
-            updateClock() {
-                const now = new Date();
-                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const dateString = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-                
-                const clockEl = document.getElementById('clock');
-                if (clockEl) {
-                    clockEl.innerHTML = `${timeString} <span style="font-size:11px; opacity:0.7;">${dateString}</span>`;
-                }
-            },
-
-            async fetchWeather() {
-                // Simple weather simulation - replace with real API if needed
-                const weatherConditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Rain'];
-                const temperatures = [18, 22, 25, 28, 30];
-                
-                this.weatherData = {
-                    condition: weatherConditions[Math.floor(Math.random() * weatherConditions.length)],
-                    temp: temperatures[Math.floor(Math.random() * temperatures.length)],
-                    location: 'Your Location'
-                };
-                
-                this.updateWeatherDisplay();
-            },
-
-            updateWeatherDisplay() {
-                const weatherEl = document.getElementById('weatherWidget');
-                if (weatherEl && this.weatherData) {
-                    const weatherIcons = {
-                        'Sunny': '☀️',
-                        'Partly Cloudy': '⛅',
-                        'Cloudy': '☁️',
-                        'Light Rain': '🌧️'
-                    };
-                    
-                    weatherEl.innerHTML = `
-                        <div class="weather-widget">
-                            <div class="weather-info">
-                                ${weatherIcons[this.weatherData.condition] || '🌡️'} ${this.weatherData.temp}°C
-                            </div>
-                            <div style="font-size: 10px; color: var(--text-muted);">
-                                ${this.weatherData.condition}
-                            </div>
-                        </div>
-                    `;
-                }
-            },
-
-            loadTaskSuggestions() {
-                const container = document.getElementById('taskSuggestions');
-                if (!container) return;
-                
-                if (this.taskHistory.length === 0) {
-                    container.innerHTML = '';
-                    return;
-                }
-                
-                container.innerHTML = `
-                    <div class="suggestions">
-                        ${this.taskHistory.slice(0, 5).map(task => `
-                            <div class="suggestion-chip" onclick="app.addSuggestedTask('${task.replace(/'/g, "\\'")}')">
-                                <i class="fas fa-history"></i> ${task}
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            },
-
-            addSuggestedTask(taskText) {
-                const input = document.getElementById('taskInput');
-                input.value = taskText;
-                input.focus();
-            },
-
-            addToTaskHistory(taskText) {
-                if (!this.taskHistory.includes(taskText)) {
-                    this.taskHistory.unshift(taskText);
-                    if (this.taskHistory.length > 8) {
-                        this.taskHistory.pop();
-                    }
-                    localStorage.setItem('taskHistory', JSON.stringify(this.taskHistory));
-                    this.loadTaskSuggestions();
-                }
             },
 
             // ===== AUTHENTICATION =====
@@ -2722,20 +1508,13 @@
                 const tag = document.getElementById("hashtagSelect").value;
                 const date = document.getElementById("dateInput").value;
                 const priority = document.getElementById("prioInput").value;
-                const repeat = this.getRepeatValue();
 
                 if (!title) {
                     alert("Please enter a task");
                     return;
                 }
 
-                // Add to task history
-                this.addToTaskHistory(title);
-
                 try {
-                    const descInput = document.getElementById("taskDescInput");
-                    const description = descInput ? descInput.value.trim() : "";
-                    
                     const { data, error } = await supabase
                         .from("tasks")
                         .insert({
@@ -2744,13 +1523,9 @@
                             tag: tag || null,
                             date: date || null,
                             priority,
-                            repeat: repeat,
                             completed: false,
-                            description: description,
-                            created_at: new Date().toISOString(),
-                            // Enhanced fields
-                            tags: (title.match(/#\w+/g) || []).map(t => t.replace('#','')),
-                            subtasks: []
+                            description: "",
+                            created_at: new Date().toISOString()
                         })
                         .select();
 
@@ -2758,307 +1533,12 @@
 
                     this.tasks.unshift(data[0]);
                     document.getElementById("taskInput").value = "";
-                    if (descInput) descInput.value = "";
                     document.getElementById("hashtagSelect").value = "";
                     document.getElementById("dateInput").value = "";
-                    this.removeRepeat(); // Clear repeat after adding
                     this.renderTasks();
                     this.updateDashboard();
-                    this.loadTaskSuggestions();
                 } catch (error) {
                     alert("Error adding task: " + error.message);
-                }
-            },
-
-            async deleteTask(id) {
-                try {
-                    const { error } = await supabase
-                        .from("tasks")
-                        .delete()
-                        .eq("id", id);
-
-                    if (error) throw error;
-
-                    this.tasks = this.tasks.filter(t => t.id !== id);
-                    this.renderTasks();
-                    this.updateDashboard();
-                } catch (error) {
-                    alert("Error deleting task: " + error.message);
-                }
-            },
-
-            async toggleTask(id) {
-                const task = this.tasks.find(t => t.id === id);
-                if (task) {
-                    try {
-                        const newVal = !task.completed;
-                        const { error } = await supabase
-                            .from("tasks")
-                            .update({ completed: newVal })
-                            .eq("id", id);
-
-                        if (error) throw error;
-
-                        // Handle repeat: create next occurrence when completing a repeated task
-                        if (newVal && task.repeat && task.repeat !== 'remove') {
-                            const nextTask = this.createNextOccurrence(task);
-                            if (nextTask) {
-                                const sbNextTask = {
-                                    ...nextTask,
-                                    user_id: this.currentUser.id,
-                                    title: nextTask.title || nextTask.text || task.title
-                                };
-                                delete sbNextTask.text;
-                                await supabase.from("tasks").insert(sbNextTask);
-                            }
-                        }
-
-                        task.completed = newVal;
-                        this.renderTasks();
-                        this.updateDashboard();
-                    } catch (error) {
-                        alert("Error updating task: " + error.message);
-                    }
-                }
-            },
-
-            // ===== SUBTASK MANAGEMENT =====
-            async addSubtask(parentId, subText) {
-                const task = this.tasks.find(t => t.id === parentId);
-                if (!task) return;
-                const newSub = {
-                    id: Date.now(),
-                    text: subText,
-                    description: '',
-                    completed: false
-                };
-                const nextSubs = [...(task.subtasks || []), newSub];
-                const { error } = await supabase.from('tasks').update({ subtasks: nextSubs }).eq('id', parentId).eq('user_id', this.currentUser.id);
-                if (!error) {
-                    task.subtasks = nextSubs;
-                    this.renderTasks();
-                }
-            },
-
-            async toggleSubtask(parentId, subId) {
-                const task = this.tasks.find(t => t.id === parentId);
-                if (!task) return;
-                const nextSubs = (task.subtasks || []).map(s => s.id == subId ? { ...s, completed: !s.completed } : s);
-                const { error } = await supabase.from('tasks').update({ subtasks: nextSubs }).eq('id', parentId).eq('user_id', this.currentUser.id);
-                if (!error) {
-                    task.subtasks = nextSubs;
-                    this.renderTasks();
-                }
-            },
-
-            async deleteSubtask(parentId, subId) {
-                const task = this.tasks.find(t => t.id === parentId);
-                if (!task) return;
-                const nextSubs = (task.subtasks || []).filter(s => s.id != subId);
-                const { error } = await supabase.from('tasks').update({ subtasks: nextSubs }).eq('id', parentId).eq('user_id', this.currentUser.id);
-                if (!error) {
-                    task.subtasks = nextSubs;
-                    this.renderTasks();
-                }
-            },
-
-            async editTask(id) {
-                const task = this.tasks.find(t => t.id === id);
-                if (!task) return;
-                
-                const newTitle = prompt("Update task name:", task.title);
-                if (newTitle && newTitle !== task.title) {
-                    try {
-                        const { error } = await supabase
-                            .from('tasks')
-                            .update({ title: newTitle })
-                            .eq('id', id)
-                            .eq('user_id', this.currentUser.id);
-                        
-                        if (error) throw error;
-                        
-                        // Update local state
-                        task.title = newTitle;
-                        this.renderTasks();
-                    } catch (error) {
-                        console.error('Error updating task:', error);
-                        alert('Could not update task. Please try again.');
-                    }
-                }
-            },
-
-            getRepeatValue: function() {
-                const interval = document.getElementById('repeatInterval').value;
-                const unit = document.getElementById('repeatUnit').value;
-                
-                if(!unit || !interval || interval < 1) return null;
-                
-                if(unit === 'weekday') {
-                    const weekday = document.getElementById('weekdaySelect').value;
-                    return `${interval}weekday:${weekday}`;
-                }
-                
-                return `${interval}${unit}`;
-            },
-
-            setRepeatValue: function(repeatValue) {
-                if(!repeatValue) {
-                    document.getElementById('repeatInterval').value = '1';
-                    document.getElementById('repeatUnit').value = '';
-                    document.getElementById('weekdaySelect').style.display = 'none';
-                    return;
-                }
-                
-                // Parse existing repeat values (for backward compatibility)
-                const repeatMap = {
-                    'daily': '1day',
-                    '2daily': '2day',
-                    'weekly': '1week',
-                    '2weekly': '2week',
-                    'monthly': '1month',
-                    '2monthly': '2month',
-                    '3monthly': '3month',
-                    'yearly': '1year',
-                    '2yearly': '2year'
-                };
-                
-                const value = repeatMap[repeatValue] || repeatValue;
-                
-                // Extract number and unit
-                const match = value.match(/^(\d+)(day|week|month|year|weekday):?(\d+)?$/);
-                if(match) {
-                    document.getElementById('repeatInterval').value = match[1];
-                    document.getElementById('repeatUnit').value = match[2];
-                    
-                    if(match[2] === 'weekday' && match[3]) {
-                        document.getElementById('weekdaySelect').value = match[3];
-                        document.getElementById('weekdaySelect').style.display = 'block';
-                    } else {
-                        document.getElementById('weekdaySelect').style.display = 'none';
-                    }
-                }
-            },
-
-            removeRepeat: function() {
-                document.getElementById('repeatInterval').value = '1';
-                document.getElementById('repeatUnit').value = '';
-                document.getElementById('weekdaySelect').style.display = 'none';
-            },
-            
-            loadHashtagSelect: function() {
-                const select = document.getElementById('hashtagSelect');
-                if (!select) return;
-                
-                const currentValue = select.value;
-                const completedTasks = this.tasks.filter(t => t.completed);
-                const completedTags = new Set();
-                
-                completedTasks.forEach(t => {
-                    if (t.tags && Array.isArray(t.tags)) {
-                        t.tags.forEach(tag => completedTags.add(tag));
-                    }
-                });
-                
-                select.innerHTML = '<option value=""># Tags</option>';
-                completedTags.forEach(tag => {
-                    const option = document.createElement('option');
-                    option.value = tag;
-                    option.textContent = '#' + tag;
-                    if(tag === currentValue) option.selected = true;
-                    select.appendChild(option);
-                });
-            },
-            
-            addSelectedHashtag: function() {
-                const select = document.getElementById('hashtagSelect');
-                const taskInput = document.getElementById('taskInput');
-                if (!select || !taskInput) return;
-                
-                const selectedTag = select.value;
-                if (selectedTag && !taskInput.value.includes('#' + selectedTag)) {
-                    taskInput.value = taskInput.value.trim() + ' #' + selectedTag;
-                }
-            },
-
-            createNextOccurrence: function(task) {
-                if(!task.repeat || task.repeat === 'remove') return null;
-                
-                const currentDate = new Date(task.date);
-                let nextDate = new Date(currentDate);
-                
-                // Parse custom repeat format (e.g., "2day", "1week", "3month", "1weekday:2")
-                const match = task.repeat.match(/^(\d+)(day|week|month|year|weekday):?(\d+)?$/);
-                if(!match) return null;
-                
-                const interval = parseInt(match[1]);
-                const unit = match[2];
-                
-                switch(unit) {
-                    case 'day':
-                        nextDate.setDate(nextDate.getDate() + interval);
-                        break;
-                    case 'week':
-                        nextDate.setDate(nextDate.getDate() + (interval * 7));
-                        break;
-                    case 'month':
-                        nextDate.setMonth(nextDate.getMonth() + interval);
-                        break;
-                    case 'year':
-                        nextDate.setFullYear(nextDate.getFullYear() + interval);
-                        break;
-                    case 'weekday':
-                        const targetWeekday = parseInt(match[3] || 0);
-                        // Find next occurrence of specified weekday
-                        do {
-                            nextDate.setDate(nextDate.getDate() + interval * 7);
-                        } while(nextDate.getDay() !== targetWeekday);
-                        break;
-                    default:
-                        return null;
-                }
-                
-                return {
-                    title: task.title,
-                    completed: false,
-                    date: nextDate.toISOString().split('T')[0],
-                    priority: task.priority,
-                    repeat: task.repeat,
-                    tags: task.tags || [],
-                    subtasks: [],
-                    description: task.description || '',
-                    created_at: Date.now(),
-                    parent_task_id: task.id
-                };
-            },
-
-            removeRepeatFromFutureTasks: async function(parentTaskId) {
-                if(!parentTaskId) return;
-                
-                try {
-                    // Find all future tasks with this parent
-                    const { data, error } = await supabase
-                        .from("tasks")
-                        .select("*")
-                        .eq("user_id", this.currentUser.id)
-                        .eq("parent_task_id", parentTaskId);
-                    
-                    if (error) throw error;
-                    
-                    if (data && data.length > 0) {
-                        // Delete all future tasks
-                        const { error: deleteError } = await supabase
-                            .from("tasks")
-                            .delete()
-                            .in("id", data.map(t => t.id));
-                        
-                        if (deleteError) throw deleteError;
-                        
-                        // Update local state
-                        this.tasks = this.tasks.filter(t => t.parent_task_id !== parentTaskId);
-                        console.log('Future repeat tasks removed successfully');
-                    }
-                } catch (error) {
-                    console.error('Error removing future repeat tasks:', error);
                 }
             },
 
@@ -3114,53 +1594,25 @@
                     filtered = this.tasks.filter(t => !t.completed);
                 }
 
-                container.innerHTML = filtered.map(task => {
-                    const tagsHtml = (task.tags || []).map(t => `<span class="tag">#${t}</span>`).join('');
-                    const descHtml = task.description ? `<div style="font-size:12px; color:var(--text-muted); margin-top:5px; padding:5px; background:var(--bg-input); border-radius:4px;">${task.description}</div>` : '';
-                    const repeatHtml = task.repeat ? `<span style="background:var(--accent); color:white; padding:2px 6px; border-radius:10px; font-size:10px; margin-left:5px;"><i class="fas fa-redo"></i> ${task.repeat}</span>` : '';
-                    
-                    const subtasksHtml = (task.subtasks || []).length > 0 ? `
-                        <div class="subtasks" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
-                            ${(task.subtasks || []).map(sub => `
-                                <div style="display:flex; align-items:center; gap:8px; padding:5px; margin:3px 0;">
-                                    <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="app.toggleSubtask('${task.id}', '${sub.id}')" style="width:16px; height:16px;">
-                                    <span style="font-size:13px; ${sub.completed ? 'text-decoration:line-through; opacity:0.6;' : ''}">${sub.text}</span>
-                                    <button class="btn btn-icon" onclick="app.deleteSubtask('${task.id}', '${sub.id}')" style="margin-left:auto; padding:2px 6px; font-size:10px;"><i class="fas fa-times"></i></button>
-                                </div>
-                            `).join('')}
-                            <div style="margin-top:8px;">
-                                <input type="text" id="sub-input-${task.id}" placeholder="+ Add subtask" style="width:100%; padding:6px; background:var(--bg-input); border:1px solid var(--border); border-radius:4px; font-size:12px; color:var(--text-main);" onkeydown="if(event.key==='Enter') { const val = this.value.trim(); if(val) { app.addSubtask('${task.id}', val); this.value=''; } }">
-                            </div>
-                        </div>
-                    ` : `
-                        <div class="subtasks" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
-                            <input type="text" id="sub-input-${task.id}" placeholder="+ Add subtask" style="width:100%; padding:6px; background:var(--bg-input); border:1px solid var(--border); border-radius:4px; font-size:12px; color:var(--text-main);" onkeydown="if(event.key==='Enter') { const val = this.value.trim(); if(val) { app.addSubtask('${task.id}', val); this.value=''; } }">
-                        </div>
-                    `;
-                    
-                    return `
+                container.innerHTML = filtered.map(task => `
                     <div class="task-card priority-${task.priority}">
                         <div class="task-header">
-                            <input type="checkbox" class="checkbox" ${task.completed ? "checked" : ""} onchange="app.toggleTask('${task.id}')" >
-                            <div class="task-content" style="flex:1;">
-                                <div class="task-title" style="${task.completed ? "text-decoration: line-through; opacity: 0.6;" : ""}">${task.title.replace(/#\w+/g,'')} ${tagsHtml} ${repeatHtml}</div>
-                                ${descHtml}
-                                <div class="task-meta" style="margin-top:8px;">
-                                    <span>${task.date ? new Date(task.date).toLocaleDateString() : 'No date'}</span>
+                            <input type="checkbox" class="checkbox" ${task.completed ? "checked" : ""} onchange="app.toggleTask('${task.id}')">
+                            <div class="task-content">
+                                <div class="task-title" style="${task.completed ? "text-decoration: line-through; opacity: 0.6;" : ""}">${task.title}</div>
+                                <div class="task-meta">
+                                    ${task.tag ? `<span class="tag">${task.tag}</span>` : ""}
+                                
+<span>${new Date(task.date).toLocaleDateString()}</span>
                                     <span>${task.priority.toUpperCase()}</span>
                                 </div>
                             </div>
-                            <button class="btn btn-secondary btn-icon" onclick="app.editTask('${task.id}')" title="Edit">
-                                <i class="fas fa-pencil"></i>
-                            </button>
-                            <button class="btn btn-danger btn-icon" onclick="app.deleteTask('${task.id}')" >
+                            <button class="btn btn-danger btn-icon" onclick="app.deleteTask('${task.id}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
-                        ${subtasksHtml}
                     </div>
-                `;
-                }).join("");
+                `).join("");
 
                 // Update badge
                 const activeTasks = this.tasks.filter(t => !t.completed).length;
@@ -3225,145 +1677,11 @@
                 `).join("");
             },
 
-            // ===== LEADERBOARD & USER STATUS TRACKING =====
-            syncLeaderboard: async function() {
-                if (!this.currentUser) return;
-                
-                try {
-                    // Get user's completed tasks count
-                    const completedTasks = this.tasks.filter(t => t.completed);
-                    const score = completedTasks.length;
-                    
-                    // Update or create leaderboard entry
-                    const { error } = await supabase
-                        .from('leaderboard')
-                        .upsert({
-                            user_id: this.currentUser.id,
-                            username: this.currentUser.email.split('@')[0],
-                            score: score,
-                            last_updated: new Date().toISOString()
-                        });
-                    
-                    if (error) {
-                        console.error('Error syncing leaderboard:', error);
-                    }
-                } catch (error) {
-                    console.error('Leaderboard sync error:', error);
-                }
-            },
-
-            loadLeaderboard: async function() {
-                try {
-                    const { data, error } = await supabase
-                        .from('leaderboard')
-                        .select('*')
-                        .order('score', { ascending: false })
-                        .limit(20);
-                    
-                    if (error) throw error;
-                    
-                    const leaderboardEl = document.getElementById('leaderboardList');
-                    if (leaderboardEl) {
-                        leaderboardEl.innerHTML = data.map((entry, index) => {
-                            const rank = index + 1;
-                            let rankBadge = '';
-                            
-                            if (rank === 1) {
-                                rankBadge = '<span class="rank-badge rank-1">1</span>';
-                            } else if (rank === 2) {
-                                rankBadge = '<span class="rank-badge rank-2">2</span>';
-                            } else if (rank === 3) {
-                                rankBadge = '<span class="rank-badge rank-3">3</span>';
-                            } else {
-                                rankBadge = `<span class="rank-badge">${rank}</span>`;
-                            }
-                            
-                            return `
-                                <tr>
-                                    <td>
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            ${rankBadge}
-                                            <span>${entry.username}</span>
-                                        </div>
-                                    </td>
-                                    <td>${entry.score}</td>
-                                    <td>${new Date(entry.last_updated).toLocaleDateString()}</td>
-                                </tr>
-                            `;
-                        }).join('');
-                    }
-                } catch (error) {
-                    console.error('Error loading leaderboard:', error);
-                }
-            },
-
-            updateUserStatus: async function() {
-                if (!this.currentUser) return;
-                
-                try {
-                    // Update user online status
-                    const { error } = await supabase
-                        .from('user_status')
-                        .upsert({
-                            user_id: this.currentUser.id,
-                            username: this.currentUser.email.split('@')[0],
-                            status: 'online',
-                            last_seen: new Date().toISOString(),
-                            current_tab: this.currentTab
-                        });
-                    
-                    if (error) {
-                        console.error('Error updating user status:', error);
-                    }
-                } catch (error) {
-                    console.error('User status update error:', error);
-                }
-            },
-
-            loadUserStatus: async function() {
-                try {
-                    const { data, error } = await supabase
-                        .from('user_status')
-                        .select('*')
-                        .order('last_seen', { ascending: false });
-                    
-                    if (error) throw error;
-                    
-                    const statusListEl = document.getElementById('userStatusList');
-                    if (statusListEl) {
-                        const onlineUsers = data.filter(user => {
-                            const lastSeen = new Date(user.last_seen);
-                            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-                            return lastSeen > fiveMinutesAgo;
-                        });
-                        
-                        if (onlineUsers.length > 0) {
-                            statusListEl.innerHTML = `
-                                <h4 style="color: var(--text-main); margin-bottom: 10px;">Online Users (${onlineUsers.length})</h4>
-                                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                                    ${onlineUsers.map(user => `
-                                        <div style="background: var(--bg-card); padding: 8px 12px; border-radius: 20px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px;">
-                                            <div style="width: 8px; height: 8px; background: var(--success); border-radius: 50%;"></div>
-                                            <span style="font-size: 12px; color: var(--text-main);">${user.username}</span>
-                                            <span style="font-size: 10px; color: var(--text-muted);">${user.current_tab}</span>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `;
-                        } else {
-                            statusListEl.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">No users online</div>';
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error loading user status:', error);
-                }
-            },
+            // ===== CHAT MANAGEMENT =====
             async sendMessage() {
                 const input = document.getElementById("chatInput");
                 const message = input.value.trim();
                 if (!message) return;
-
-                this.stopTyping();
 
                 try {
                     const { data, error } = await supabase
@@ -3372,10 +1690,7 @@
                             user_id: this.currentUser.id,
                             username: this.currentUser.email.split("@")[0],
                             message,
-                            created_at: new Date().toISOString(),
-                            // Enhanced fields
-                            edited: false,
-                            reactions: []
+                            created_at: new Date().toISOString()
                         })
                         .select();
 
@@ -3389,148 +1704,14 @@
                 }
             },
 
-            handleTyping() {
-                if (!this.currentUser) return;
-                
-                // Broadcast typing indicator
-                this.typingUsers.add(this.currentUser.id);
-                this.updateTypingIndicator();
-                
-                // Stop typing after 3 seconds
-                clearTimeout(this.typingTimeout);
-                this.typingTimeout = setTimeout(() => {
-                    this.stopTyping();
-                }, 3000);
-            },
-
-            stopTyping() {
-                if (!this.currentUser) return;
-                
-                this.typingUsers.delete(this.currentUser.id);
-                this.updateTypingIndicator();
-                clearTimeout(this.typingTimeout);
-            },
-
-            updateTypingIndicator() {
-                const indicator = document.getElementById('typingIndicator');
-                if (!indicator) return;
-                
-                const otherTypingUsers = Array.from(this.typingUsers).filter(uid => uid !== this.currentUser?.id);
-                
-                if (otherTypingUsers.length > 0) {
-                    const usernames = otherTypingUsers.map(uid => {
-                        const user = this.chatMessages.find(msg => msg.user_id === uid);
-                        return user ? user.username : 'Someone';
-                    });
-                    
-                    indicator.innerHTML = `
-                        <div class="typing-indicator">
-                            <div class="typing-dots">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                            ${usernames.join(', ')} ${usernames.length === 1 ? 'is' : 'are'} typing...
-                        </div>
-                    `;
-                } else {
-                    indicator.innerHTML = '';
-                }
-            },
-
-            toggleEmojiPicker() {
-                this.emojiPickerVisible = !this.emojiPickerVisible;
-                const picker = document.getElementById('emojiPicker');
-                if (picker) {
-                    picker.style.display = this.emojiPickerVisible ? 'grid' : 'none';
-                }
-            },
-
-            addEmoji(emoji) {
-                const input = document.getElementById("chatInput");
-                input.value += emoji;
-                input.focus();
-                this.toggleEmojiPicker();
-            },
-
-            async editChatMessage(msgId, currentText) {
-                const newText = prompt('Edit your message:', currentText);
-                if (newText === null || newText.trim() === currentText.trim()) return;
-                
-                const trimmedText = newText.trim();
-                if (!trimmedText) {
-                    alert('Message cannot be empty');
-                    return;
-                }
-                
-                try {
-                    const { error } = await supabase
-                        .from("chat_messages")
-                        .update({ 
-                            message: trimmedText, 
-                            edited: true,
-                            edited_at: new Date().toISOString()
-                        })
-                        .eq("id", msgId);
-                    
-                    if (error) throw error;
-                    
-                    // Update local message
-                    const msgIndex = this.chatMessages.findIndex(m => m.id === msgId);
-                    if (msgIndex !== -1) {
-                        this.chatMessages[msgIndex].message = trimmedText;
-                        this.chatMessages[msgIndex].edited = true;
-                        this.renderChat();
-                    }
-                } catch (error) {
-                    alert("Error editing message: " + error.message);
-                }
-            },
-
-            async deleteChatMessage(msgId) {
-                if (!confirm('Delete this message?')) return;
-                
-                try {
-                    const { error } = await supabase
-                        .from("chat_messages")
-                        .delete()
-                        .eq("id", msgId);
-                    
-                    if (error) throw error;
-                    
-                    // Remove from local messages
-                    this.chatMessages = this.chatMessages.filter(m => m.id !== msgId);
-                    this.renderChat();
-                } catch (error) {
-                    alert("Error deleting message: " + error.message);
-                }
-            },
-
             renderChat() {
                 const container = document.getElementById("chatMessages");
                 container.innerHTML = this.chatMessages.map(msg => {
                     const isOwn = msg.user_id === this.currentUser.id;
-                    const time = new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                    const editedText = msg.edited ? '<span style="color:var(--text-muted); font-size:9px; font-style:italic; margin-left:5px;">edited</span>' : '';
-                    
                     return `
-                        <div class="chat-msg ${isOwn ? "me" : "them"}" id="msg-${msg.id}">
-                            <div style="font-size: 11px; opacity: 0.7; margin-bottom: 4px; display:flex; justify-content:space-between; align-items:center;">
-                                <span>${msg.username} • ${time}</span>
-                                ${isOwn ? `
-                                <div style="display:flex; gap:8px; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px;">
-                                    <button onclick="app.editChatMessage('${msg.id}', '${msg.message.replace(/'/g, "\\'")}')" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:11px; padding:2px 4px; border-radius:2px;" title="Edit message">
-                                        <i class="fas fa-pencil"></i> Edit
-                                    </button>
-                                    <button onclick="app.deleteChatMessage('${msg.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:11px; padding:2px 4px; border-radius:2px;" title="Delete message">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </button>
-                                </div>` : ''}
-                            </div>
-                            <div class="msg-content">${msg.message}</div>
-                            <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">
-                                ${editedText}
-                            </div>
+                        <div class="chat-msg ${isOwn ? "me" : "them"}">
+                            <div style="font-size: 11px; opacity: 0.7; margin-bottom: 4px;">${msg.username}</div>
+                            <div>${msg.message}</div>
                         </div>
                     `;
                 }).join("");
@@ -3568,8 +1749,7 @@
                     const { error } = await supabase
                         .from("habits")
                         .delete()
-                        .eq("id", id)
-                        .eq("user_id", this.currentUser.id);
+                        .eq("id", id);
 
                     if (error) throw error;
 
@@ -3587,8 +1767,7 @@
                         const { error } = await supabase
                             .from("habits")
                             .update({ completed_today: !habit.completed_today })
-                            .eq("id", id)
-                            .eq("user_id", this.currentUser.id);
+                            .eq("id", id);
 
                         if (error) throw error;
 
@@ -3624,9 +1803,16 @@
                 `).join("");
             },
 
-            // ===== ADVANCED STOPWATCH & TIMER SYSTEM =====
-            initStopwatchTimer: function() {
-                this.stopwatchTimer.init();
+            // ===== POMODORO TIMER =====
+            startFocus() {
+                const duration = parseInt(document.getElementById("focusDuration").value) * 60 * 1000;
+                this.focusData.timeLeft = duration;
+                this.focusData.mode = "focus";
+                this.focusData.isRunning = true;
+                this.focusData.isPaused = false;
+                this.focusData.sessionStartTime = Date.now();
+                this.runTimer();
+                this.updateTimerUI();
             },
 
             startBreak() {
@@ -3714,10 +1900,8 @@
                 const minutes = Math.floor(timeLeft / 60000);
                 const seconds = Math.floor((timeLeft % 60000) / 1000);
 
-                const display = document.getElementById("timerDisplay");
-                if (display) {
-                    display.textContent = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-                }
+                document.getElementById("timerDisplay").textContent = 
+                    `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 
                 const circle = document.getElementById("timerCircle");
                 circle.className = "timer-circle timer-active";
@@ -3815,61 +1999,38 @@
                 const m = Math.floor((time % 3600000) / 60000);
                 const s = Math.floor((time % 60000) / 1000);
 
-                const stopwatchDisplayEl = document.getElementById("stopwatchDisplay");
-                if (stopwatchDisplayEl) {
-                    stopwatchDisplayEl.textContent = 
-                        `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-                }
+                document.getElementById("stopwatchDisplay").textContent = 
+                    `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 
                 const totalTime = this.stopwatchData.totalTime;
                 const th = Math.floor(totalTime / 3600000);
                 const tm = Math.floor((totalTime % 3600000) / 60000);
                 const ts = Math.floor((totalTime % 60000) / 1000);
 
-                // Update total stopwatch time display if element exists
-                const totalTimeEl = document.getElementById("totalStopwatchTime");
-                if (totalTimeEl) {
-                    totalTimeEl.textContent = 
-                        `${th.toString().padStart(2, "0")}:${tm.toString().padStart(2, "0")}:${ts.toString().padStart(2, "0")}`;
-                }
+                document.getElementById("totalStopwatchTime").textContent = 
+                    `${th.toString().padStart(2, "0")}:${tm.toString().padStart(2, "0")}:${ts.toString().padStart(2, "0")}`;
 
-                const btnStartEl = document.getElementById("btnStartStopwatch");
-                if (btnStartEl) {
-                    btnStartEl.textContent = this.stopwatchData.isRunning ? "Pause" : "Start";
-                }
-                
-                const btnLapEl = document.getElementById("btnLapStopwatch");
-                if (btnLapEl) {
-                    btnLapEl.style.display = this.stopwatchData.isRunning ? "inline-flex" : "none";
-                }
+                document.getElementById("btnStartStopwatch").textContent = this.stopwatchData.isRunning ? "Pause" : "Start";
+                document.getElementById("btnLapStopwatch").style.display = this.stopwatchData.isRunning ? "inline-flex" : "none";
 
                 // Render laps
                 const lapsList = document.getElementById("lapsList");
-                if (lapsList && this.stopwatchData.laps && this.stopwatchData.laps.length > 0) {
-                    lapsList.innerHTML = this.stopwatchData.laps.map((lap, index) => {
-                        const lh = Math.floor(lap / 3600000);
-                        const lm = Math.floor((lap % 3600000) / 60000);
-                        const ls = Math.floor((lap % 60000) / 1000);
-                        return `
-                            <div style="display: flex; justify-content: space-between; padding: 8px; background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border);">
-                                <span>Lap ${index + 1}</span>
-                                <span style="font-family: Roboto Mono, monospace;">${lh.toString().padStart(2, "0")}:${lm.toString().padStart(2, "0")}:${ls.toString().padStart(2, "0")}</span>
-                            </div>
-                        `;
-                    }).join("");
-                } else if (lapsList) {
-                    lapsList.innerHTML = "";
-                }
+                lapsList.innerHTML = this.stopwatchData.laps.map((lap, index) => {
+                    const lh = Math.floor(lap / 3600000);
+                    const lm = Math.floor((lap % 3600000) / 60000);
+                    const ls = Math.floor((lap % 60000) / 1000);
+                    return `
+                        <div style="display: flex; justify-content: space-between; padding: 8px; background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border);">
+                            <span>Lap ${index + 1}</span>
+                            <span style="font-family: Roboto Mono, monospace;">${lh.toString().padStart(2, "0")}:${lm.toString().padStart(2, "0")}:${ls.toString().padStart(2, "0")}</span>
+                        </div>
+                    `;
+                }).join("");
             },
 
             // ===== TIMER =====
             startCustomTimer() {
-                const timerInputEl = document.getElementById("timerInput");
-                if (!timerInputEl) {
-                    console.warn("timerInput element not found");
-                    return;
-                }
-                const seconds = parseInt(timerInputEl.value);
+                const seconds = parseInt(document.getElementById("timerInput").value);
                 if (seconds <= 0) {
                     alert("Please enter a valid time");
                     return;
@@ -3917,10 +2078,7 @@
 
                 this.timerData.isRunning = false;
                 this.timerData.timeLeft = 0;
-                const timerInputEl = document.getElementById("timerInput");
-                if (timerInputEl) {
-                    timerInputEl.value = "";
-                }
+                document.getElementById("timerInput").value = "";
                 this.renderTimer();
             },
 
@@ -3930,22 +2088,16 @@
                 const m = Math.floor((time % 3600000) / 60000);
                 const s = Math.floor((time % 60000) / 1000);
 
-                const timerDisplayEl = document.getElementById("timerDisplay");
-                if (timerDisplayEl) {
-                    timerDisplayEl.textContent = 
-                        `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-                }
+                document.getElementById("timerDisplay2").textContent = 
+                    `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 
                 const totalTime = this.timerData.totalTime;
                 const th = Math.floor(totalTime / 3600000);
                 const tm = Math.floor((totalTime % 3600000) / 60000);
                 const ts = Math.floor((totalTime % 60000) / 1000);
 
-                const totalTimerTimeEl = document.getElementById("totalTimerTime");
-                if (totalTimerTimeEl) {
-                    totalTimerTimeEl.textContent = 
-                        `${th.toString().padStart(2, "0")}:${tm.toString().padStart(2, "0")}:${ts.toString().padStart(2, "0")}`;
-                }
+                document.getElementById("totalTimerTime").textContent = 
+                    `${th.toString().padStart(2, "0")}:${tm.toString().padStart(2, "0")}:${ts.toString().padStart(2, "0")}`;
             },
 
             // ===== CALENDAR =====
@@ -3959,14 +2111,10 @@
                 const year = now.getFullYear();
                 const month = now.getMonth();
 
-                const calMonthYearEl = document.getElementById("calMonthYear");
-                if (calMonthYearEl) {
-                    calMonthYearEl.textContent = 
-                        new Date(year, month, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
-                }
+                document.getElementById("calMonthYear").textContent = 
+                    new Date(year, month, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
                 const grid = document.getElementById("calGrid");
-                if (!grid) return;
                 grid.innerHTML = "";
 
                 // Days of week header
@@ -4012,163 +2160,26 @@
 
             // ===== DASHBOARD =====
             updateDashboard() {
-                // Count tasks including subtasks
-                let totalTasks = this.tasks.length;
-                this.tasks.forEach(t => {
-                    if (t.subtasks && Array.isArray(t.subtasks)) {
-                        totalTasks += t.subtasks.length;
-                    }
-                });
-                
+                const total = this.tasks.length;
                 const completed = this.tasks.filter(t => t.completed).length;
-                const pending = this.tasks.length - completed;
+                const pending = total - completed;
 
-                const dashTotalEl = document.getElementById("dashTotal");
-                const dashDoneEl = document.getElementById("dashDone");
-                const dashPendingEl = document.getElementById("dashPending");
-                
-                if (dashTotalEl) dashTotalEl.textContent = totalTasks;
-                if (dashDoneEl) dashDoneEl.textContent = completed;
-                if (dashPendingEl) dashPendingEl.textContent = pending;
-                
-                const streakEl = document.getElementById("streakCount");
-                if (streakEl) streakEl.textContent = this.focusData.sessionCount;
+                document.getElementById("dashTotal").textContent = total;
+                document.getElementById("dashDone").textContent = completed;
+                document.getElementById("dashPending").textContent = pending;
+                document.getElementById("streakCount").textContent = this.focusData.sessionCount;
 
                 const focusHours = Math.floor(this.focusData.totalFocusTime / 3600000);
                 const focusMinutes = Math.floor((this.focusData.totalFocusTime % 3600000) / 60000);
-                const focusTimeEl = document.getElementById("focusTimeDisplay");
-                if (focusTimeEl) focusTimeEl.textContent = `${focusHours}h ${focusMinutes}m`;
+                document.getElementById("focusTimeDisplay").textContent = `${focusHours}h ${focusMinutes}m`;
 
-                const sessionsEl = document.getElementById("totalSessionsDisplay");
-                if (sessionsEl) sessionsEl.textContent = this.focusData.sessionCount;
+                document.getElementById("totalSessionsDisplay").textContent = this.focusData.sessionCount;
 
                 const goal = 3 * 3600000; // 3 hours
                 const percent = Math.min(100, Math.floor((this.focusData.totalFocusTime / goal) * 100));
-                const goalPercentEl = document.getElementById("goalPercentDisplay");
-                if (goalPercentEl) goalPercentEl.textContent = `${percent}%`;
+                document.getElementById("goalPercentDisplay").textContent = `${percent}%`;
 
-                this.renderDashboardCharts();
-            },
-            
-            renderDashboardCharts() {
-                // Update tag filter dropdown
-                const allTags = new Set();
-                this.tasks.forEach(t => {
-                    if (t.tags && Array.isArray(t.tags)) {
-                        t.tags.forEach(tag => allTags.add(tag));
-                    }
-                });
-                
-                const tagSelect = document.getElementById('dashFilterTag');
-                if (tagSelect && tagSelect.options.length === 1) {
-                    allTags.forEach(tag => {
-                        const opt = document.createElement('option');
-                        opt.value = tag;
-                        opt.textContent = '#' + tag;
-                        tagSelect.appendChild(opt);
-                    });
-                }
-                
-                // Productivity Trend Chart (Last 7 days)
-                const chartEl1 = document.getElementById('mainChart') || document.getElementById('dashboardChart');
-                if (chartEl1) {
-                    try {
-                        // Destroy existing chart if it exists
-                        if (this.charts && this.charts.main) {
-                            this.charts.main.destroy();
-                            this.charts.main = null;
-                        }
-                        
-                        const ctx1 = chartEl1.getContext('2d');
-                        if (!ctx1) return;
-                        
-                        const labels = [];
-                        const dataPoints = [];
-                        for(let i = 6; i >= 0; i--) {
-                            const d = new Date();
-                            d.setDate(d.getDate() - i);
-                            const k = d.toISOString().split('T')[0];
-                            labels.push(k.slice(5));
-                            dataPoints.push(this.tasks.filter(t => t.date === k && t.completed).length);
-                        }
-                        
-                        if (!this.charts) this.charts = {};
-                        this.charts.main = new Chart(ctx1, {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Completed Tasks',
-                                data: dataPoints,
-                                borderColor: getComputedStyle(document.body).getPropertyValue('--accent') || '#208084',
-                                backgroundColor: 'rgba(32, 128, 132, 0.1)',
-                                tension: 0.4,
-                                fill: true
-                            }]
-                        },
-                        options: {
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false }
-                            },
-                            scales: {
-                                y: { beginAtZero: true }
-                            }
-                        }
-                    });
-                    } catch (error) {
-                        console.error('Error rendering main chart:', error);
-                    }
-                }
-                
-                // Hashtag Analysis Chart (use dashboardChart if tagChart doesn't exist)
-                const chartEl2 = document.getElementById('tagChart');
-                if (chartEl2 && chartEl2 !== chartEl1) {
-                    try {
-                        // Destroy existing chart if it exists
-                        if (this.charts && this.charts.tags) {
-                            this.charts.tags.destroy();
-                            this.charts.tags = null;
-                        }
-                        
-                        const ctx2 = chartEl2.getContext('2d');
-                        if (!ctx2) return;
-                        
-                        const tagCounts = {};
-                        this.tasks.forEach(t => {
-                            if (t.tags && Array.isArray(t.tags)) {
-                                t.tags.forEach(tag => {
-                                    tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-                                });
-                            }
-                        });
-                        
-                        if (!this.charts) this.charts = {};
-                        this.charts.tags = new Chart(ctx2, {
-                        type: 'doughnut',
-                        data: {
-                            labels: Object.keys(tagCounts),
-                            datasets: [{
-                                data: Object.values(tagCounts),
-                                backgroundColor: ['#208084', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#8b5cf6']
-                            }]
-                        },
-                        options: {
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        color: getComputedStyle(document.body).getPropertyValue('--text-main') || '#f8fafc'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                    } catch (error) {
-                        console.error('Error rendering tag chart:', error);
-                    }
-                }
+                this.renderChart();
             },
 
             renderChart() {
@@ -4213,15 +2224,12 @@
             },
 
             renderAllData() {
-                    this.renderTasks();
-                    this.renderNotes();
-                    this.renderChat();
-                    this.renderHabits();
-                    this.renderCalendar();
-                    this.updateDashboard();
-                    this.loadTaskSuggestions();
-                    this.loadHashtagSelect();
-                    this.updateWeatherDisplay();
+                this.renderTasks();
+                this.renderNotes();
+                this.renderChat();
+                this.renderHabits();
+                this.renderCalendar();
+                this.updateDashboard();
             },
 
             // ===== UI UTILITIES =====
@@ -4238,16 +2246,7 @@
                     link.classList.remove("active");
                 });
 
-                document.querySelector(`[onclick*="${tab}"]`).classList.add("active");
-                
-                // Update user status when switching tabs
-                this.updateUserStatus();
-                
-                // Initialize stopwatch timer when switching to timer tab
-                if (tab === "stopwatch" && !this.stopwatchTimer.clockInterval) {
-                    this.stopwatchTimer.init();
-                }
-                
+                event.target.closest(".nav-link").classList.add("active");
                 document.getElementById("pageTitle").textContent = 
                     tab.charAt(0).toUpperCase() + tab.slice(1);
 
@@ -4255,6 +2254,7 @@
                 if (tab === "calendar") this.renderCalendar();
                 if (tab === "stopwatch") {
                     this.renderStopwatch();
+                    this.renderTimer();
                 }
                 if (tab === "community") this.renderChat();
             },
@@ -4278,13 +2278,6 @@
         document.addEventListener("DOMContentLoaded", () => {
             app.init();
         });
-
-        // ===== SERVICE WORKER REGISTRATION =====
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('SW Registered', reg))
-                .catch(err => console.log('SW Error', err));
-        }
     </script>
 </body>
 
