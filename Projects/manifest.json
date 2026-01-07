@@ -1,1 +1,90 @@
-{"name": "Enterprise TaskPro - Supabase Edition", "short_name": "TaskPro", "description": "A professional real-time task manager with Supabase backend, focus sessions and community features.", "start_url": "TaskPro_Supabase.html", "display": "standalone", "background_color": "#0f172a", "theme_color": "#208084", "orientation": "portrait", "icons": [{"src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj4KICA8cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIGZpbGw9IiMyMGI4MTQiLz4KICA8dGV4dCB4PSIxNiIgeT0iMjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlQ8L3RleHQ+Cjwvc3ZnPg==", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable"}, {"src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"}, {"src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png", "sizes": "128x128", "type": "image/png", "purpose": "any maskable"}, {"src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png", "sizes": "96x96", "type": "image/png", "purpose": "any maskable"}], "shortcuts": [{"name": "Add Task", "short_name": "Add Task", "description": "Quickly add a new task", "url": "TaskPro_Supabase.html?action=add-task", "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png", "sizes": "96x96"}]}, {"name": "Focus Timer", "short_name": "Timer", "description": "Start focus timer", "url": "TaskPro_Supabase.html?action=focus", "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png", "sizes": "96x96"}]}, {"name": "Community Chat", "short_name": "Chat", "description": "Open community chat", "url": "TaskPro_Supabase.html?action=chat", "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png", "sizes": "96x96"}]}], "screenshots": [{"src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgNDAwIDMwMCIgZmlsbD0iIzIwYjgxNCIvPjwvc3ZnPg==", "sizes": "1280x720", "type": "image/svg+xml", "form_factor": "wide", "label": "TaskPro Supabase Dashboard"}], "related_applications": [], "prefer_related_applications": false, "edge_side_panel": {"preferred_width": 400}, "categories": ["productivity", "business"], "lang": "en", "scope": "/", "serviceworker": "sw.js"}
+{
+  "name": "Enterprise TaskPro - Supabase Edition",
+  "short_name": "TaskPro",
+  "description": "A professional real-time task manager with Supabase backend, focus sessions and community features.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#208084",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj4KICA8cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIGZpbGw9IiMyMGI4MTQiLz4KICA8dGV4dCB4PSIxNiIgeT0iMjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlQ8L3RleHQ+Cjwvc3ZnPg==",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Task",
+      "short_name": "Add Task",
+      "description": "Quickly add a new task",
+      "url": "./?action=add-task",
+      "icons": [
+        {
+          "src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Focus Timer",
+      "short_name": "Timer",
+      "description": "Start focus timer",
+      "url": "./?action=focus",
+      "icons": [
+        {
+          "src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Community Chat",
+      "short_name": "Chat",
+      "description": "Open community chat",
+      "url": "./?action=chat",
+      "icons": [
+        {
+          "src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgNDAwIDMwMCIgZmlsbD0iIzIwYjgxNCIvPjwvc3ZnPg==",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "TaskPro Supabase Dashboard"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": { "preferred_width": 400 },
+  "categories": ["productivity", "business"],
+  "lang": "en",
+  "serviceworker": "sw.js"
+}

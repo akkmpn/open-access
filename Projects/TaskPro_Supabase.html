@@ -1358,8 +1358,8 @@
             <p style="color: var(--text-muted); margin-bottom: 20px;">Sign in or create an account</p>
 
             <form id="authForm" onsubmit="event.preventDefault(); app.handleSignIn();">
-                <input type="email" id="authEmail" placeholder="Email" required>
-                <input type="password" id="authPassword" placeholder="Password" required>
+                <input type="email" id="authEmail" placeholder="Email" autocomplete="username" required>
+                <input type="password" id="authPassword" placeholder="Password" autocomplete="current-password" required>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">Sign In</button>
                 <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="app.handleSignUp()">Sign Up</button>
             </form>
@@ -1636,6 +1636,7 @@
             weatherData: null,
             typingUsers: new Set(),
             emojiPickerVisible: false,
+            charts: { main: null, tags: null },
 
             // ===== ADVANCED STOPWATCH & TIMER SYSTEM =====
             stopwatchTimer: {
@@ -3785,8 +3786,11 @@
                 const m = Math.floor((time % 3600000) / 60000);
                 const s = Math.floor((time % 60000) / 1000);
 
-                document.getElementById("stopwatchDisplay").textContent = 
-                    `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+                const stopwatchDisplayEl = document.getElementById("stopwatchDisplay");
+                if (stopwatchDisplayEl) {
+                    stopwatchDisplayEl.textContent = 
+                        `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+                }
 
                 const totalTime = this.stopwatchData.totalTime;
                 const th = Math.floor(totalTime / 3600000);
@@ -3800,8 +3804,15 @@
                         `${th.toString().padStart(2, "0")}:${tm.toString().padStart(2, "0")}:${ts.toString().padStart(2, "0")}`;
                 }
 
-                document.getElementById("btnStartStopwatch").textContent = this.stopwatchData.isRunning ? "Pause" : "Start";
-                document.getElementById("btnLapStopwatch").style.display = this.stopwatchData.isRunning ? "inline-flex" : "none";
+                const btnStartEl = document.getElementById("btnStartStopwatch");
+                if (btnStartEl) {
+                    btnStartEl.textContent = this.stopwatchData.isRunning ? "Pause" : "Start";
+                }
+                
+                const btnLapEl = document.getElementById("btnLapStopwatch");
+                if (btnLapEl) {
+                    btnLapEl.style.display = this.stopwatchData.isRunning ? "inline-flex" : "none";
+                }
 
                 // Render laps
                 const lapsList = document.getElementById("lapsList");
@@ -3878,16 +3889,22 @@
                 const m = Math.floor((time % 3600000) / 60000);
                 const s = Math.floor((time % 60000) / 1000);
 
-                document.getElementById("timerDisplay").textContent = 
-                    `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+                const timerDisplayEl = document.getElementById("timerDisplay");
+                if (timerDisplayEl) {
+                    timerDisplayEl.textContent = 
+                        `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+                }
 
                 const totalTime = this.timerData.totalTime;
                 const th = Math.floor(totalTime / 3600000);
                 const tm = Math.floor((totalTime % 3600000) / 60000);
                 const ts = Math.floor((totalTime % 60000) / 1000);
 
-                document.getElementById("totalTimerTime").textContent = 
-                    `${th.toString().padStart(2, "0")}:${tm.toString().padStart(2, "0")}:${ts.toString().padStart(2, "0")}`;
+                const totalTimerTimeEl = document.getElementById("totalTimerTime");
+                if (totalTimerTimeEl) {
+                    totalTimerTimeEl.textContent = 
+                        `${th.toString().padStart(2, "0")}:${tm.toString().padStart(2, "0")}:${ts.toString().padStart(2, "0")}`;
+                }
             },
 
             // ===== CALENDAR =====
@@ -3901,10 +3918,14 @@
                 const year = now.getFullYear();
                 const month = now.getMonth();
 
-                document.getElementById("calMonthYear").textContent = 
-                    new Date(year, month, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+                const calMonthYearEl = document.getElementById("calMonthYear");
+                if (calMonthYearEl) {
+                    calMonthYearEl.textContent = 
+                        new Date(year, month, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+                }
 
                 const grid = document.getElementById("calGrid");
+                if (!grid) return;
                 grid.innerHTML = "";
 
                 // Days of week header
@@ -4010,21 +4031,28 @@
                 // Productivity Trend Chart (Last 7 days)
                 const chartEl1 = document.getElementById('mainChart') || document.getElementById('dashboardChart');
                 if (chartEl1) {
-                    const ctx1 = chartEl1.getContext('2d');
-                    if (this.charts && this.charts.main) this.charts.main.destroy();
-                    
-                    const labels = [];
-                    const dataPoints = [];
-                    for(let i = 6; i >= 0; i--) {
-                        const d = new Date();
-                        d.setDate(d.getDate() - i);
-                        const k = d.toISOString().split('T')[0];
-                        labels.push(k.slice(5));
-                        dataPoints.push(this.tasks.filter(t => t.date === k && t.completed).length);
-                    }
-                    
-                    if (!this.charts) this.charts = {};
-                    this.charts.main = new Chart(ctx1, {
+                    try {
+                        // Destroy existing chart if it exists
+                        if (this.charts && this.charts.main) {
+                            this.charts.main.destroy();
+                            this.charts.main = null;
+                        }
+                        
+                        const ctx1 = chartEl1.getContext('2d');
+                        if (!ctx1) return;
+                        
+                        const labels = [];
+                        const dataPoints = [];
+                        for(let i = 6; i >= 0; i--) {
+                            const d = new Date();
+                            d.setDate(d.getDate() - i);
+                            const k = d.toISOString().split('T')[0];
+                            labels.push(k.slice(5));
+                            dataPoints.push(this.tasks.filter(t => t.date === k && t.completed).length);
+                        }
+                        
+                        if (!this.charts) this.charts = {};
+                        this.charts.main = new Chart(ctx1, {
                         type: 'line',
                         data: {
                             labels: labels,
@@ -4047,25 +4075,35 @@
                             }
                         }
                     });
+                    } catch (error) {
+                        console.error('Error rendering main chart:', error);
+                    }
                 }
                 
                 // Hashtag Analysis Chart (use dashboardChart if tagChart doesn't exist)
-                const chartEl2 = document.getElementById('tagChart') || document.getElementById('dashboardChart');
-                if (chartEl2) {
-                    const ctx2 = chartEl2.getContext('2d');
-                    if (this.charts && this.charts.tags) this.charts.tags.destroy();
-                    
-                    const tagCounts = {};
-                    this.tasks.forEach(t => {
-                        if (t.tags && Array.isArray(t.tags)) {
-                            t.tags.forEach(tag => {
-                                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-                            });
+                const chartEl2 = document.getElementById('tagChart');
+                if (chartEl2 && chartEl2 !== chartEl1) {
+                    try {
+                        // Destroy existing chart if it exists
+                        if (this.charts && this.charts.tags) {
+                            this.charts.tags.destroy();
+                            this.charts.tags = null;
                         }
-                    });
-                    
-                    if (!this.charts) this.charts = {};
-                    this.charts.tags = new Chart(ctx2, {
+                        
+                        const ctx2 = chartEl2.getContext('2d');
+                        if (!ctx2) return;
+                        
+                        const tagCounts = {};
+                        this.tasks.forEach(t => {
+                            if (t.tags && Array.isArray(t.tags)) {
+                                t.tags.forEach(tag => {
+                                    tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                                });
+                            }
+                        });
+                        
+                        if (!this.charts) this.charts = {};
+                        this.charts.tags = new Chart(ctx2, {
                         type: 'doughnut',
                         data: {
                             labels: Object.keys(tagCounts),
@@ -4086,6 +4124,9 @@
                             }
                         }
                     });
+                    } catch (error) {
+                        console.error('Error rendering tag chart:', error);
+                    }
                 }
             },
 
