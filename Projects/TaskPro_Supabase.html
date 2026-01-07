@@ -1795,9 +1795,12 @@
                             }
                         }, 10);
                         
-                        document.getElementById('btnStartStopwatch').style.display = 'none';
-                        document.getElementById('btnPauseStopwatch').style.display = 'inline-flex';
-                        document.getElementById('btnLap').style.display = 'inline-flex';
+                        const btnStart = document.getElementById('btnStartStopwatch');
+                        const btnPause = document.getElementById('btnPauseStopwatch');
+                        const btnLap = document.getElementById('btnLap');
+                        if (btnStart) btnStart.style.display = 'none';
+                        if (btnPause) btnPause.style.display = 'inline-flex';
+                        if (btnLap) btnLap.style.display = 'inline-flex';
                     }
                 },
 
@@ -1812,8 +1815,10 @@
                             this.saveSession(this.currentStopwatchSession);
                         }
                         
-                        document.getElementById('btnStartStopwatch').style.display = 'inline-flex';
-                        document.getElementById('btnPauseStopwatch').style.display = 'none';
+                        const btnStart = document.getElementById('btnStartStopwatch');
+                        const btnPause = document.getElementById('btnPauseStopwatch');
+                        if (btnStart) btnStart.style.display = 'inline-flex';
+                        if (btnPause) btnPause.style.display = 'none';
                     }
                 },
 
@@ -1850,9 +1855,12 @@
                         this.currentStopwatchSession = null;
                         
                         // Reset button states
-                        document.getElementById('btnStartStopwatch').style.display = 'inline-flex';
-                        document.getElementById('btnPauseStopwatch').style.display = 'none';
-                        document.getElementById('btnLap').style.display = 'none';
+                        const btnStart = document.getElementById('btnStartStopwatch');
+                        const btnPause = document.getElementById('btnPauseStopwatch');
+                        const btnLap = document.getElementById('btnLap');
+                        if (btnStart) btnStart.style.display = 'inline-flex';
+                        if (btnPause) btnPause.style.display = 'none';
+                        if (btnLap) btnLap.style.display = 'none';
                     }
                 },
 
@@ -1873,9 +1881,12 @@
                     this.updateStopwatchDisplay();
                     this.renderLaps();
                     
-                    document.getElementById('btnStartStopwatch').style.display = 'inline-flex';
-                    document.getElementById('btnPauseStopwatch').style.display = 'none';
-                    document.getElementById('btnLap').style.display = 'none';
+                        const btnStart = document.getElementById('btnStartStopwatch');
+                        const btnPause = document.getElementById('btnPauseStopwatch');
+                        const btnLap = document.getElementById('btnLap');
+                        if (btnStart) btnStart.style.display = 'inline-flex';
+                        if (btnPause) btnPause.style.display = 'none';
+                        if (btnLap) btnLap.style.display = 'none';
                 },
 
                 stopwatchComplete: function() {
@@ -1899,9 +1910,12 @@
                     this.showNotification('Stopwatch Complete!', 'success');
                     
                     // Reset button states
-                    document.getElementById('btnStartStopwatch').style.display = 'inline-flex';
-                    document.getElementById('btnPauseStopwatch').style.display = 'none';
-                    document.getElementById('btnLap').style.display = 'none';
+                        const btnStart = document.getElementById('btnStartStopwatch');
+                        const btnPause = document.getElementById('btnPauseStopwatch');
+                        const btnLap = document.getElementById('btnLap');
+                        if (btnStart) btnStart.style.display = 'inline-flex';
+                        if (btnPause) btnPause.style.display = 'none';
+                        if (btnLap) btnLap.style.display = 'none';
                 },
 
                 updateStopwatchDisplay: function() {
@@ -1994,9 +2008,12 @@
                             }
                         }, 10);
                         
-                        document.getElementById('btnStartTimer').style.display = 'none';
-                        document.getElementById('btnPauseTimer').style.display = 'inline-flex';
-                        document.getElementById('btnStopTimer').style.display = 'inline-flex';
+                        const btnStartTimer = document.getElementById('btnStartTimer');
+                        const btnPauseTimer = document.getElementById('btnPauseTimer');
+                        const btnStopTimer = document.getElementById('btnStopTimer');
+                        if (btnStartTimer) btnStartTimer.style.display = 'none';
+                        if (btnPauseTimer) btnPauseTimer.style.display = 'inline-flex';
+                        if (btnStopTimer) btnStopTimer.style.display = 'inline-flex';
                     }
                 },
 
@@ -2013,9 +2030,12 @@
                             this.saveSession(this.currentTimerSession);
                         }
                         
-                        document.getElementById('btnStartTimer').style.display = 'inline-flex';
-                        document.getElementById('btnPauseTimer').style.display = 'none';
-                        document.getElementById('btnStopTimer').style.display = 'none';
+                        const btnStartTimer = document.getElementById('btnStartTimer');
+                        const btnPauseTimer = document.getElementById('btnPauseTimer');
+                        const btnStopTimer = document.getElementById('btnStopTimer');
+                        if (btnStartTimer) btnStartTimer.style.display = 'inline-flex';
+                        if (btnPauseTimer) btnPauseTimer.style.display = 'none';
+                        if (btnStopTimer) btnStopTimer.style.display = 'none';
                     }
                 },
 
@@ -2041,9 +2061,12 @@
                         this.currentTimerSession = null;
                         
                         // Reset button states
-                        document.getElementById('btnStartTimer').style.display = 'inline-flex';
-                        document.getElementById('btnPauseTimer').style.display = 'none';
-                        document.getElementById('btnStopTimer').style.display = 'none';
+                        const btnStartTimer = document.getElementById('btnStartTimer');
+                        const btnPauseTimer = document.getElementById('btnPauseTimer');
+                        const btnStopTimer = document.getElementById('btnStopTimer');
+                        if (btnStartTimer) btnStartTimer.style.display = 'inline-flex';
+                        if (btnPauseTimer) btnPauseTimer.style.display = 'none';
+                        if (btnStopTimer) btnStopTimer.style.display = 'none';
                         
                         this.updateTabTitle();
                     }
@@ -2065,9 +2088,12 @@
                     this.updateTimerDisplay();
                     this.updateTabTitle();
                     
-                    document.getElementById('btnStartTimer').style.display = 'inline-flex';
-                    document.getElementById('btnPauseTimer').style.display = 'none';
-                    document.getElementById('btnStopTimer').style.display = 'none';
+                    const btnStartTimer = document.getElementById('btnStartTimer');
+                    const btnPauseTimer = document.getElementById('btnPauseTimer');
+                    const btnStopTimer = document.getElementById('btnStopTimer');
+                    if (btnStartTimer) btnStartTimer.style.display = 'inline-flex';
+                    if (btnPauseTimer) btnPauseTimer.style.display = 'none';
+                    if (btnStopTimer) btnStopTimer.style.display = 'none';
                 },
 
                 timerComplete: function() {
@@ -2092,9 +2118,12 @@
                     this.showNotification('Timer Complete!', 'success');
                     
                     // Reset button states
-                    document.getElementById('btnStartTimer').style.display = 'inline-flex';
-                    document.getElementById('btnPauseTimer').style.display = 'none';
-                    document.getElementById('btnStopTimer').style.display = 'none';
+                    const btnStartTimer = document.getElementById('btnStartTimer');
+                    const btnPauseTimer = document.getElementById('btnPauseTimer');
+                    const btnStopTimer = document.getElementById('btnStopTimer');
+                    if (btnStartTimer) btnStartTimer.style.display = 'inline-flex';
+                    if (btnPauseTimer) btnPauseTimer.style.display = 'none';
+                    if (btnStopTimer) btnStopTimer.style.display = 'none';
                     
                     this.updateTabTitle();
                 },
@@ -3816,22 +3845,31 @@
 
                 // Render laps
                 const lapsList = document.getElementById("lapsList");
-                lapsList.innerHTML = this.stopwatchData.laps.map((lap, index) => {
-                    const lh = Math.floor(lap / 3600000);
-                    const lm = Math.floor((lap % 3600000) / 60000);
-                    const ls = Math.floor((lap % 60000) / 1000);
-                    return `
-                        <div style="display: flex; justify-content: space-between; padding: 8px; background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border);">
-                            <span>Lap ${index + 1}</span>
-                            <span style="font-family: Roboto Mono, monospace;">${lh.toString().padStart(2, "0")}:${lm.toString().padStart(2, "0")}:${ls.toString().padStart(2, "0")}</span>
-                        </div>
-                    `;
-                }).join("");
+                if (lapsList && this.stopwatchData.laps && this.stopwatchData.laps.length > 0) {
+                    lapsList.innerHTML = this.stopwatchData.laps.map((lap, index) => {
+                        const lh = Math.floor(lap / 3600000);
+                        const lm = Math.floor((lap % 3600000) / 60000);
+                        const ls = Math.floor((lap % 60000) / 1000);
+                        return `
+                            <div style="display: flex; justify-content: space-between; padding: 8px; background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border);">
+                                <span>Lap ${index + 1}</span>
+                                <span style="font-family: Roboto Mono, monospace;">${lh.toString().padStart(2, "0")}:${lm.toString().padStart(2, "0")}:${ls.toString().padStart(2, "0")}</span>
+                            </div>
+                        `;
+                    }).join("");
+                } else if (lapsList) {
+                    lapsList.innerHTML = "";
+                }
             },
 
             // ===== TIMER =====
             startCustomTimer() {
-                const seconds = parseInt(document.getElementById("timerInput").value);
+                const timerInputEl = document.getElementById("timerInput");
+                if (!timerInputEl) {
+                    console.warn("timerInput element not found");
+                    return;
+                }
+                const seconds = parseInt(timerInputEl.value);
                 if (seconds <= 0) {
                     alert("Please enter a valid time");
                     return;
@@ -3879,7 +3917,10 @@
 
                 this.timerData.isRunning = false;
                 this.timerData.timeLeft = 0;
-                document.getElementById("timerInput").value = "";
+                const timerInputEl = document.getElementById("timerInput");
+                if (timerInputEl) {
+                    timerInputEl.value = "";
+                }
                 this.renderTimer();
             },
 
