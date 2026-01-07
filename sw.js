@@ -1,10 +1,5 @@
-// Enhanced Service Worker with Quota Monitoring
+// Clean Service Worker for TaskPro
 const CACHE_NAME = 'taskpro-v9-cache';
-
-// Quota monitoring
-let firebaseRequests = 0;
-let localRequests = 0;
-let lastLogTime = Date.now();
 
 self.addEventListener('install', (event) => {
   console.log('SW Installed');
@@ -32,6 +27,24 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+  
+  // Cache static assets
+  if (url.pathname.endsWith('.js') || 
+      url.pathname.endsWith('.css') || 
+      url.pathname.endsWith('.json') || 
+      url.pathname.endsWith('.html') ||
+      url.pathname.endsWith('.ico') ||
+      url.pathname.endsWith('.png')) {
+    event.respondWith(
+      caches.match(event.request).then(response => {
+        return response || fetch(event.request);
+      })
+    );
+  }
+  
+  // For API calls, just fetch
+  event.respondWith(fetch(event.request));
+});
   
   // Skip Firebase and external APIs - go to network
   if (url.origin.includes('firebase') || 
