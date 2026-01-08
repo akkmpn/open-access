@@ -637,3 +637,24 @@ document.addEventListener('DOMContentLoaded', () => {
 // Global functions for backward compatibility
 window.toggleSidebar = (force) => TaskProApp.toggleSidebar(force);
 window.toggleTheme = () => TaskProApp.toggleTheme();
+
+// Toast Notification System
+function showToast(message, type = 'success', duration = 3000) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    
+    // Auto-remove after duration
+    setTimeout(() => {
+        toast.style.animation = 'slideDown 0.3s ease-out';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 300);
+    }, duration);
+}
+
+// Make showToast globally available
+window.showToast = showToast;

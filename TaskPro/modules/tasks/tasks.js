@@ -41,10 +41,11 @@ function renderTasks(tasks) {
     
     if (filteredTasks.length === 0) {
         tasksList.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-clipboard-list" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
-                <p>No tasks found</p>
-                <small>${currentFilter !== 'all' || searchQuery ? 'Try adjusting your filters' : 'Click the + button to add your first task'}</small>
+            <div class="empty-state-container">
+                <div class="empty-state-icon">🎯</div>
+                <h3>All clear!</h3>
+                <p>You don't have any tasks right now. Ready to start something new?</p>
+                <button class="btn-primary" onclick="openTaskModal()">Create Your First Task</button>
             </div>
         `;
         return;
@@ -73,7 +74,8 @@ function createTaskCard(task) {
         learning: '#f59e0b'
     };
     
-    const isOverdue = task.date && new Date(task.date) < new Date() && !task.completed;
+    const today = new Date().toISOString().split('T')[0];
+    const isOverdue = task.date && task.date < today && !task.completed;
     const formattedDate = task.date ? formatDateRelative(task.date) : 'No date';
     
     return `
@@ -90,6 +92,7 @@ function createTaskCard(task) {
                 <div class="task-content">
                     <h4 class="task-title ${task.completed ? 'completed-title' : ''}">${escapeHtml(task.title)}</h4>
                     <div class="task-meta">
+                        ${isOverdue ? '<span class="overdue-badge">⚠️ Overdue</span>' : ''}
                         ${task.tag ? `<span class="task-tag" style="background: ${tagColors[task.tag] || 'var(--accent)'}20; color: ${tagColors[task.tag] || 'var(--accent)'}">${task.tag}</span>` : ''}
                         <span class="task-date ${isOverdue ? 'overdue-date' : ''}">
                             <i class="far fa-calendar"></i> ${formattedDate}
@@ -192,7 +195,7 @@ async function addTask(taskData) {
         
         if (result.error) throw result.error;
         
-        TaskProApp.showNotification('Task added successfully', 'success');
+        showToast('Task Created!', 'success');
         await loadTasks();
         return result.data[0];
     } catch (error) {
@@ -277,7 +280,7 @@ async function deleteTask(taskId) {
         
         if (result.error) throw result.error;
         
-        TaskProApp.showNotification('Task deleted successfully', 'success');
+        showToast('Task Deleted!', 'success');
         
         // Remove from cache
         TaskProApp.cache.tasks = TaskProApp.cache.tasks.filter(t => t.id !== taskId);

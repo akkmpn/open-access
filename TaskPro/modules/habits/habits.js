@@ -43,26 +43,72 @@
         console.error('Error loading habits:', error);
         TaskProApp.showNotification('Failed to load habits', 'error');
     }
-}
 
-// Enhanced habit rendering with calendar view
-function renderHabits(habits) {
-    if (!habitsList) return;
-    
-    if (habits.length === 0) {
-        habitsList.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-fire" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
-                <p>No habits yet</p>
-                <small>Build better habits by tracking them daily</small>
+    // Enhanced habit rendering with calendar view
+    function renderHabits(habits) {
+        if (!habitsList) return;
+        
+        if (habits.length === 0) {
+            habitsList.innerHTML = `
+                <div class="empty-state-container">
+                    <div class="empty-state-icon">🔥</div>
+                    <h3>Start building habits!</h3>
+                    <p>Create your first habit and start building streaks. Small steps lead to big changes!</p>
+                    <button class="btn-primary" onclick="openHabitModal()">Create Your First Habit</button>
+                </div>
+            `;
+            return;
+        }
+        
+        habitsList.innerHTML = habits.map(habit => createHabitCard(habit)).join('');
+        
+        // Animate habit cards
+        animateHabitCards();
+    }
+
+    function createHabitCard(habit) {
+        const isCompletedToday = habit.completed_today || false;
+        const streakColor = getStreakColor(habit.streak);
+        const completionRate = calculateCompletionRate(habit);
+        
+        return `
+            <div class="habit-card ${isCompletedToday ? 'completed-today' : ''}" data-habit-id="${habit.id}">
+                <div class="habit-header">
+                    <div class="habit-info">
+                        <h4 class="habit-name">${escapeHtml(habit.name)}</h4>
+                        <div class="habit-meta">
+                            <span class="habit-streak" style="color: ${streakColor};">
+                                <i class="fas fa-fire"></i> ${habit.streak} day streak
+                            </span>
+                            <span class="habit-completion">${completionRate}% completion</span>
+                        </div>
+                    </div>
+                    <div class="habit-actions">
+                        <button class="habit-action-btn complete-btn ${isCompletedToday ? 'completed' : ''}" 
+                                onclick="toggleHabit('${habit.id}')" 
+                                title="${isCompletedToday ? 'Mark as incomplete' : 'Mark as complete'}">
+                            <i class="fas ${isCompletedToday ? 'fa-check-circle' : 'fa-circle'}"></i>
+                        </button>
+                        <button class="habit-action-btn" onclick="editHabit('${habit.id}')" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="habit-action-btn delete-btn" onclick="deleteHabit('${habit.id}')" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="habit-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${completionRate}%; background: ${streakColor};"></div>
+                    </div>
+                    <div class="progress-text">Last 30 days: ${getRecentCompletions(habit)} days</div>
+                </div>
+                <div class="habit-calendar">
+                    ${generateMiniCalendar(habit)}
+                </div>
             </div>
         `;
-        return;
     }
-    
-    habitsList.innerHTML = habits.map(habit => createHabitCard(habit)).join('');
-    
-    // Animate habit cards
     animateHabitCards();
 }
 

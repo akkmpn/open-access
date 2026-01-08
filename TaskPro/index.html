@@ -108,41 +108,25 @@
                     <h1>Welcome back, <span id="dash-username">User</span>!</h1>
                     <p id="dash-date">Thursday, January 8, 2026</p>
                 </div>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">✅</div>
-                        <div class="stat-info">
-                            <h3 id="dash-tasks-count">0</h3>
-                            <p>Tasks Today</p>
-                        </div>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>🎯 Tasks Pending</h3>
+                        <div class="stat-value" id="pending-tasks-count">0</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">🔥</div>
-                        <div class="stat-info">
-                            <h3 id="dash-habit-streak">0</h3>
-                            <p>Best Habit Streak</p>
-                        </div>
+
+                    <div class="dashboard-card">
+                        <h3>🔥 Best Streak</h3>
+                        <div class="stat-value" id="best-streak-count">0</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">⏱️</div>
-                        <div class="stat-info">
-                            <h3 id="dash-focus-hours">0h 0m</h3>
-                            <p>Focus Time</p>
-                        </div>
+
+                    <div class="dashboard-card">
+                        <h3>⏱️ Total Focus</h3>
+                        <div class="stat-value" id="total-focus-count">0m</div>
                     </div>
-                </div>
-                <div class="dashboard-content">
-                    <div class="dash-widget">
-                        <h3>Focus This Week</h3>
-                        <div id="dash-upcoming-list" class="dash-list"></div>
-                    </div>
-                    <div class="dash-widget">
-                        <h3>Productivity Trends</h3>
-                        <div class="chart-container">
-                            <div class="placeholder-chart">
-                                <p>Visualizing your progress...</p>
-                            </div>
-                        </div>
+
+                    <div class="dashboard-card chart-container">
+                        <h3>📊 Focus Trends (Last 7 Days)</h3>
+                        <canvas id="productivityChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -321,6 +305,7 @@
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="supabase-config.js"></script>
     
     <script src="modules/login/login.js"></script>

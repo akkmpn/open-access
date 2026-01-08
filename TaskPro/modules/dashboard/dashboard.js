@@ -1,31 +1,14 @@
 // ===== ENHANCED DASHBOARD MODULE =====
 // Advanced analytics and productivity tracking with Chart.js integration
 
-let dashboardChart = null;
+let productivityChart = null;
 
 async function initDashboard() {
     if (!TaskProApp.currentUser) return;
     
     try {
         // Load all dashboard data in parallel
-        const [
-            tasksData,
-            habitsData,
-            focusStats,
-            weeklyData
-        ] = await Promise.all([
-            loadDashboardTasks(),
-            loadDashboardHabits(),
-            loadFocusStats(),
-            loadWeeklyProductivity()
-        ]);
-        
-        // Update all dashboard components
-        updateTaskStats(tasksData);
-        updateHabitStats(habitsData);
-        updateFocusStats(focusStats);
-        updateWeeklyChart(weeklyData);
-        updateUpcomingTasks(tasksData);
+        await loadDashboardData();
         
         // Start real-time updates
         startDashboardUpdates();
@@ -34,6 +17,94 @@ async function initDashboard() {
         console.error('Dashboard initialization error:', error);
         TaskProApp.showNotification('Dashboard loading failed', 'error');
     }
+}
+
+async function loadDashboardData() {
+    const userId = TaskProApp.currentUser.id;
+
+    const [tasks, habits, stats, sessions] = await Promise.all([
+        supabase.from('tasks').select('id', { count: 'exact' }).eq('user_id', userId).eq('completed', false),
+        supabase.from('habits').select('streak').eq('user_id', userId).order('streak', { ascending: false }).limit(1),
+        supabase.from('timer_stats').select('total_focus_time').eq('user_id', userId).maybeSingle(),
+        supabase
+            .from('timer_sessions')
+            .select('created_at, duration_ms')
+            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+            .eq('user_id', userId)
+    ]);
+
+    // Update stat cards with animated numbers
+    animateValue('pending-tasks-count', tasks.count || 0);
+    animateValue('best-streak-count', habits.data[0]?.streak || 0);
+    const totalMinutes = Math.round((stats.data?.total_focus_time || 0) / 60000);
+    animateValue('total-focus-count', totalMinutes, 'm');
+    
+    // Initialize the productivity chart
+    await initProductivityChart(sessions.data || []);
+}
+
+async function initProductivityChart(sessions) {
+    const ctx = document.getElementById('productivityChart');
+    if (!ctx) return;
+
+    // Process data for the chart (Group by day)
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const chartData = new Array(7).fill(0);
+    
+    sessions.forEach(s => {
+        const dayIndex = new Date(s.created_at).getDay();
+        chartData[dayIndex] += (s.duration_ms / 60000); // Convert ms to minutes
+    });
+
+    if (productivityChart) productivityChart.destroy();
+
+    // Create gradient for the chart
+    const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(0, 184, 148, 0.5)');
+    gradient.addColorStop(1, 'rgba(0, 184, 148, 0)');
+
+    productivityChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: days,
+            datasets: [{
+                label: 'Focus Minutes',
+                data: chartData,
+                borderColor: '#00b894',
+                borderWidth: 3,
+                pointBackgroundColor: '#fff',
+                pointRadius: 4,
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#00b894',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                y: { 
+                    beginAtZero: true, 
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: 'rgba(255,255,255,0.7)' }
+                },
+                x: { 
+                    grid: { display: false },
+                    ticks: { color: 'rgba(255,255,255,0.7)' }
+                }
+            }
+        }
+    });
 }
 
 async function loadDashboardTasks() {
@@ -343,7 +414,7 @@ function formatDate(dateStr) {
     }
 }
 
-function animateValue(elementId, targetValue) {
+function animateValue(elementId, targetValue, suffix = '') {
     const element = document.getElementById(elementId);
     if (!element) return;
     
@@ -357,7 +428,7 @@ function animateValue(elementId, targetValue) {
         const progress = Math.min(elapsed / duration, 1);
         
         const currentValue = Math.floor(startValue + (targetValue - startValue) * progress);
-        element.textContent = currentValue;
+        element.textContent = currentValue + suffix;
         
         if (progress < 1) {
             requestAnimationFrame(update);
@@ -375,6 +446,10 @@ function startDashboardUpdates() {
         }
     }, 5 * 60 * 1000);
 }
+
+// Export functions for global access
+window.initDashboard = initDashboard;
+window.loadDashboardData = loadDashboardData;
 
 // Enhanced dashboard refresh function
 async function refreshDashboard() {

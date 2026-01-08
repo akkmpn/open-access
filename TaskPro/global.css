@@ -14,6 +14,97 @@
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap');
 
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    background: var(--bg-card);
+    color: var(--text-main);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 9999;
+    animation: slideUp 0.3s ease-out;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.toast.success {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+}
+
+.toast.error {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+}
+
+.toast.warning {
+    background: var(--warning);
+    color: white;
+    border-color: var(--warning);
+}
+
+@keyframes slideUp { 
+    from { transform: translateY(100%); opacity: 0; } 
+    to { transform: translateY(0); opacity: 1; } 
+}
+
+@keyframes slideDown { 
+    from { transform: translateY(0); opacity: 1; } 
+    to { transform: translateY(100%); opacity: 0; } 
+}
+
+/* Professional Empty States */
+.empty-state-container {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    margin-top: 20px;
+    min-height: 300px;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 15px;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.empty-state-container h3 {
+    font-size: 1.5rem;
+    color: var(--text-main);
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.empty-state-container p {
+    color: var(--text-muted);
+    max-width: 300px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.empty-state-container .btn-primary {
+    margin-top: 10px;
+}
+
 /* CSS Variables - Advanced Dark Theme */
 :root {
     --bg-body: #0f172a;

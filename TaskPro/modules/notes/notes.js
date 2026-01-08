@@ -50,10 +50,11 @@ function renderNotes(notes) {
     
     if (filteredNotes.length === 0) {
         notesList.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-sticky-note" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
-                <p>No notes found</p>
-                <small>${searchQuery ? 'Try adjusting your search' : 'Click the + button to add your first note'}</small>
+            <div class="empty-state-container">
+                <div class="empty-state-icon">📝</div>
+                <h3>Capture your thoughts!</h3>
+                <p>${searchQuery ? 'No notes match your search. Try different keywords?' : 'Start writing notes to organize your ideas and thoughts.'}</p>
+                <button class="btn-primary" onclick="openNoteModal()">Create Your First Note</button>
             </div>
         `;
         return;
