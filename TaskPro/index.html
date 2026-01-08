@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TaskPro v9.0 - Enterprise Productivity Suite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskPro - Production</title>
     <link rel="stylesheet" href="global.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
 <body class="taskpro-theme">
 
@@ -36,97 +35,64 @@
     </div>
 
     <div id="main-app" style="display:none;">
-        <!-- Mobile Header -->
-        <div class="mobile-header">
-            <button class="mobile-menu-toggle" onclick="toggleSidebar()">
-                <i class="fas fa-bars"></i>
-            </button>
-            <div class="mobile-logo">
-                <i class="fas fa-bolt"></i>
-                TaskPro 9.0
-            </div>
-            <button class="mobile-menu-toggle" onclick="toggleTheme()">
-                <i id="themeIcon" class="fas fa-moon"></i>
-            </button>
-        </div>
-
-        <!-- Sidebar -->
-        <nav class="sidebar" id="sidebar">
-            <div class="logo">
-                <i class="fas fa-bolt"></i>
-                TaskPro 9.0
-            </div>
+        <nav class="sidebar">
+            <div class="logo">TaskPro</div>
             <ul class="nav-links">
-                <li class="nav-link" onclick="showSection('dashboard')">
-                    <i class="fas fa-chart-pie"></i>
-                    Dashboard
-                </li>
-                <li class="nav-link" onclick="showSection('tasks')">
-                    <i class="fas fa-tasks"></i>
-                    My Tasks
-                </li>
-                <li class="nav-link" onclick="showSection('habits')">
-                    <i class="fas fa-fire"></i>
-                    Habits
-                </li>
-                <li class="nav-link" onclick="showSection('notes')">
-                    <i class="fas fa-sticky-note"></i>
-                    My Notes
-                </li>
-                <li class="nav-link" onclick="showSection('calendar')">
-                    <i class="far fa-calendar-alt"></i>
-                    Calendar
-                </li>
-                <li class="nav-link" onclick="showSection('pomodoro')">
-                    <i class="fas fa-stopwatch"></i>
-                    Focus
-                </li>
-                <li class="nav-link" onclick="showSection('timer')">
-                    <i class="fas fa-clock"></i>
-                    Timer
-                </li>
-                <li class="nav-link" onclick="showSection('community')">
-                    <i class="fas fa-users"></i>
-                    Community
-                </li>
-                <li class="nav-link" onclick="showSection('backup')">
-                    <i class="fas fa-cog"></i>
-                    Settings
-                </li>
+                <li class="nav-link" onclick="showSection('dashboard')">Dashboard</li>
+                <li class="nav-link" onclick="showSection('tasks')">Tasks</li>
+                <li class="nav-link" onclick="showSection('habits')">Habits</li>
+                <li class="nav-link" onclick="showSection('notes')">Notes</li>
+                <li class="nav-link" onclick="showSection('calendar')">Calendar</li>
+                <li class="nav-link" onclick="showSection('pomodoro')">Focus</li>
+                <li class="nav-link" onclick="showSection('timer')">Timer</li>
+                <li class="nav-link" onclick="showSection('community')">Community</li>
+                <li class="nav-link" onclick="showSection('backup')">Settings</li>
             </ul>
-            <button onclick="handleLogout()" class="logout-btn">
-                <i class="fas fa-sign-out-alt"></i>
-                Logout
-            </button>
+            <button onclick="handleLogout()" class="logout-btn">Logout</button>
         </nav>
 
-        <!-- Main Content Area -->
-        <main id="main-app-content" class="content-area">
+        <main id="content-area">
             
             <div id="dashboard-section" class="app-section">
                 <div class="dashboard-welcome">
                     <h1>Welcome back, <span id="dash-username">User</span>!</h1>
                     <p id="dash-date">Thursday, January 8, 2026</p>
                 </div>
-                <div class="dashboard-grid">
-                    <div class="dashboard-card">
-                        <h3>🎯 Tasks Pending</h3>
-                        <div class="stat-value" id="pending-tasks-count">0</div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3 id="dash-tasks-count">0</h3>
+                            <p>Tasks Today</p>
+                        </div>
                     </div>
-
-                    <div class="dashboard-card">
-                        <h3>🔥 Best Streak</h3>
-                        <div class="stat-value" id="best-streak-count">0</div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔥</div>
+                        <div class="stat-info">
+                            <h3 id="dash-habit-streak">0</h3>
+                            <p>Best Habit Streak</p>
+                        </div>
                     </div>
-
-                    <div class="dashboard-card">
-                        <h3>⏱️ Total Focus</h3>
-                        <div class="stat-value" id="total-focus-count">0m</div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏱️</div>
+                        <div class="stat-info">
+                            <h3 id="dash-focus-hours">0h 0m</h3>
+                            <p>Focus Time</p>
+                        </div>
                     </div>
-
-                    <div class="dashboard-card chart-container">
-                        <h3>📊 Focus Trends (Last 7 Days)</h3>
-                        <canvas id="productivityChart"></canvas>
+                </div>
+                <div class="dashboard-content">
+                    <div class="dash-widget">
+                        <h3>Focus This Week</h3>
+                        <div id="dash-upcoming-list" class="dash-list"></div>
+                    </div>
+                    <div class="dash-widget">
+                        <h3>Productivity Trends</h3>
+                        <div class="chart-container">
+                            <div class="placeholder-chart">
+                                <p>Visualizing your progress...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -135,14 +101,6 @@
                 <div class="section-header">
                     <h2>My Tasks</h2>
                     <button id="add-task-btn" onclick="openTaskModal()" class="btn-primary">+ Add New Task</button>
-                </div>
-                <div class="task-controls">
-                    <input type="text" id="task-search" placeholder="Search tasks...">
-                    <select id="task-sort">
-                        <option value="newest">Newest First</option>
-                        <option value="priority">High Priority</option>
-                        <option value="date">Due Date</option>
-                    </select>
                 </div>
                 <div class="task-filters">
                     <button class="filter-btn active" onclick="filterTasks('all')">All</button>
@@ -155,34 +113,16 @@
                         <h3 id="modal-title">Task Details</h3>
                         <form id="task-form">
                             <input type="hidden" id="task-id">
-                            <div class="form-group">
-                                <label>Task Title</label>
-                                <input type="text" id="task-title" placeholder="What needs to be done?" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Description (Optional)</label>
-                                <textarea id="task-description" placeholder="Add details..." rows="3"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Due Date</label>
-                                <input type="date" id="task-date" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Priority</label>
-                                <select id="task-priority">
-                                    <option value="low">Low</option>
-                                    <option value="medium" selected>Medium</option>
-                                    <option value="high">High</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Tag (Optional)</label>
-                                <input type="text" id="task-tag" placeholder="e.g., Work, Personal">
-                            </div>
-                            <div class="modal-actions">
-                                <button type="button" class="btn-secondary" onclick="closeTaskModal()">Cancel</button>
-                                <button type="submit" class="btn-save">Save Task</button>
-                            </div>
+                            <input type="text" id="task-title" placeholder="What needs to be done?" required>
+                            <input type="date" id="task-date" required>
+                            <select id="task-priority">
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                            <input type="text" id="task-tag" placeholder="Tag (e.g. Work)">
+                            <button type="submit" class="btn-save">Save Task</button>
+                            <button type="button" onclick="closeTaskModal()">Cancel</button>
                         </form>
                     </div>
                 </div>
@@ -275,10 +215,6 @@
                         <h2>Stopwatch</h2>
                         <span class="session-label">Current Session</span>
                     </div>
-                    <div class="timer-stats-panel">
-                        <span id="total-sessions-count">0</span> sessions
-                        <span id="total-timer-time">0</span> minutes
-                    </div>
                     <div class="stopwatch-display">
                         <h1 id="sw-display">00:00:00</h1>
                     </div>
@@ -335,7 +271,6 @@
         </main>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="supabase-config.js"></script>
     
     <script src="modules/login/login.js"></script>
@@ -350,9 +285,6 @@
     <script src="modules/backup/backup.js"></script>
 
     <script src="app.js"></script>
-    
-    <!-- Feature Verification (Optional - for testing) -->
-    <script src="feature-verification.js"></script>
 
 </body>
 </html>

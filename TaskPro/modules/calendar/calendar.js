@@ -61,10 +61,3 @@ function changeMonth(offset) {
 
 // Initial Load
 renderCalendar();
-
-// Export functions for global access
-window.initCalendar = async function() {
-    await renderCalendar();
-};
-window.renderCalendar = renderCalendar;
-window.changeMonth = changeMonth;
