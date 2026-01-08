@@ -147,16 +147,34 @@
                         <h3 id="modal-title">Task Details</h3>
                         <form id="task-form">
                             <input type="hidden" id="task-id">
-                            <input type="text" id="task-title" placeholder="What needs to be done?" required>
-                            <input type="date" id="task-date" required>
-                            <select id="task-priority">
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                            </select>
-                            <input type="text" id="task-tag" placeholder="Tag (e.g. Work)">
-                            <button type="submit" class="btn-save">Save Task</button>
-                            <button type="button" onclick="closeTaskModal()">Cancel</button>
+                            <div class="form-group">
+                                <label>Task Title</label>
+                                <input type="text" id="task-title" placeholder="What needs to be done?" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Description (Optional)</label>
+                                <textarea id="task-description" placeholder="Add details..." rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Due Date</label>
+                                <input type="date" id="task-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Priority</label>
+                                <select id="task-priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tag (Optional)</label>
+                                <input type="text" id="task-tag" placeholder="e.g., Work, Personal">
+                            </div>
+                            <div class="modal-actions">
+                                <button type="button" class="btn-secondary" onclick="closeTaskModal()">Cancel</button>
+                                <button type="submit" class="btn-save">Save Task</button>
+                            </div>
                         </form>
                     </div>
                 </div>

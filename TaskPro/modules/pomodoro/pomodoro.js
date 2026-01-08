@@ -187,10 +187,11 @@ function setMode(mode) {
     pomodoroState.mode = mode;
     pomodoroState.timeLeft = getModeDuration();
     
-    // Update UI
+    // Update UI based on onclick attribute instead
     document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.classList.remove('active');
-        if (btn.dataset.mode === mode) {
+        const btnOnclick = btn.getAttribute('onclick');
+        if (btnOnclick && btnOnclick.includes(`'${mode}'`)) {
             btn.classList.add('active');
         }
     });

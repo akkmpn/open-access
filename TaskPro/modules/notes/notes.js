@@ -29,16 +29,7 @@
             console.error('Error loading notes:', error);
             TaskProApp.showNotification('Failed to load notes', 'error');
         }
-    try {
-        const notes = await TaskProApp.loadNotes();
-        currentNotes = notes;
-        renderNotes(notes);
-        setupNotesEventListeners();
-    } catch (error) {
-        console.error('Error loading notes:', error);
-        TaskProApp.showNotification('Failed to load notes', 'error');
     }
-}
 
 // Enhanced note rendering with animations
 function renderNotes(notes) {

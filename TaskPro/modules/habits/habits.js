@@ -32,16 +32,6 @@
             console.error('Error loading habits:', error);
             TaskProApp.showNotification('Failed to load habits', 'error');
         }
-    try {
-        const habits = await TaskProApp.loadHabits();
-        currentHabits = habits;
-        renderHabits(habits);
-        updateHabitStats();
-        setupHabitsEventListeners();
-        checkDailyReset();
-    } catch (error) {
-        console.error('Error loading habits:', error);
-        TaskProApp.showNotification('Failed to load habits', 'error');
     }
 
     // Enhanced habit rendering with calendar view
@@ -103,9 +93,6 @@
                     </div>
                     <div class="progress-text">Last 30 days: ${getRecentCompletions(habit)} days</div>
                 </div>
-                <div class="habit-calendar">
-                    ${generateMiniCalendar(habit)}
-                </div>
             </div>
         `;
     }
@@ -148,9 +135,6 @@ function createHabitCard(habit) {
                     <div class="progress-fill" style="width: ${completionRate}%; background: ${streakColor};"></div>
                 </div>
                 <div class="progress-text">Last 30 days: ${getRecentCompletions(habit)} days</div>
-            </div>
-            <div class="habit-calendar">
-                ${generateMiniCalendar(habit)}
             </div>
         </div>
     `;

@@ -580,6 +580,7 @@ window.deleteTask = deleteTask;
 window.duplicateTask = duplicateTask;
 window.toggleTask = toggleTask;
 window.setTaskFilter = setTaskFilter;
+window.filterTasks = filterTasks;
 window.searchTasks = searchTasks;
 
 // Add CSS animations
