@@ -7,20 +7,31 @@ export async function init() {
 
     // 1. Get current user
     const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+        console.error("No active user session found");
+        return;
+    }
 
     // 2. Function to Render Tasks
     const renderTasks = async () => {
         const { data: tasks, error } = await supabase
             .from('tasks')
-            .select('*')
+            .select('*') // Standard select
+            .eq('user_id', user.id) // Filter by user to prevent 400/406 errors
             .order('created_at', { ascending: false });
 
-        if (error) return console.error(error);
+        if (error) {
+            console.error("Fetch error:", error.message);
+            return;
+        }
+
+        if (!taskList) return;
 
         taskList.innerHTML = tasks.map(task => `
             <div class="task-item ${task.is_completed ? 'completed' : ''}">
                 <input type="checkbox" ${task.is_completed ? 'checked' : ''} 
-                    onclick="toggleTask('${task.id}', ${task.is_completed})">
+                    onchange="toggleTask('${task.id}', ${task.is_completed})">
                 <span>${task.title}</span>
                 <button onclick="deleteTask('${task.id}')">🗑️</button>
             </div>
@@ -34,22 +45,34 @@ export async function init() {
 
         const { error } = await supabase
             .from('tasks')
-            .insert([{ title, user_id: user.id }]);
+            .insert([{ title, user_id: user.id, is_completed: false }]);
 
-        if (!error) {
+        if (error) {
+            console.error("Insert error:", error.message);
+        } else {
             taskInput.value = '';
             renderTasks();
         }
     };
 
-    // 4. Expose functions to the window (so HTML onclick can find them)
-    window.toggleTask = async (id, status) => {
-        await supabase.from('tasks').update({ is_completed: !status }).eq('id', id);
+    // 4. Expose functions to the window
+    window.toggleTask = async (id, currentStatus) => {
+        const { error } = await supabase
+            .from('tasks')
+            .update({ is_completed: !currentStatus })
+            .eq('id', id);
+        
+        if (error) console.error("Update error:", error.message);
         renderTasks();
     };
 
     window.deleteTask = async (id) => {
-        await supabase.from('tasks').delete().eq('id', id);
+        const { error } = await supabase
+            .from('tasks')
+            .delete()
+            .eq('id', id);
+            
+        if (error) console.error("Delete error:", error.message);
         renderTasks();
     };
 

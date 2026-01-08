@@ -7,15 +7,19 @@ export async function init() {
     const statusMsg = document.getElementById('save-status');
     const { data: { user } } = await supabase.auth.getUser();
 
-    // 1. Load the existing note
-    const { data: note } = await supabase
+    if (!user) return;
+
+    // 1. Load the existing note 
+    // FIXED: Removed .single() to prevent 406 error on empty results
+    const { data: notes, error } = await supabase
         .from('notes')
         .select('content')
-        .eq('user_id', user.id)
-        .single();
+        .eq('user_id', user.id);
 
-    if (note) {
-        noteArea.value = note.content;
+    if (error) {
+        console.error("Error loading notes:", error.message);
+    } else if (notes && notes.length > 0) {
+        noteArea.value = notes[0].content;
     }
 
     // 2. Auto-save Event Listener
@@ -26,15 +30,21 @@ export async function init() {
         saveTimeout = setTimeout(async () => {
             statusMsg.innerText = "Saving...";
             
+            // FIXED: Using upsert correctly with user_id as the unique constraint
             const { error } = await supabase
                 .from('notes')
                 .upsert({ 
                     user_id: user.id, 
                     content: noteArea.value,
-                    updated_at: new Date() 
+                    updated_at: new Date().toISOString() // Better practice to use ISO string
                 }, { onConflict: 'user_id' });
 
-            statusMsg.innerText = error ? "Error saving!" : "Saved to cloud";
+            if (error) {
+                console.error("Save error details:", error);
+                statusMsg.innerText = "Error saving!";
+            } else {
+                statusMsg.innerText = "Saved to cloud";
+            }
         }, 1000); // 1 second delay
     });
 }
