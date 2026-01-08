@@ -172,7 +172,7 @@
             const presenceChannel = supabase.channel('online_users');
             
             presenceChannel.on('presence', { event: 'sync' }, (status) => {
-                console.log('👥 Online users sync:', Object.keys(status.presences).length);
+                console.log('👥 Online users sync:', Object.keys(status.presences || {}).length);
             });
             
             presenceChannel.on('presence', { event: 'join' }, (key, newPresences) => {
