@@ -290,12 +290,12 @@ function updateWeeklyChart(weekData) {
     if (!ctx) return;
     
     // Destroy existing chart if it exists
-    if (productivityChart) {
-        productivityChart.destroy();
+    if (dashboardChart) {
+        dashboardChart.destroy();
     }
     
     // Create new chart
-    productivityChart = new Chart(ctx, {
+    dashboardChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: weekData.labels,

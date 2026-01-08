@@ -571,6 +571,14 @@ function setupTaskEventListeners() {
     });
 }
 
+// Define filterTasks function
+function filterTasks(category) {
+    if (window.setTaskFilter) {
+        return window.setTaskFilter(category);
+    }
+    console.warn('setTaskFilter not available');
+}
+
 // Export functions for global access
 window.loadTasks = loadTasks;
 window.openTaskModal = openTaskModal;
