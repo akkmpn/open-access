@@ -17,8 +17,9 @@ export async function init() {
     const renderTasks = async () => {
         const { data: tasks, error } = await supabase
             .from('tasks')
-            .select('*') // Standard select
-            .eq('user_id', user.id) // Filter by user to prevent 400/406 errors
+            // FIX: We fetch 'completed' from DB but tell JS to call it 'is_completed'
+            .select('id, title, user_id, created_at, is_completed:completed') 
+            .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -45,7 +46,8 @@ export async function init() {
 
         const { error } = await supabase
             .from('tasks')
-            .insert([{ title, user_id: user.id, is_completed: false }]);
+            // FIX: Changed column name to 'completed'
+            .insert([{ title, user_id: user.id, completed: false }]); 
 
         if (error) {
             console.error("Insert error:", error.message);
@@ -59,7 +61,8 @@ export async function init() {
     window.toggleTask = async (id, currentStatus) => {
         const { error } = await supabase
             .from('tasks')
-            .update({ is_completed: !currentStatus })
+            // FIX: Changed column name to 'completed'
+            .update({ completed: !currentStatus }) 
             .eq('id', id);
         
         if (error) console.error("Update error:", error.message);
