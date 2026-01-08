@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskPro - Your Complete Productivity Suite</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation Sidebar -->
+    <nav>
+        <h2 style="margin: 0 0 2rem 0; color: var(--text-main);">📋 TaskPro</h2>
+        <a class="nav-link active" data-module="dashboard">Dashboard</a>
+        <a class="nav-link" data-module="tasks">Tasks</a>
+        <a class="nav-link" data-module="habits">Habits</a>
+        <a class="nav-link" data-module="calendar">Calendar</a>
+        <a class="nav-link" data-module="timer">⏱️ Timer</a>
+        <a class="nav-link" data-module="pomodoro">🍅 Pomodoro</a>
+        <a class="nav-link" data-module="notes">Notes</a>
+        <a class="nav-link" data-module="community">Community</a>
+        <a class="nav-link" data-module="backup">Backup</a>
+        <button class="btn-outline" id="logout-btn" style="margin-top: auto;">Sign Out</button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div id="main-content"></div>
+
+    <!-- Offline Indicator Toast -->
+    <div id="offline-toast"></div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
