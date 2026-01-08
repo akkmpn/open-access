@@ -2,6 +2,7 @@
 // Advanced analytics and productivity tracking with Chart.js integration
 
 let productivityChart = null;
+let dashboardChart = null;
 
 async function initDashboard() {
     if (!TaskProApp.currentUser) return;
@@ -83,24 +84,50 @@ async function initProductivityChart(sessions) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: { 
-                legend: { display: false },
+                legend: { 
+                    display: false 
+                },
                 tooltip: {
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
                     titleColor: '#fff',
                     bodyColor: '#fff',
                     borderColor: '#00b894',
-                    borderWidth: 1
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return Math.round(context.parsed.y) + ' min';
+                        }
+                    }
                 }
             },
             scales: {
                 y: { 
                     beginAtZero: true, 
-                    grid: { color: 'rgba(255,255,255,0.1)' },
-                    ticks: { color: 'rgba(255,255,255,0.7)' }
+                    grid: { 
+                        color: 'rgba(255,255,255,0.1)' 
+                    },
+                    ticks: { 
+                        color: 'rgba(255,255,255,0.7)',
+                        font: {
+                            size: window.innerWidth < 768 ? 10 : 12
+                        },
+                        callback: function(value) {
+                            return Math.round(value);
+                        }
+                    }
                 },
                 x: { 
-                    grid: { display: false },
-                    ticks: { color: 'rgba(255,255,255,0.7)' }
+                    grid: { 
+                        display: false 
+                    },
+                    ticks: { 
+                        color: 'rgba(255,255,255,0.7)',
+                        font: {
+                            size: window.innerWidth < 768 ? 10 : 12
+                        }
+                    }
                 }
             }
         }
@@ -330,7 +357,7 @@ function updateWeeklyChart(weekData) {
                     labels: {
                         color: getComputedStyle(document.body).getPropertyValue('--text-main'),
                         font: {
-                            size: 12,
+                            size: window.innerWidth < 768 ? 10 : 12,
                             family: 'Inter'
                         }
                     }
@@ -340,7 +367,14 @@ function updateWeeklyChart(weekData) {
                     titleColor: getComputedStyle(document.body).getPropertyValue('--text-main'),
                     bodyColor: getComputedStyle(document.body).getPropertyValue('--text-muted'),
                     borderColor: getComputedStyle(document.body).getPropertyValue('--border'),
-                    borderWidth: 1
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + Math.round(context.parsed.y);
+                        }
+                    }
                 }
             },
             scales: {
@@ -348,7 +382,13 @@ function updateWeeklyChart(weekData) {
                     beginAtZero: true,
                     ticks: {
                         color: getComputedStyle(document.body).getPropertyValue('--text-muted'),
-                        stepSize: 1
+                        stepSize: 1,
+                        font: {
+                            size: window.innerWidth < 768 ? 10 : 12
+                        },
+                        callback: function(value) {
+                            return Math.round(value);
+                        }
                     },
                     grid: {
                         color: getComputedStyle(document.body).getPropertyValue('--border'),
@@ -357,7 +397,10 @@ function updateWeeklyChart(weekData) {
                 },
                 x: {
                     ticks: {
-                        color: getComputedStyle(document.body).getPropertyValue('--text-muted')
+                        color: getComputedStyle(document.body).getPropertyValue('--text-muted'),
+                        font: {
+                            size: window.innerWidth < 768 ? 10 : 12
+                        }
                     },
                     grid: {
                         display: false
@@ -447,10 +490,6 @@ function startDashboardUpdates() {
     }, 5 * 60 * 1000);
 }
 
-// Export functions for global access
-window.initDashboard = initDashboard;
-window.loadDashboardData = loadDashboardData;
-
 // Enhanced dashboard refresh function
 async function refreshDashboard() {
     TaskProApp.setLoading(true);
@@ -466,11 +505,22 @@ async function refreshDashboard() {
 
 // Export functions for global access
 window.initDashboard = initDashboard;
+window.loadDashboardData = loadDashboardData;
 window.refreshDashboard = refreshDashboard;
 
 // Auto-refresh on visibility change
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden && TaskProApp.currentSection === 'dashboard') {
         refreshDashboard();
+    }
+});
+
+// ===== CHART RESIZE HANDLER FOR MOBILE =====
+window.addEventListener('resize', () => {
+    if (productivityChart) {
+        productivityChart.resize();
+    }
+    if (dashboardChart) {
+        dashboardChart.resize();
     }
 });

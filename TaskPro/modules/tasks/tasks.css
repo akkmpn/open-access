@@ -186,3 +186,131 @@
     align-items: center;
     gap: 15px;
 }
+
+/* ===== MOBILE RESPONSIVE FIXES ===== */
+
+/* Tablet and below (iPad, tablets) */
+@media (max-width: 768px) {
+    .tasks-grid {
+        gap: 10px;
+    }
+
+    .task-card {
+        padding: 12px;
+        flex-direction: column;
+    }
+
+    /* Make task actions always visible on mobile - NO HOVER NEEDED */
+    .task-actions {
+        opacity: 1 !important;
+        margin-top: 12px;
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .task-header {
+        width: 100%;
+    }
+
+    .task-meta {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .task-title {
+        font-size: 14px;
+    }
+
+    .task-description {
+        font-size: 13px;
+    }
+
+    .task-action-btn {
+        padding: 8px;
+        font-size: 14px;
+        /* Larger tap targets for mobile */
+        min-width: 36px;
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Touch-friendly checkbox */
+    .task-checkbox {
+        width: 22px;
+        height: 22px;
+    }
+}
+
+/* Mobile phones (iPhone, Android phones) */
+@media (max-width: 480px) {
+    .task-card {
+        padding: 10px;
+    }
+
+    .task-title {
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+
+    .task-meta {
+        gap: 6px;
+        font-size: 10px;
+    }
+
+    .task-tag {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+
+    .task-date {
+        font-size: 11px;
+    }
+
+    .task-priority-indicator {
+        font-size: 10px;
+    }
+
+    .task-actions {
+        gap: 6px;
+        margin-top: 10px;
+    }
+
+    .task-action-btn {
+        padding: 6px;
+        min-width: 32px;
+        min-height: 32px;
+    }
+
+    .task-description {
+        font-size: 12px;
+        margin-top: 10px;
+        padding-top: 10px;
+    }
+
+    .overdue-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}
+
+/* Touch device support */
+@media (hover: none) and (pointer: coarse) {
+    /* Always show actions on touch devices */
+    .task-actions {
+        opacity: 1 !important;
+    }
+
+    /* Remove hover effects on touch devices */
+    .task-card:hover {
+        transform: none;
+    }
+
+    /* Increase tap target size */
+    .task-checkbox,
+    .task-action-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
