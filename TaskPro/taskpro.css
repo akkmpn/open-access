@@ -469,6 +469,46 @@ input[type="checkbox"] {
     border-radius: 4px;
 }
 
+/* Enhanced Calendar Task Styles */
+.calendar-task-list {
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 60px;
+    overflow-y: auto;
+}
+
+.calendar-task-item {
+    font-size: 0.7rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.9);
+    border-left: 3px solid;
+    margin-bottom: 2px;
+}
+
+.calendar-task-item.high {
+    border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.calendar-task-item.medium {
+    border-left-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.calendar-task-item.low {
+    border-left-color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.day-number {
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #333;
+}
+
 /* ============================================
    TIMER (STOPWATCH) STYLES
    ============================================ */
@@ -734,6 +774,54 @@ input[type="checkbox"] {
 /* ============================================
    COMMUNITY STYLES
    ============================================ */
+
+.chat-input-area {
+    display: flex;
+    gap: 10px;
+    padding: 15px;
+    border-top: 1px solid #eee;
+}
+
+#chat-input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+#send-chat {
+    padding: 0.5rem 1rem;
+    white-space: nowrap;
+}
+
+.chat-messages {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 400px;
+    background: #f9f9f9;
+    border-radius: 0 0 8px 8px;
+}
+
+.chat-msg {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.chat-msg.own {
+    background: #e3f2fd;
+    margin-left: auto;
+    text-align: right;
+}
+
+.chat-msg strong {
+    color: #333;
+    font-size: 0.85rem;
+}
 
 .community-grid {
     display: grid;

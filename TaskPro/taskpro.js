@@ -441,37 +441,43 @@ async function loadCalendar() {
 async function renderCalendarFunc() {
     const grid = document.getElementById('calendar-grid');
     const monthYearLabel = document.getElementById('current-month-year');
+    if (!grid || !monthYearLabel) return;
 
     const month = currentDate.getMonth();
     const year = currentDate.getFullYear();
     monthYearLabel.innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentDate);
 
-    // FIXED: Changed 'date' to 'due_date' to match your Supabase schema
+    // Fetch tasks that have a due_date
     const { data: tasks } = await supabase
         .from('tasks')
-        .select('title, due_date, priority');
+        .select('title, due_date, priority, is_completed');
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const startDayIndex = new Date(year, month, 1).getDay();
 
     grid.innerHTML = '';
 
+    // Add empty slots for previous month
     for (let x = 0; x < startDayIndex; x++) {
-        grid.innerHTML += '<div class="day"></div>';
+        grid.innerHTML += '<div class="day empty"></div>';
     }
 
+    // Add days of the month
     for (let i = 1; i <= daysInMonth; i++) {
-        // Formats as YYYY-MM-DD to match Supabase DATE format
         const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-        
-        // FIXED: Filtering by 'due_date' instead of 'date'
         const dayTasks = tasks?.filter(t => t.due_date === dateString) || [];
-        const today = new Date().toDateString() === new Date(year, month, i).toDateString();
+        const isToday = new Date().toDateString() === new Date(year, month, i).toDateString();
+
+        const taskHtml = dayTasks.map(t => `
+            <div class="calendar-task-item ${t.priority}" title="${t.title}">
+                ${t.is_completed ? '✅' : ''} ${t.title}
+            </div>
+        `).join('');
 
         grid.innerHTML += `
-            <div class="day ${today ? 'today' : ''}">
-                ${i}
-                ${dayTasks.length > 0 ? '<div class="task-dot" title="' + dayTasks.map(t => t.title).join(', ') + '"></div>' : ''}
+            <div class="day ${isToday ? 'today' : ''}">
+                <span class="day-number">${i}</span>
+                <div class="calendar-task-list">${taskHtml}</div>
             </div>
         `;
     }
@@ -790,10 +796,12 @@ async function loadCommunity() {
     contentArea.innerHTML = `
         <h1>👥 Community</h1>
         <div class="community-grid">
-            <div class="chat-container">
+            <div class="chat-container card">
                 <h3 style="padding: 15px; margin: 0; border-bottom: 1px solid #eee;">Global Chat</h3>
-                <div class="chat-messages" id="chat-messages">
-                    <p style="text-align: center; color: #999;">Chat coming soon...</p>
+                <div class="chat-messages" id="chat-messages"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Type a message...">
+                    <button id="send-chat" class="btn-primary">Send</button>
                 </div>
             </div>
             <div class="card">
@@ -803,6 +811,56 @@ async function loadCommunity() {
         </div>
     `;
 
+    setupChat(); // Initialize real-time chat logic
+    renderLeaderboard(); // Your existing leaderboard logic
+}
+
+async function setupChat() {
+    const chatBox = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-chat');
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // 1. Load Last 50 Messages
+    const { data: messages } = await supabase
+        .from('messages')
+        .select('*, profiles(email)') // Assumes you have a profiles table or just use user_id
+        .order('created_at', { ascending: true })
+        .limit(50);
+
+    const renderMessage = (msg) => {
+        const div = document.createElement('div');
+        div.className = `chat-msg ${msg.user_id === user.id ? 'own' : ''}`;
+        div.innerHTML = `<strong>${msg.user_email || 'User'}:</strong> ${msg.content}`;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    };
+
+    if (messages) messages.forEach(renderMessage);
+
+    // 2. Listen for NEW Messages (Realtime)
+    const channel = supabase
+        .channel('public:messages')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, 
+            payload => renderMessage(payload.new))
+        .subscribe();
+
+    // 3. Sending Messages
+    const sendMessage = async () => {
+        if (!chatInput.value.trim()) return;
+        await supabase.from('messages').insert({
+            content: chatInput.value,
+            user_id: user.id,
+            user_email: user.email // Temporary way to show names
+        });
+        chatInput.value = '';
+    };
+
+    sendBtn.onclick = sendMessage;
+    chatInput.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+}
+
+async function renderLeaderboard() {
     const { data: habits } = await supabase
         .from('habits')
         .select('name, streak, user_id')
