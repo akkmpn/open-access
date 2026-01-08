@@ -798,7 +798,7 @@ function getLoginHTML() {
                     </div>
                     <div class="input-group">
                         <label for="password">Password</label>
-                        <input type="password" id="password" required>
+                        <input type="password" id="password" required autocomplete="current-password">
                     </div>
                     <button type="submit" class="btn-primary" id="login-btn" style="width: 100%; padding: 0.75rem;">Sign In</button>
                     <div id="auth-error" style="display: none;"></div>
