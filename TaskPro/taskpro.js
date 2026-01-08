@@ -794,7 +794,7 @@ function getLoginHTML() {
                 <form id="login-form">
                     <div class="input-group">
                         <label for="email">Email</label>
-                        <input type="email" id="email" required>
+                        <input type="email" id="email" required autocomplete="username">
                     </div>
                     <div class="input-group">
                         <label for="password">Password</label>
