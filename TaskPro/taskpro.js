@@ -951,63 +951,91 @@ async function loadBackup() {
 }
 
 /* ============================================
-   DESIGN WIZARD MODULE
+   DESIGN WIZARD FUNCTIONS
    ============================================ */
 
-function loadDesignWizard() {
+window.updateTheme = (theme) => {
+    document.body.className = document.body.className.replace(/\btheme-\S+/g, '');
+    document.body.classList.add(`theme-${theme}`);
+    localStorage.setItem('tp-theme', theme);
+};
+
+window.updateLayout = (side) => {
+    document.body.style.flexDirection = side === 'right' ? 'row-reverse' : 'row';
+    localStorage.setItem('tp-layout', side);
+};
+
+window.updateCardStyle = (style) => {
+    const radius = style === 'rounded' ? '25px' : '12px';
+    document.documentElement.style.setProperty('--card-radius', radius);
+    localStorage.setItem('tp-card-style', style);
+};
+
+window.applySavedDesign = () => {
+    window.updateTheme(localStorage.getItem('tp-theme') || 'dark');
+    window.updateLayout(localStorage.getItem('tp-layout') || 'left');
+    window.updateCardStyle(localStorage.getItem('tp-card-style') || 'sharp');
+};
+
+window.loadDesignWizard = () => {
+    const contentArea = document.getElementById('main-content');
     contentArea.innerHTML = `
-        <h1>🎨 Layout Wizard</h1>
-        <p>Customize how TaskPro looks and feels.</p>
-        
-        <div class="design-grid">
-            <div class="card design-card">
-                <h3>Theme Mode</h3>
-                <div class="design-options">
-                    <button class="btn-secondary" onclick="updateTheme('dark')">Midnight Dark</button>
-                    <button class="btn-secondary" onclick="updateTheme('light')">Clean Light</button>
-                    <button class="btn-secondary" onclick="updateTheme('glass')">Glassmorphism</button>
+        <div class="design-wizard-container">
+            <h1></h1>
+            <p>Customize TaskPro's appearance.</p>
+            <h1>🎨 Layout Wizard</h1>
+            <p>Customize your workspace appearance.</p>
+            
+            <div class="stats-grid">
+                <div class="card">
+                    <h3>Theme Mode</h3>
+                    <button class="btn-primary" onclick="updateTheme('dark')">Dark</button>
+                    <button class="btn-primary" onclick="updateTheme('light')">Light</button>
+                    <button class="btn-primary" onclick="updateTheme('glass')">Glass</button>
                 </div>
-            </div>
-
-            <div class="card design-card">
-                <h3>Sidebar Position</h3>
-                <div class="design-options">
-                    <button class="btn-secondary" onclick="updateLayout('left')">Left Sidebar</button>
-                    <button class="btn-secondary" onclick="updateLayout('right')">Right Sidebar</button>
+                <div class="card">
+                    <h3>Sidebar Position</h3>
+                    <button class="btn-primary" onclick="updateLayout('left')">Left Sidebar</button>
+                    <button class="btn-primary" onclick="updateLayout('right')">Right Sidebar</button>
                 </div>
-            </div>
-
-            <div class="card design-card">
-                <h3>Card Style</h3>
-                <div class="design-options">
-                    <button class="btn-secondary" onclick="updateCardStyle('sharp')">Modern Sharp</button>
-                    <button class="btn-secondary" onclick="updateCardStyle('rounded')">Playful Rounded</button>
+                <div class="card">
+                    <h3>Card Style</h3>
+                    <button class="btn-primary" onclick="updateCardStyle('sharp')">Sharp</button>
+                    <button class="btn-primary" onclick="updateCardStyle('rounded')">Rounded</button>
                 </div>
             </div>
         </div>
     `;
-}
+};
 
-function updateTheme(theme) {
-    document.body.className = document.body.className.replace(/\btheme-\S+/g, '');
-    document.body.classList.add(`theme-${theme}`);
-    localStorage.setItem('tp-theme', theme);
-}
-
-function updateLayout(side) {
-    if (side === 'right') {
-        document.body.style.flexDirection = 'row-reverse';
-    } else {
-        document.body.style.flexDirection = 'row';
-    }
-    localStorage.setItem('tp-layout', side);
-}
-
-function updateCardStyle(style) {
-    const radius = style === 'rounded' ? '25px' : '8px';
-    document.documentElement.style.setProperty('--card-radius', radius);
-    localStorage.setItem('tp-card-style', style);
-}
+// Also add function that builds the UI
+window.loadDesignWizard = () => {
+    const contentArea = document.getElementById('main-content');
+    contentArea.innerHTML = `
+        <div class="design-wizard-container">
+            <h1>🎨 Layout Wizard</h1>
+            <p>Customize TaskPro's appearance.</p>
+            <div class="stats-grid">
+                <div class="card">
+                    <h3>Theme Mode</h3>
+                    <button class="btn-primary" onclick="updateTheme('dark')">Dark</button>
+                    <button class="btn-primary" onclick="updateTheme('light')">Light</button>
+                    <button class="btn-primary" onclick="updateTheme('glass')">Glass</button>
+                </div>
+                <div class="card">
+                    <h3>Sidebar Position</h3>
+                    <button class="btn-primary" onclick="updateLayout('left')">Left</button>
+                    <button class="btn-primary" onclick="updateLayout('right')">Right</button>
+                </div>
+                <div class="card">
+                    <h3>Card Style</h3>
+                    <button class="btn-primary" onclick="updateCardStyle('sharp')">Sharp</button>
+                    <button class="btn-primary" onclick="updateCardStyle('rounded')">Rounded</button>
+                </div>
+            </div>
+        </div>
+    `;
+};
 
 function applySavedDesign() {
     const theme = localStorage.getItem('tp-theme') || 'dark';
