@@ -93,6 +93,7 @@
                     </div>
                     <div class="progress-text">Last 30 days: ${getRecentCompletions(habit)} days</div>
                 </div>
+                <div class="mini-calendar">${generateMiniCalendar(habit)}</div>
             </div>
         `;
     }
