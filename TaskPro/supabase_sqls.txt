@@ -71,3 +71,4 @@ ALTER TABLE tasks ADD COLUMN priority TEXT DEFAULT 'medium';
 ALTER TABLE tasks 
 RENAME COLUMN completed TO is_completed;
 
+ALTER TABLE notes ADD CONSTRAINT unique_user_note UNIQUE (user_id);

@@ -106,12 +106,14 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 
 // Check auth on load
 supabase.auth.onAuthStateChange((event, session) => {
-    if (!session) {
-        contentArea.innerHTML = getLoginHTML();
-        setupLoginForm();
-    } else {
+    if (session) {
+        // User is logged in - handle INITIAL_SESSION and subsequent changes
         const savedModule = localStorage.getItem('currentModule') || 'dashboard';
         loadModule(savedModule);
+    } else {
+        // No session found, show login
+        contentArea.innerHTML = getLoginHTML();
+        setupLoginForm();
     }
 });
 
@@ -123,7 +125,7 @@ async function loadDashboard() {
     contentArea.innerHTML = `
         <div class="dashboard-welcome">
             <h1>Welcome back! 🎯</h1>
-            <p>Here's your productivity overview</p>
+            <p>Loading stats...</p>
         </div>
 
         <div class="stats-grid">
@@ -179,12 +181,18 @@ async function loadDashboard() {
     const totalMinutes = focusSessions?.reduce((acc, s) => acc + s.focus_time_minutes, 0) || 0;
     const displayHours = (totalMinutes / 60).toFixed(1);
 
-    document.getElementById('stat-tasks').innerText = `${completedTasks}/${totalTasks}`;
-    document.getElementById('stat-habit-streak').innerText = `${topHabit.streak} days`;
-    document.getElementById('stat-habit-name').innerText = topHabit.name;
-    document.getElementById('stat-focus-time').innerText = `${displayHours} hrs`;
-    document.getElementById('task-progress').style.width = `${taskPercent}%`;
-    document.getElementById('completion-rate').innerText = `${taskPercent}%`;
+    if (document.getElementById('stat-tasks')) document.getElementById('stat-tasks').innerText = `${completedTasks}/${totalTasks}`;
+    if (document.getElementById('stat-habit-streak')) document.getElementById('stat-habit-streak').innerText = `${topHabit.streak} days`;
+    if (document.getElementById('stat-habit-name')) document.getElementById('stat-habit-name').innerText = topHabit.name;
+    if (document.getElementById('stat-focus-time')) document.getElementById('stat-focus-time').innerText = `${displayHours} hrs`;
+    if (document.getElementById('task-progress')) document.getElementById('task-progress').style.width = `${taskPercent}%`;
+    if (document.getElementById('completion-rate')) document.getElementById('completion-rate').innerText = `${taskPercent}%`;
+    
+    // Update welcome message after loading
+    const welcomeEl = document.querySelector('.dashboard-welcome p');
+    if (welcomeEl) {
+        welcomeEl.innerText = "Here's your productivity overview";
+    }
 }
 
 /* ============================================
@@ -260,7 +268,10 @@ const renderTasks = async () => {
         <div class="task-item ${task.is_completed ? 'completed' : ''}">
             <input type="checkbox" ${task.is_completed ? 'checked' : ''} 
                 onchange="toggleTask('${task.id}', this.checked)">
-            <span style="flex: 1;">${task.title}</span>
+            <div style="flex: 1;">
+                <div style="font-weight: 600;">${task.title}</div>
+                ${task.due_date ? `<small style="color: var(--text-dim); font-size: 0.8rem;">📅 ${new Date(task.due_date).toLocaleDateString()}</small>` : ''}
+            </div>
             <span class="priority-badge ${task.priority}">${task.priority}</span>
             <button class="btn-danger" style="padding: 0.5rem 1rem;" onclick="deleteTask('${task.id}')">Delete</button>
         </div>
@@ -268,7 +279,10 @@ const renderTasks = async () => {
 };
 
     addBtn.addEventListener('click', async () => {
-        if (!taskInput.value.trim()) return;
+        if (!taskInput.value.trim()) {
+            alert("Please enter a task title!");
+            return;
+        }
         
         await supabase.from('tasks').insert({
             title: taskInput.value,
@@ -290,8 +304,10 @@ const renderTasks = async () => {
     };
 
     window.deleteTask = async (id) => {
-        await supabase.from('tasks').delete().eq('id', id);
-        renderTasks();
+        if (confirm("Are you sure you want to delete this task?")) {
+            await supabase.from('tasks').delete().eq('id', id);
+            renderTasks();
+        }
     };
 
     document.getElementById('hide-completed').addEventListener('change', renderTasks);
@@ -348,7 +364,10 @@ async function loadHabits() {
     };
 
     addHabitBtn.addEventListener('click', async () => {
-        if (!habitInput.value.trim()) return;
+        if (!habitInput.value.trim()) {
+            alert("Please enter a habit name!");
+            return;
+        }
         await supabase.from('habits').insert({
             name: habitInput.value,
             user_id: user.id,
@@ -373,8 +392,10 @@ async function loadHabits() {
     };
 
     window.deleteHabit = async (id) => {
-        await supabase.from('habits').delete().eq('id', id);
-        renderHabits();
+        if (confirm("Are you sure you want to delete this habit?")) {
+            await supabase.from('habits').delete().eq('id', id);
+            renderHabits();
+        }
     };
 
     renderHabits();
@@ -508,8 +529,13 @@ function toggleStopwatchFunc() {
 }
 
 function updateStopwatch() {
+    const display = document.getElementById('stopwatch-display');
+    
+    // ADD THIS LINE:
+    if (!display) return; 
+
     swElapsedTime = Date.now() - swStartTime;
-    document.getElementById('stopwatch-display').innerText = formatTime(swElapsedTime);
+    display.innerText = formatTime(swElapsedTime);
 }
 
 function formatTime(ms) {
@@ -559,10 +585,17 @@ function resetStopwatchFunc() {
     swRunning = false;
     swElapsedTime = 0;
     swStartTime = 0;
-    document.getElementById('stopwatch-display').innerText = '00:00:00';
-    document.getElementById('stopwatch-start').innerText = 'Start';
-    document.getElementById('stopwatch-start').style.backgroundColor = '#10b981';
-    document.getElementById('laps-list').innerHTML = '';
+    
+    const display = document.getElementById('stopwatch-display');
+    const startBtn = document.getElementById('stopwatch-start');
+    const lapsList = document.getElementById('laps-list');
+    
+    if (display) display.innerText = '00:00:00';
+    if (startBtn) {
+        startBtn.innerText = 'Start';
+        startBtn.style.backgroundColor = '#10b981';
+    }
+    if (lapsList) lapsList.innerHTML = '';
 }
 
 /* ============================================
@@ -613,15 +646,25 @@ async function loadPomodoro() {
 }
 
 function updatePomodoroDisplay() {
+    const display = document.getElementById('timer-display');
+    
+    // ADD NULL CHECK:
+    if (!display) return;
+    
     const mins = Math.floor(pomodoroTimeLeft / 60);
     const secs = pomodoroTimeLeft % 60;
-    document.getElementById('timer-display').innerText = 
+    display.innerText = 
         `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     
-    document.getElementById('sessions-stat').innerText = pomodoroSessionCount;
-    const hours = Math.floor(pomodoroTotalFocusTime / 60);
-    const minutes = pomodoroTotalFocusTime % 60;
-    document.getElementById('focus-time-stat').innerText = `${hours}h ${minutes}m`;
+    const sessionStat = document.getElementById('sessions-stat');
+    const focusStat = document.getElementById('focus-time-stat');
+    
+    if (sessionStat) sessionStat.innerText = pomodoroSessionCount;
+    if (focusStat) {
+        const hours = Math.floor(pomodoroTotalFocusTime / 60);
+        const minutes = pomodoroTotalFocusTime % 60;
+        focusStat.innerText = `${hours}h ${minutes}m`;
+    }
 }
 
 function togglePomodoroFunc() {
@@ -658,8 +701,13 @@ function resetPomodoroFunc() {
     clearInterval(pomodoroInterval);
     pomodoroTimeLeft = 25 * 60;
     pomodoroIsRunning = false;
-    document.getElementById('start-timer').innerText = 'Start Focus';
-    document.getElementById('start-timer').style.backgroundColor = '#f59e0b';
+    
+    const startBtn = document.getElementById('start-timer');
+    if (startBtn) {
+        startBtn.innerText = 'Start Focus';
+        startBtn.style.backgroundColor = '#f59e0b';
+    }
+    
     updatePomodoroDisplay();
     
     // Save session to Supabase
