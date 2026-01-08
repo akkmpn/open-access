@@ -1,5 +1,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/+esm';
 
+const finishSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+
 /* ============================================
    SUPABASE CONFIGURATION
    ============================================ */
@@ -206,6 +208,10 @@ async function loadTasks() {
                 <button class="btn-primary" id="add-task-btn">Add Task</button>
             </div>
         </div>
+        <div style="margin: 1rem 0; display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="hide-completed">
+            <label for="hide-completed" style="font-size: 0.9rem; color: var(--text-dim);">Hide Completed Tasks</label>
+        </div>
         <div id="task-list"></div>
     `;
 
@@ -221,26 +227,45 @@ async function loadTasks() {
 const renderTasks = async () => {
     const { data: tasks } = await supabase
         .from('tasks')
-        .select('id, title, user_id, created_at, is_completed') // Removed the :completed alias
+        .select('id, title, user_id, created_at, is_completed, priority')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-        if (!taskList || !tasks) return;
+    if (!taskList || !tasks) return;
 
-        if (tasks.length === 0) {
-            taskList.innerHTML = '<div class="empty-state">No tasks yet. Add one to get started!</div>';
-            return;
-        }
+    // ADDED: Sorting logic
+    const priorityOrder = { high: 1, medium: 2, low: 3 };
+    const sortedTasks = [...tasks].sort((a, b) => {
+        return (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2);
+    });
 
-        taskList.innerHTML = tasks.map(task => `
-            <div class="task-item ${task.is_completed ? 'completed' : ''}">
-                <input type="checkbox" ${task.is_completed ? 'checked' : ''} 
-                    onchange="toggleTask('${task.id}', this.checked)">
-                <span style="flex: 1;">${task.title}</span>
-                <button class="btn-danger" style="padding: 0.5rem 1rem;" onclick="deleteTask('${task.id}')">Delete</button>
-            </div>
-        `).join('');
-    };
+    const hideCompleted = document.getElementById('hide-completed')?.checked;
+    
+    // Filter tasks if the checkbox is checked
+    let displayTasks = sortedTasks;
+    if (hideCompleted) {
+        displayTasks = sortedTasks.filter(t => !t.is_completed);
+    }
+
+    if (displayTasks.length === 0 && hideCompleted) {
+        taskList.innerHTML = '<div class="empty-state">No active tasks. All completed tasks are hidden!</div>';
+        return;
+    } else if (displayTasks.length === 0) {
+        taskList.innerHTML = '<div class="empty-state">No tasks yet. Add one to get started!</div>';
+        return;
+    }
+
+    // Use displayTasks.map instead of sortedTasks.map
+    taskList.innerHTML = displayTasks.map(task => `
+        <div class="task-item ${task.is_completed ? 'completed' : ''}">
+            <input type="checkbox" ${task.is_completed ? 'checked' : ''} 
+                onchange="toggleTask('${task.id}', this.checked)">
+            <span style="flex: 1;">${task.title}</span>
+            <span class="priority-badge ${task.priority}">${task.priority}</span>
+            <button class="btn-danger" style="padding: 0.5rem 1rem;" onclick="deleteTask('${task.id}')">Delete</button>
+        </div>
+    `).join('');
+};
 
     addBtn.addEventListener('click', async () => {
         if (!taskInput.value.trim()) return;
@@ -258,8 +283,9 @@ const renderTasks = async () => {
         renderTasks();
     });
 
-    window.toggleTask = async (id, completed) => {
-        await supabase.from('tasks').update({ completed }).eq('id', id);
+    window.toggleTask = async (id, isChecked) => {
+        // FIX: Use 'is_completed' to match your database
+        await supabase.from('tasks').update({ is_completed: isChecked }).eq('id', id);
         renderTasks();
     };
 
@@ -267,6 +293,8 @@ const renderTasks = async () => {
         await supabase.from('tasks').delete().eq('id', id);
         renderTasks();
     };
+
+    document.getElementById('hide-completed').addEventListener('change', renderTasks);
 
     renderTasks();
 }
@@ -606,6 +634,7 @@ function togglePomodoroFunc() {
             
             if (pomodoroTimeLeft <= 0) {
                 clearInterval(pomodoroInterval);
+                finishSound.play(); // PLAY SOUND HERE
                 pomodoroSessionCount++;
                 pomodoroTotalFocusTime += 25;
                 alert('🎉 Focus session complete! Take a 5-minute break.');
