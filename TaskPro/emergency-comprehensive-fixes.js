@@ -46,7 +46,7 @@
             console.warn(`⚠️ Element not found: ${id}`);
             // Create missing elements if they're critical
             if (id === 'main-app-content') {
-                const mainApp = document.getElementById('main-app');
+                const mainApp = document.getElementById('content-area');
                 if (mainApp) {
                     const content = document.createElement('div');
                     content.id = 'main-app-content';
@@ -138,6 +138,15 @@
         .app-section { min-height: 400px; }
     `;
     document.head.appendChild(style);
+    
+    // FIX 11: Ensure critical global functions exist
+    window.filterTasks = window.filterTasks || function(category) {
+        console.log('🔧 filterTasks called with:', category);
+        if (window.setTaskFilter) {
+            return window.setTaskFilter(category);
+        }
+        console.warn('setTaskFilter not available');
+    };
     
     console.log('✅ Emergency comprehensive fixes applied successfully!');
     console.log('🛡️ Protected against: Supabase errors, null errors, XSS, unhandled promises, style conflicts');
