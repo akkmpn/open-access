@@ -1,32 +1,20 @@
-.tasks-grid {
+.task-item {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 20px;
-}
-
-.task-card {
-    background: #fff;
+    align-items: center;
+    background: #1e293b;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
     border-radius: 8px;
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border-left: 4px solid var(--primary);
 }
 
-/* Priority Borders */
-.priority-high { border-left: 5px solid #ff4d4d; }
-.priority-medium { border-left: 5px solid #ffa500; }
-.priority-low { border-left: 5px solid #2ecc71; }
-
-.is-completed h4 {
+.task-item.completed {
+    opacity: 0.5;
     text-decoration: line-through;
-    color: #888;
+    border-left-color: #10b981;
 }
 
-.task-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+input[type="checkbox"] {
+    margin-right: 1rem;
+    transform: scale(1.2);
 }

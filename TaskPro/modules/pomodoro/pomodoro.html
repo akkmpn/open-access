@@ -1,23 +1,8 @@
-<section id="pomodoro-section" class="app-section">
-    <div class="pomodoro-container">
-        <div class="timer-modes">
-            <button class="mode-btn active" data-time="1500" onclick="setMode('focus')">Focus</button>
-            <button class="mode-btn" data-time="300" onclick="setMode('short')">Short Break</button>
-            <button class="mode-btn" data-time="900" onclick="setMode('long')">Long Break</button>
-        </div>
-
-        <div class="timer-display">
-            <h1 id="timer-countdown">25:00</h1>
-            <p id="timer-status">Ready to work?</p>
-        </div>
-
-        <div class="timer-controls">
-            <button id="start-btn" class="btn-primary" onclick="toggleTimer()">Start</button>
-            <button id="reset-btn" class="btn-secondary" onclick="resetTimer()">Reset</button>
-        </div>
+<div class="pomodoro-container card">
+    <h2>Focus Timer</h2>
+    <div id="timer-display">25:00</div>
+    <div class="timer-controls">
+        <button id="start-timer" class="btn-primary">Start Focus</button>
+        <button id="reset-timer" class="btn-outline">Reset</button>
     </div>
-
-    <div class="pomodoro-stats">
-        <span>Today's Focus: <strong id="today-focus-time">0</strong> mins</span>
-    </div>
-</section>
+</div>

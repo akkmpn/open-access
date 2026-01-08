@@ -1,47 +1,19 @@
-<section id="dashboard-section" class="app-section">
-    <div class="dashboard-welcome">
-        <h1>Welcome back, <span id="dash-username">User</span>!</h1>
-        <p id="dash-date">Thursday, January 8, 2026</p>
-    </div>
-
+<div class="dashboard-container">
+    <h2>Welcome Back!</h2>
+    
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-icon">✅</div>
-            <div class="stat-info">
-                <h3 id="dash-tasks-count">0</h3>
-                <p>Tasks Today</p>
+            <h3>Task Completion</h3>
+            <p id="stat-tasks">0/0</p>
+            <div class="progress-bar-bg">
+                <div id="task-progress" class="progress-bar-fill"></div>
             </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">🔥</div>
-            <div class="stat-info">
-                <h3 id="dash-habit-streak">0</h3>
-                <p>Best Habit Streak</p>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">⏱️</div>
-            <div class="stat-info">
-                <h3 id="dash-focus-hours">0h 0m</h3>
-                <p>Focus Time</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="dashboard-content">
-        <div class="dash-widget">
-            <h3>Focus This Week</h3>
-            <div id="dash-upcoming-list" class="dash-list">
-                </div>
         </div>
 
-        <div class="dash-widget">
-            <h3>Productivity Trends</h3>
-            <div class="chart-container">
-                <div class="placeholder-chart">
-                    <p>Visualizing your progress...</p>
-                </div>
-            </div>
+        <div class="stat-card">
+            <h3>Best Habit</h3>
+            <p id="stat-habit-streak">0 days</p>
+            <span id="stat-habit-name">Keep going!</span>
         </div>
     </div>
-</section>
+</div>

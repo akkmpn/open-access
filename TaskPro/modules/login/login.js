@@ -1,49 +1,14 @@
-let isSignUpMode = false;
+import { supabase } from '../../supabase-config.js';
 
-function toggleAuthMode() {
-    isSignUpMode = !isSignUpMode;
-    document.getElementById('auth-title').innerText = isSignUpMode ? "Create Account" : "Welcome Back";
-    document.getElementById('auth-submit-btn').innerText = isSignUpMode ? "Sign Up" : "Sign In";
-    document.getElementById('toggle-text').innerHTML = isSignUpMode ? 
-        `Already have an account? <a href="#" onclick="toggleAuthMode()">Sign In</a>` : 
-        `Don't have an account? <a href="#" onclick="toggleAuthMode()">Sign Up</a>`;
-}
+async function handleLogin(email, password) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
 
-document.getElementById('auth-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
-
-    if (isSignUpMode) {
-        // SIGN UP
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) alert(error.message);
-        else alert("Check your email for the confirmation link!");
+    if (error) {
+        alert("Login failed: " + error.message);
     } else {
-        // SIGN IN
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) alert(error.message);
-        else {
-            // Success: Redirect to Dashboard or Refresh
-            window.location.reload(); 
-        }
+        window.location.href = "/"; // Redirect to dashboard/home
     }
-});
-
-// Logout Function
-async function handleLogout() {
-    await supabase.auth.signOut();
-    window.location.reload();
 }
-
-// Session Observer
-supabase.auth.onAuthStateChange((event, session) => {
-    if (session) {
-        console.log("User is logged in:", session.user);
-        document.getElementById('auth-container').style.display = 'none';
-        document.getElementById('main-app-content').style.display = 'block';
-    } else {
-        document.getElementById('auth-container').style.display = 'flex';
-        document.getElementById('main-app-content').style.display = 'none';
-    }
-});

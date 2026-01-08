@@ -1,69 +1,65 @@
-const habitsList = document.getElementById('habits-list');
-const habitForm = document.getElementById('habit-form');
+import { supabase } from '../../supabase-config.js';
 
-// 1. Fetch Habits
-async function loadHabits() {
-    const { data: habits, error } = await supabase
-        .from('habits')
-        .select('*')
-        .order('streak', { ascending: false });
+export async function init() {
+    const habitList = document.getElementById('habit-list');
+    const habitInput = document.getElementById('habit-input');
+    const addHabitBtn = document.getElementById('add-habit-btn');
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (error) return console.error('Error fetching habits:', error);
-    renderHabits(habits);
+    // 1. Fetch and Render Habits
+    const renderHabits = async () => {
+        const { data: habits, error } = await supabase
+            .from('habits')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) return console.error(error);
+
+        habitList.innerHTML = habits.map(habit => {
+            // Check if it was already completed today
+            const lastDate = habit.last_completed ? new Date(habit.last_completed).toDateString() : null;
+            const isDoneToday = lastDate === new Date().toDateString();
+
+            return `
+                <div class="habit-card">
+                    <div class="habit-info">
+                        <h3>${habit.name}</h3>
+                        <p>🔥 Streak: ${habit.streak} days</p>
+                    </div>
+                    <button 
+                        class="${isDoneToday ? 'btn-done' : 'btn-active'}" 
+                        onclick="completeHabit('${habit.id}', ${habit.streak}, ${isDoneToday})"
+                        ${isDoneToday ? 'disabled' : ''}>
+                        ${isDoneToday ? 'Completed' : 'Complete Today'}
+                    </button>
+                </div>
+            `;
+        }).join('');
+    };
+
+    // 2. Add New Habit
+    addHabitBtn.onclick = async () => {
+        const name = habitInput.value.trim();
+        if (!name) return;
+
+        await supabase.from('habits').insert([{ name, user_id: user.id, streak: 0 }]);
+        habitInput.value = '';
+        renderHabits();
+    };
+
+    // 3. Logic to Increment Streak
+    window.completeHabit = async (id, currentStreak, isDoneToday) => {
+        if (isDoneToday) return;
+
+        await supabase.from('habits')
+            .update({ 
+                streak: currentStreak + 1, 
+                last_completed: new Date().toISOString() 
+            })
+            .eq('id', id);
+        
+        renderHabits();
+    };
+
+    renderHabits();
 }
-
-// 2. Render Habits
-function renderHabits(habits) {
-    habitsList.innerHTML = habits.map(habit => `
-        <div class="habit-card">
-            <div class="habit-details">
-                <div class="streak-badge">🔥 ${habit.streak}</div>
-                <h4>${habit.name}</h4>
-            </div>
-            <div class="habit-actions">
-                <button class="btn-check" onclick="incrementStreak('${habit.id}', ${habit.streak})">
-                    Done Today
-                </button>
-                <button class="btn-delete" onclick="deleteHabit('${habit.id}')">×</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// 3. Create New Habit
-habitForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const user = (await supabase.auth.getUser()).data.user;
-    
-    const { error } = await supabase.from('habits').insert([{
-        name: document.getElementById('habit-name').value,
-        user_id: user.id,
-        streak: 0
-    }]);
-
-    if (!error) {
-        closeHabitModal();
-        loadHabits();
-    }
-});
-
-// 4. Increment Streak
-async function incrementStreak(id, currentStreak) {
-    const { error } = await supabase
-        .from('habits')
-        .update({ streak: currentStreak + 1 })
-        .eq('id', id);
-
-    if (!error) loadHabits();
-}
-
-// 5. Delete Habit
-async function deleteHabit(id) {
-    if (confirm('Stop tracking this habit?')) {
-        await supabase.from('habits').delete().eq('id', id);
-        loadHabits();
-    }
-}
-
-// Initial Load
-loadHabits();

@@ -1,20 +1,11 @@
-<section id="backup-section" class="app-section">
-    <div class="backup-card">
-        <div class="backup-info">
-            <h3>Export Personal Data</h3>
-            <p>Download a copy of all your tasks, notes, habits, and focus sessions in JSON format.</p>
-        </div>
-        
-        <div class="backup-actions">
-            <button id="export-btn" class="btn-primary" onclick="exportUserData()">
-                📥 Generate Export
-            </button>
-            <span id="export-status"></span>
-        </div>
+<div class="backup-container card">
+    <h2>Data Management</h2>
+    <p>Download a copy of all your tasks, habits, and notes for safekeeping.</p>
+    <button id="export-data" class="btn-primary">Download JSON Backup</button>
+    
+    <div class="danger-zone">
+        <h3>Danger Zone</h3>
+        <p>Deleting your account will remove all data from our servers.</p>
+        <button class="btn-danger" id="delete-account">Delete Account</button>
     </div>
-
-    <div class="sync-status">
-        <p>Cloud Sync: <span class="status-online">● Connected to Supabase</span></p>
-        <small>Last synced: <span id="last-sync-time">Just now</span></small>
-    </div>
-</section>
+</div>

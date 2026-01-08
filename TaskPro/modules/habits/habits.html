@@ -1,22 +1,11 @@
-<section id="habits-section" class="app-section">
-    <div class="section-header">
-        <h2>Habit Tracker</h2>
-        <button id="add-habit-btn" onclick="openHabitModal()" class="btn-primary">+ New Habit</button>
-    </div>
-
-    <div id="habits-list" class="habits-grid">
+<div class="habits-container">
+    <header>
+        <h2>Daily Habits</h2>
+        <div class="input-row">
+            <input type="text" id="habit-input" placeholder="New habit (e.g. Gym, Reading)">
+            <button id="add-habit-btn">+</button>
         </div>
-</section>
-
-<div id="habit-modal" class="modal" style="display:none;">
-    <div class="modal-content">
-        <h3>Track New Habit</h3>
-        <form id="habit-form">
-            <input type="text" id="habit-name" placeholder="E.g., Morning Meditating, Gym, Reading" required>
-            <div class="modal-actions">
-                <button type="button" onclick="closeHabitModal()">Cancel</button>
-                <button type="submit" class="btn-save">Start Tracking</button>
-            </div>
-        </form>
-    </div>
+    </header>
+    <div id="habit-list" class="habit-grid">
+        </div>
 </div>

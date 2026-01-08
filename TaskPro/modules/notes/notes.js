@@ -1,65 +1,40 @@
-const notesList = document.getElementById('notes-list');
-const noteForm = document.getElementById('note-form');
+import { supabase } from '../../supabase-config.js';
 
-// 1. Fetch Notes from Supabase
-async function loadNotes() {
-    const { data: notes, error } = await supabase
+let saveTimeout;
+
+export async function init() {
+    const noteArea = document.getElementById('note-content');
+    const statusMsg = document.getElementById('save-status');
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // 1. Load the existing note
+    const { data: note } = await supabase
         .from('notes')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('content')
+        .eq('user_id', user.id)
+        .single();
 
-    if (error) return console.error('Error fetching notes:', error);
-    renderNotes(notes);
-}
-
-// 2. Render Notes Grid
-function renderNotes(notes) {
-    if (notes.length === 0) {
-        notesList.innerHTML = `<p class="empty-state">No notes yet.</p>`;
-        return;
+    if (note) {
+        noteArea.value = note.content;
     }
 
-    notesList.innerHTML = notes.map(note => `
-        <div class="note-card">
-            <div class="note-date">${new Date(note.created_at).toLocaleDateString()}</div>
-            <div class="note-body">${note.content}</div>
-            <div class="note-footer">
-                <button class="btn-icon delete" onclick="deleteNote('${note.id}')">
-                    🗑️ Delete
-                </button>
-            </div>
-        </div>
-    `).join('');
+    // 2. Auto-save Event Listener
+    noteArea.addEventListener('input', () => {
+        statusMsg.innerText = "Typing...";
+        
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(async () => {
+            statusMsg.innerText = "Saving...";
+            
+            const { error } = await supabase
+                .from('notes')
+                .upsert({ 
+                    user_id: user.id, 
+                    content: noteArea.value,
+                    updated_at: new Date() 
+                }, { onConflict: 'user_id' });
+
+            statusMsg.innerText = error ? "Error saving!" : "Saved to cloud";
+        }, 1000); // 1 second delay
+    });
 }
-
-// 3. Save New Note
-noteForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const user = (await supabase.auth.getUser()).data.user;
-    
-    const { error } = await supabase.from('notes').insert([{
-        content: document.getElementById('note-content').value,
-        user_id: user.id
-    }]);
-
-    if (!error) {
-        document.getElementById('note-content').value = ''; // Clear textarea
-        closeNoteModal();
-        loadNotes();
-    }
-});
-
-// 4. Delete Note
-async function deleteNote(id) {
-    if (confirm('Are you sure you want to delete this note?')) {
-        const { error } = await supabase
-            .from('notes')
-            .delete()
-            .eq('id', id);
-
-        if (!error) loadNotes();
-    }
-}
-
-// Initial Load
-loadNotes();

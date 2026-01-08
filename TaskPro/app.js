@@ -1,88 +1,109 @@
-// Global State
-let currentUser = null;
+import { supabase } from './supabase-config.js';
 
-// 1. Section Switcher (Navigation)
-function showSection(sectionId) {
-    // Hide all sections
-    document.querySelectorAll('.app-section').forEach(section => {
-        section.classList.remove('active');
-    });
+const contentArea = document.getElementById('main-content');
 
-    // Show target section
-    const target = document.getElementById(`${sectionId}-section`);
-    if (target) {
-        target.classList.add('active');
+// --- NEW: Base Path Helper ---
+// This ensures that on GitHub Pages, we always reference the correct subfolder
+const BASE_URL = window.location.pathname.endsWith('/') 
+    ? window.location.pathname 
+    : window.location.pathname.split('/').slice(0, -1).join('/') + '/';
+
+// --- 1. Offline Indicator Logic ---
+window.addEventListener('online', () => {
+    document.body.style.filter = "none";
+    showStatusMessage("Back online!", "success");
+});
+
+window.addEventListener('offline', () => {
+    document.body.style.filter = "grayscale(0.3)";
+    showStatusMessage("You are offline. Changes may not save.", "error");
+});
+
+function showStatusMessage(text, type) {
+    let msg = document.getElementById('offline-toast');
+    if (!msg) {
+        msg = document.createElement('div');
+        msg.id = 'offline-toast';
+        document.body.appendChild(msg);
     }
-
-    // Update Sidebar UI active state
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-        // Check if the link's onclick attribute contains the current sectionId
-        if(link.getAttribute('onclick') && link.getAttribute('onclick').includes(sectionId)) {
-            link.classList.add('active');
-        }
-    });
-
-    // --- REFRESH LOGIC FOR ALL MODULES ---
-    // This tells each module to fetch fresh data from Supabase when you open it
-    if (sectionId === 'dashboard') typeof initDashboard === 'function' && initDashboard();
-    if (sectionId === 'tasks') typeof loadTasks === 'function' && loadTasks();
-    if (sectionId === 'habits') typeof loadHabits === 'function' && loadHabits();
-    if (sectionId === 'notes') typeof loadNotes === 'function' && loadNotes();
-    if (sectionId === 'calendar') typeof initCalendar === 'function' && initCalendar();
-    if (sectionId === 'pomodoro') typeof initPomodoro === 'function' && initPomodoro();
-    if (sectionId === 'timer') typeof initStopwatch === 'function' && initStopwatch();
-    
-    if (sectionId === 'community') {
-        if (typeof loadChatHistory === 'function') loadChatHistory();
-        if (typeof loadLeaderboard === 'function') loadLeaderboard();
-    }
+    msg.innerText = text;
+    msg.className = `show ${type}`;
+    setTimeout(() => msg.className = msg.className.replace("show", ""), 3000);
 }
 
-// 2. Real-time Presence Logic (Heartbeat)
-async function updatePresence() {
-    if (!currentUser) return;
-
+// --- 2. Dynamic Module Loader ---
+async function loadModule(moduleName) {
     try {
-        await supabase
-            .from('user_status')
-            .upsert({
-                user_id: currentUser.id,
-                username: currentUser.email.split('@')[0],
-                status: 'online',
-                last_seen: new Date().toISOString()
-            });
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.toggle('active', link.dataset.module === moduleName);
+        });
+
+        document.title = `TaskPro | ${moduleName.charAt(0).toUpperCase() + moduleName.slice(1)}`;
+
+        // Load Module CSS dynamically using the BASE_URL logic
+        const cssId = `css-${moduleName}`;
+        if (!document.getElementById(cssId)) {
+            const link = document.createElement('link');
+            link.id = cssId;
+            link.rel = 'stylesheet';
+            link.href = `${BASE_URL}modules/${moduleName}/${moduleName}.css`;
+            document.head.appendChild(link);
+        }
+
+        // Fetch HTML using the BASE_URL
+        const response = await fetch(`${BASE_URL}modules/${moduleName}/${moduleName}.html`);
+        if (!response.ok) throw new Error(`Module ${moduleName} not found at ${BASE_URL}`);
+        const html = await response.text();
+        contentArea.innerHTML = html;
+
+        // Import JS using the BASE_URL
+        const moduleJS = await import(`${BASE_URL}modules/${moduleName}/${moduleName}.js?t=${Date.now()}`);
+        
+        if (moduleJS.init) {
+            await moduleJS.init();
+        }
+        
+        localStorage.setItem('currentModule', moduleName);
+
     } catch (err) {
-        console.error("Presence Error:", err);
+        contentArea.innerHTML = `
+            <div class="error-state">
+                <p>Error loading ${moduleName}: ${err.message}</p>
+                <button class="btn-primary" onclick="location.reload()">Retry</button>
+            </div>
+        `;
+        console.error("Module Load Error:", err);
     }
 }
 
-// 3. Authentication & App Initialization
-supabase.auth.onAuthStateChange(async (event, session) => {
-    const authScreen = document.getElementById('auth-screen');
-    const mainApp = document.getElementById('main-app');
-
+// --- 3. Auth State Observer ---
+supabase.auth.onAuthStateChange((event, session) => {
     if (session) {
-        currentUser = session.user;
-        authScreen.style.display = 'none';
-        mainApp.style.display = 'flex';
-        
-        // Start Presence heartbeat every 30 seconds
-        updatePresence();
-        setInterval(updatePresence, 30000); 
-        
-        // Load the default view
-        showSection('dashboard'); 
+        const savedModule = localStorage.getItem('currentModule') || 'dashboard';
+        loadModule(savedModule);
     } else {
-        currentUser = null;
-        authScreen.style.display = 'flex';
-        mainApp.style.display = 'none';
+        loadModule('login');
     }
 });
 
-// 4. Global Logout Helper
-async function handleLogout() {
-    const { error } = await supabase.auth.signOut();
-    if (error) alert(error.message);
-    window.location.reload(); // Refresh to clear state
+// --- 4. Global Click Listener ---
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+        const target = e.target.closest('.nav-link');
+        if (target && target.dataset.module) {
+            loadModule(target.dataset.module);
+        }
+    });
+});
+
+// --- 5. Logout Logic ---
+const logoutBtn = document.getElementById('logout-btn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+        const { error } = await supabase.auth.signOut();
+        if (!error) {
+            localStorage.clear();
+            location.reload(); 
+        }
+    });
 }

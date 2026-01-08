@@ -1,51 +1,21 @@
 .pomodoro-container {
-    background: #ffffff;
-    padding: 40px;
-    border-radius: 20px;
     text-align: center;
     max-width: 400px;
-    margin: 20px auto;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    margin: 2rem auto;
 }
 
-.timer-modes {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 30px;
-}
-
-.mode-btn {
-    background: #f0f0f0;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.mode-btn.active {
-    background: #ff4757;
-    color: white;
-}
-
-.timer-display h1 {
+#timer-display {
     font-size: 5rem;
-    margin: 10px 0;
-    color: #2f3542;
+    font-weight: bold;
+    color: var(--primary);
+    margin: 2rem 0;
     font-variant-numeric: tabular-nums;
 }
 
-.timer-controls {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 30px;
-}
-
-.pomodoro-stats {
-    text-align: center;
-    margin-top: 20px;
-    color: #747d8c;
-    font-size: 0.9rem;
+.timer-controls button {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    margin: 0 0.5rem;
+    cursor: pointer;
+    border-radius: 8px;
 }
