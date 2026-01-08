@@ -82,6 +82,8 @@ async function loadModule(moduleName) {
             loadCommunity();
         } else if (moduleName === 'backup') {
             loadBackup();
+        } else if (moduleName === 'design') {
+            loadDesignWizard();
         }
 
         localStorage.setItem('currentModule', moduleName);
@@ -107,6 +109,9 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 // Check auth on load
 supabase.auth.onAuthStateChange((event, session) => {
     if (session) {
+        // Apply saved design settings
+        applySavedDesign();
+        
         // User is logged in - handle INITIAL_SESSION and subsequent changes
         const savedModule = localStorage.getItem('currentModule') || 'dashboard';
         loadModule(savedModule);
@@ -946,13 +951,78 @@ async function loadBackup() {
 }
 
 /* ============================================
-   LOGIN MODULE
+   DESIGN WIZARD MODULE
    ============================================ */
+
+function loadDesignWizard() {
+    contentArea.innerHTML = `
+        <h1>🎨 Layout Wizard</h1>
+        <p>Customize how TaskPro looks and feels.</p>
+        
+        <div class="design-grid">
+            <div class="card design-card">
+                <h3>Theme Mode</h3>
+                <div class="design-options">
+                    <button class="btn-secondary" onclick="updateTheme('dark')">Midnight Dark</button>
+                    <button class="btn-secondary" onclick="updateTheme('light')">Clean Light</button>
+                    <button class="btn-secondary" onclick="updateTheme('glass')">Glassmorphism</button>
+                </div>
+            </div>
+
+            <div class="card design-card">
+                <h3>Sidebar Position</h3>
+                <div class="design-options">
+                    <button class="btn-secondary" onclick="updateLayout('left')">Left Sidebar</button>
+                    <button class="btn-secondary" onclick="updateLayout('right')">Right Sidebar</button>
+                </div>
+            </div>
+
+            <div class="card design-card">
+                <h3>Card Style</h3>
+                <div class="design-options">
+                    <button class="btn-secondary" onclick="updateCardStyle('sharp')">Modern Sharp</button>
+                    <button class="btn-secondary" onclick="updateCardStyle('rounded')">Playful Rounded</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function updateTheme(theme) {
+    document.body.className = document.body.className.replace(/\btheme-\S+/g, '');
+    document.body.classList.add(`theme-${theme}`);
+    localStorage.setItem('tp-theme', theme);
+}
+
+function updateLayout(side) {
+    if (side === 'right') {
+        document.body.style.flexDirection = 'row-reverse';
+    } else {
+        document.body.style.flexDirection = 'row';
+    }
+    localStorage.setItem('tp-layout', side);
+}
+
+function updateCardStyle(style) {
+    const radius = style === 'rounded' ? '25px' : '8px';
+    document.documentElement.style.setProperty('--card-radius', radius);
+    localStorage.setItem('tp-card-style', style);
+}
+
+function applySavedDesign() {
+    const theme = localStorage.getItem('tp-theme') || 'dark';
+    const layout = localStorage.getItem('tp-layout') || 'left';
+    const card = localStorage.getItem('tp-card-style') || 'sharp';
+
+    updateTheme(theme);
+    updateLayout(layout);
+    updateCardStyle(card);
+}
 
 function getLoginHTML() {
     return `
-        <div style="width: 100%; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-dark);">
-            <div class="login-box">
+        <div class="login-container">
+            <div class="login-card card">
                 <h1 style="text-align: center; margin-bottom: 1.5rem;" id="auth-title">📋 TaskPro</h1>
                 <p style="text-align: center; color: var(--text-dim); margin-bottom: 2rem;" id="auth-subtitle">Sign in to your account</p>
                 
