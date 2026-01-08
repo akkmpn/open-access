@@ -838,23 +838,3 @@ function setupLoginForm() {
         }
     });
 }
-/* Inside loadTasks */
-window.toggleTask = async (id, completed) => { ... };
-window.deleteTask = async (id) => { ... };
-
-/* Inside loadHabits */
-window.completeHabit = async (id) => { ... };
-window.deleteHabit = async (id) => { ... };
-
-/* Inside loadCalendar */
-window.previousMonth = previousMonth;
-window.nextMonth = nextMonth;
-
-/* Inside loadTimer */
-window.toggleStopwatch = toggleStopwatchFunc;
-window.recordLap = recordLapFunc;
-window.resetStopwatch = resetStopwatchFunc;
-
-/* Inside loadPomodoro */
-window.togglePomodoro = togglePomodoroFunc;
-window.resetPomodoro = resetPomodoroFunc;
