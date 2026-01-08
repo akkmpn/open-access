@@ -72,3 +72,92 @@ ALTER TABLE tasks
 RENAME COLUMN completed TO is_completed;
 
 ALTER TABLE notes ADD CONSTRAINT unique_user_note UNIQUE (user_id);
+
+create table messages (
+  id uuid default uuid_generate_v4() primary key,
+  created_at timestamp with time zone default now(),
+  content text,
+  user_id uuid references auth.users(id),
+  user_email text
+);
+-- Enable Realtime for this table in Supabase Dashboard!
+
+CREATE INDEX ON public.messages (user_id);
+CREATE INDEX ON public.messages (created_at);
+
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+
+-- Allow authenticated users to insert messages where user_id = auth.uid()
+CREATE POLICY messages_insert_authenticated ON public.messages
+  FOR INSERT
+  TO authenticated
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+-- Allow authenticated users to select messages where user_id = auth.uid()
+CREATE POLICY messages_select_owner ON public.messages
+  FOR SELECT
+  TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
+
+-- Optionally allow authenticated users to delete their own messages
+CREATE POLICY messages_delete_owner ON public.messages
+  FOR DELETE
+  TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
+
+-- Optionally allow update only by owner
+CREATE POLICY messages_update_owner ON public.messages
+  FOR UPDATE
+  TO authenticated
+  USING ((SELECT auth.uid()) = user_id)
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+  CREATE OR REPLACE FUNCTION public.messages_broadcast_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+  PERFORM realtime.broadcast_changes(
+    'messages',    -- topic name, consider 'room:123:messages' for rooms
+    TG_OP,
+    TG_OP,
+    TG_TABLE_NAME,
+    TG_TABLE_SCHEMA,
+    NEW,
+    OLD
+  );
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER messages_broadcast_trigger
+  AFTER INSERT OR UPDATE OR DELETE ON public.messages
+  FOR EACH ROW EXECUTE FUNCTION public.messages_broadcast_trigger();
+
+  -- Shows all replication publications (Supabase uses a publication called 'supabase_realtime' by default)
+SELECT * FROM pg_publication;
+
+SELECT tgname, tgrelid::regclass::text AS table_name
+FROM pg_trigger
+WHERE tgname LIKE '%messages_broadcast_trigger%';
+
+-- List publications
+SELECT * FROM pg_publication;
+
+-- Check if messages is included in the 'supabase_realtime' publication
+SELECT p.pubname,
+       n.nspname AS schemaname,
+       c.relname
+FROM pg_publication p
+JOIN pg_publication_rel pr ON pr.prpubid = p.oid
+JOIN pg_class c ON pr.prrelid = c.oid
+JOIN pg_namespace n ON c.relnamespace = n.oid
+WHERE p.pubname = 'supabase_realtime'
+  AND n.nspname = 'public'
+  AND c.relname = 'messages';
+
+ -- 1. Fix the Select Policy so everyone can see all messages
+DROP POLICY IF EXISTS "messages_select_owner" ON public.messages;
+CREATE POLICY "messages_select_all" ON public.messages 
+  FOR SELECT TO authenticated USING (true);
+
+-- 2. Explicitly add the table to the Supabase Realtime publication
+ALTER PUBLICATION supabase_realtime ADD TABLE messages;

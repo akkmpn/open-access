@@ -824,7 +824,7 @@ async function setupChat() {
     // 1. Load Last 50 Messages
     const { data: messages } = await supabase
         .from('messages')
-        .select('*, profiles(email)') // Assumes you have a profiles table or just use user_id
+        .select('*') // Select all columns including user_email
         .order('created_at', { ascending: true })
         .limit(50);
 
@@ -843,7 +843,11 @@ async function setupChat() {
         .channel('public:messages')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, 
             payload => renderMessage(payload.new))
-        .subscribe();
+        .subscribe(status => {
+            if (status === 'SUBSCRIBED') {
+                console.log('📡 Connected to Global Chat!');
+            }
+        });
 
     // 3. Sending Messages
     const sendMessage = async () => {

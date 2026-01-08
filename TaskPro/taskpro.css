@@ -471,42 +471,32 @@ input[type="checkbox"] {
 
 /* Enhanced Calendar Task Styles */
 .calendar-task-list {
-    margin-top: 4px;
     display: flex;
     flex-direction: column;
     gap: 2px;
-    max-height: 60px;
+    margin-top: 4px;
     overflow-y: auto;
+    max-height: 60px;
 }
 
 .calendar-task-item {
     font-size: 0.7rem;
     padding: 2px 4px;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.9);
-    border-left: 3px solid;
-    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: white;
 }
 
-.calendar-task-item.high {
-    border-left-color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
-}
+/* Priority Colors for Calendar */
+.calendar-task-item.high { background-color: #ef4444; }
+.calendar-task-item.medium { background-color: #f59e0b; }
+.calendar-task-item.low { background-color: #3b82f6; }
 
-.calendar-task-item.medium {
-    border-left-color: #f59e0b;
-    background: rgba(245, 158, 11, 0.1);
-}
-
-.calendar-task-item.low {
-    border-left-color: #10b981;
-    background: rgba(16, 185, 129, 0.1);
-}
-
-.day-number {
-    font-weight: bold;
-    font-size: 0.9rem;
-    color: #333;
+.day.today {
+    background-color: rgba(99, 102, 241, 0.1);
+    border: 2px solid var(--primary-color);
 }
 
 /* ============================================
@@ -796,31 +786,40 @@ input[type="checkbox"] {
 }
 
 .chat-messages {
-    flex-grow: 1;
-    padding: 20px;
+    height: 300px;
     overflow-y: auto;
-    max-height: 400px;
-    background: #f9f9f9;
-    border-radius: 0 0 8px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    background: var(--card-bg);
 }
 
 .chat-msg {
-    margin-bottom: 15px;
-    padding: 10px;
-    border-radius: 8px;
-    background: white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    max-width: 80%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: #374151; /* Default for others */
+    align-self: flex-start;
 }
 
 .chat-msg.own {
-    background: #e3f2fd;
-    margin-left: auto;
-    text-align: right;
+    background: var(--primary-color);
+    color: white;
+    align-self: flex-end;
+}
+
+.chat-input-area {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
 }
 
 .chat-msg strong {
-    color: #333;
+    color: white;
     font-size: 0.85rem;
+    display: block;
+    margin-bottom: 4px;
 }
 
 .community-grid {
