@@ -788,8 +788,8 @@ function getLoginHTML() {
     return `
         <div style="width: 100%; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-dark);">
             <div class="login-box">
-                <h1 style="text-align: center; margin-bottom: 1.5rem;">📋 TaskPro</h1>
-                <p style="text-align: center; color: var(--text-dim); margin-bottom: 2rem;">Your Complete Productivity Suite</p>
+                <h1 style="text-align: center; margin-bottom: 1.5rem;" id="auth-title">📋 TaskPro</h1>
+                <p style="text-align: center; color: var(--text-dim); margin-bottom: 2rem;" id="auth-subtitle">Sign in to your account</p>
                 
                 <form id="login-form">
                     <div class="input-group">
@@ -801,11 +801,11 @@ function getLoginHTML() {
                         <input type="password" id="password" required autocomplete="current-password">
                     </div>
                     <button type="submit" class="btn-primary" id="login-btn" style="width: 100%; padding: 0.75rem;">Sign In</button>
-                    <div id="auth-error" style="display: none;"></div>
+                    <div id="auth-error" style="display: none; color: #ff4757; margin-top: 10px; text-align: center;"></div>
                 </form>
 
                 <p style="text-align: center; margin-top: 1.5rem; color: var(--text-dim); font-size: 0.9rem;">
-                    Demo Account: test@example.com / password123
+                    <a href="#" id="toggle-auth" style="color: var(--accent-color); text-decoration: none;">Don't have an account? Sign Up</a>
                 </p>
             </div>
         </div>
@@ -815,26 +815,51 @@ function getLoginHTML() {
 function setupLoginForm() {
     const loginForm = document.getElementById('login-form');
     const authError = document.getElementById('auth-error');
+    const toggleBtn = document.getElementById('toggle-auth');
+    const submitBtn = document.getElementById('login-btn');
+    const title = document.getElementById('auth-title');
+    
+    let isSignUp = false;
+
+    // Toggle between Login and Sign Up
+    toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        isSignUp = !isSignUp;
+        title.innerText = isSignUp ? "Create Account" : "📋 TaskPro";
+        submitBtn.innerText = isSignUp ? "Sign Up" : "Sign In";
+        toggleBtn.innerText = isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up";
+    });
 
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-        const submitBtn = document.getElementById('login-btn');
 
-        submitBtn.innerText = "Authenticating...";
+        submitBtn.innerText = "Processing...";
         submitBtn.disabled = true;
         authError.style.display = "none";
 
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        let result;
+        if (isSignUp) {
+            // New user registration
+            result = await supabase.auth.signUp({ email, password });
+        } else {
+            // Existing user login
+            result = await supabase.auth.signInWithPassword({ email, password });
+        }
+
+        const { data, error } = result;
 
         if (error) {
             authError.innerText = error.message;
             authError.style.display = "block";
-            submitBtn.innerText = "Sign In";
+            submitBtn.innerText = isSignUp ? "Sign Up" : "Sign In";
             submitBtn.disabled = false;
-        } else {
-            console.log("Login successful!", data);
+        } else if (isSignUp && !data.session) {
+            // If email confirmation is ON in Supabase
+            authError.innerText = "Check your email for the confirmation link!";
+            authError.style.color = "#10b981";
+            authError.style.display = "block";
         }
     });
 }
