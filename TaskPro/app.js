@@ -2,13 +2,11 @@ import { supabase } from './supabase-config.js';
 
 const contentArea = document.getElementById('main-content');
 
-// --- NEW: Base Path Helper ---
-// This ensures that on GitHub Pages, we always reference the correct subfolder
-const BASE_URL = window.location.pathname.endsWith('/') 
-    ? window.location.pathname 
-    : window.location.pathname.split('/').slice(0, -1).join('/') + '/';
+// --- 1. Base Path Helper ---
+// Optimized for GitHub Pages subfolder compatibility
+const BASE_URL = window.location.origin + window.location.pathname.replace(/[^\/]*$/, '');
 
-// --- 1. Offline Indicator Logic ---
+// --- 2. Offline Indicator Logic ---
 window.addEventListener('online', () => {
     document.body.style.filter = "none";
     showStatusMessage("Back online!", "success");
@@ -31,16 +29,17 @@ function showStatusMessage(text, type) {
     setTimeout(() => msg.className = msg.className.replace("show", ""), 3000);
 }
 
-// --- 2. Dynamic Module Loader ---
+// --- 3. Dynamic Module Loader ---
 async function loadModule(moduleName) {
     try {
+        // UI Updates: Set Active Nav Link
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.toggle('active', link.dataset.module === moduleName);
         });
 
         document.title = `TaskPro | ${moduleName.charAt(0).toUpperCase() + moduleName.slice(1)}`;
 
-        // Load Module CSS dynamically using the BASE_URL logic
+        // Load Module CSS
         const cssId = `css-${moduleName}`;
         if (!document.getElementById(cssId)) {
             const link = document.createElement('link');
@@ -50,24 +49,28 @@ async function loadModule(moduleName) {
             document.head.appendChild(link);
         }
 
-        // Fetch HTML using the BASE_URL
+        // Fetch Module HTML
         const response = await fetch(`${BASE_URL}modules/${moduleName}/${moduleName}.html`);
-        if (!response.ok) throw new Error(`Module ${moduleName} not found at ${BASE_URL}`);
+        if (!response.ok) throw new Error(`Module ${moduleName} not found`);
         const html = await response.text();
         contentArea.innerHTML = html;
 
-        // Import JS using the BASE_URL
-        const moduleJS = await import(`${BASE_URL}modules/${moduleName}/${moduleName}.js?t=${Date.now()}`);
+        // Import Module JS with Cache Busting
+        const modulePath = `${BASE_URL}modules/${moduleName}/${moduleName}.js?t=${Date.now()}`;
+        const moduleJS = await import(modulePath);
         
         if (moduleJS.init) {
             await moduleJS.init();
         }
         
-        localStorage.setItem('currentModule', moduleName);
+        // Save state for refresh
+        if (moduleName !== 'login') {
+            localStorage.setItem('currentModule', moduleName);
+        }
 
     } catch (err) {
         contentArea.innerHTML = `
-            <div class="error-state">
+            <div class="error-state" style="padding: 2rem; color: white; text-align: center;">
                 <p>Error loading ${moduleName}: ${err.message}</p>
                 <button class="btn-primary" onclick="location.reload()">Retry</button>
             </div>
@@ -76,8 +79,10 @@ async function loadModule(moduleName) {
     }
 }
 
-// --- 3. Auth State Observer ---
+// --- 4. Auth State Observer ---
+// This handles the initial load AND state changes
 supabase.auth.onAuthStateChange((event, session) => {
+    console.log("Auth Event:", event);
     if (session) {
         const savedModule = localStorage.getItem('currentModule') || 'dashboard';
         loadModule(savedModule);
@@ -86,24 +91,22 @@ supabase.auth.onAuthStateChange((event, session) => {
     }
 });
 
-// --- 4. Global Click Listener ---
-document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', (e) => {
-        const target = e.target.closest('.nav-link');
-        if (target && target.dataset.module) {
-            loadModule(target.dataset.module);
-        }
-    });
+// --- 5. Navigation Listeners ---
+document.addEventListener('click', (e) => {
+    const target = e.target.closest('.nav-link');
+    if (target && target.dataset.module) {
+        loadModule(target.dataset.module);
+    }
 });
 
-// --- 5. Logout Logic ---
+// --- 6. Logout Logic ---
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
         const { error } = await supabase.auth.signOut();
         if (!error) {
             localStorage.clear();
-            location.reload(); 
+            window.location.reload(); 
         }
     });
 }

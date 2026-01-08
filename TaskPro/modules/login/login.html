@@ -1,25 +1,18 @@
-<div id="auth-container" class="auth-wrapper">
-    <div class="auth-card">
-        <div class="auth-header">
-            <h2 id="auth-title">Welcome to TaskPro</h2>
-            <p id="auth-subtitle">Login to sync your productivity</p>
-        </div>
-
-        <form id="auth-form">
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="auth-email" placeholder="name@company.com" required>
+<div class="login-container">
+    <div class="login-box">
+        <h2>Welcome to TaskPro</h2>
+        <p>Please sign in to continue</p>
+        <form id="login-form">
+            <div class="input-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="you@example.com" required>
             </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="auth-password" placeholder="••••••••" required>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="••••••••" required>
             </div>
-            
-            <button type="submit" id="auth-submit-btn" class="btn-auth">Sign In</button>
+            <button type="submit" id="login-btn">Sign In</button>
+            <p id="auth-error" class="error-text" style="display: none;"></p>
         </form>
-
-        <div class="auth-footer">
-            <p id="toggle-text">Don't have an account? <a href="#" onclick="toggleAuthMode()">Sign Up</a></p>
-        </div>
     </div>
 </div>
