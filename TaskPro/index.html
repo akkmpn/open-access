@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskPro - Production</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TaskPro v9.0 - Enterprise Productivity Suite</title>
     <link rel="stylesheet" href="global.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
 <body class="taskpro-theme">
 
@@ -36,19 +37,52 @@
 
     <div id="main-app" style="display:none;">
         <nav class="sidebar">
-            <div class="logo">TaskPro</div>
+            <div class="logo">
+                <i class="fas fa-bolt"></i>
+                TaskPro 9.0
+            </div>
             <ul class="nav-links">
-                <li class="nav-link" onclick="showSection('dashboard')">Dashboard</li>
-                <li class="nav-link" onclick="showSection('tasks')">Tasks</li>
-                <li class="nav-link" onclick="showSection('habits')">Habits</li>
-                <li class="nav-link" onclick="showSection('notes')">Notes</li>
-                <li class="nav-link" onclick="showSection('calendar')">Calendar</li>
-                <li class="nav-link" onclick="showSection('pomodoro')">Focus</li>
-                <li class="nav-link" onclick="showSection('timer')">Timer</li>
-                <li class="nav-link" onclick="showSection('community')">Community</li>
-                <li class="nav-link" onclick="showSection('backup')">Settings</li>
+                <li class="nav-link" onclick="showSection('dashboard')">
+                    <i class="fas fa-chart-pie"></i>
+                    Dashboard
+                </li>
+                <li class="nav-link" onclick="showSection('tasks')">
+                    <i class="fas fa-tasks"></i>
+                    My Tasks
+                </li>
+                <li class="nav-link" onclick="showSection('habits')">
+                    <i class="fas fa-fire"></i>
+                    Habits
+                </li>
+                <li class="nav-link" onclick="showSection('notes')">
+                    <i class="fas fa-sticky-note"></i>
+                    My Notes
+                </li>
+                <li class="nav-link" onclick="showSection('calendar')">
+                    <i class="far fa-calendar-alt"></i>
+                    Calendar
+                </li>
+                <li class="nav-link" onclick="showSection('pomodoro')">
+                    <i class="fas fa-stopwatch"></i>
+                    Focus
+                </li>
+                <li class="nav-link" onclick="showSection('timer')">
+                    <i class="fas fa-clock"></i>
+                    Timer
+                </li>
+                <li class="nav-link" onclick="showSection('community')">
+                    <i class="fas fa-users"></i>
+                    Community
+                </li>
+                <li class="nav-link" onclick="showSection('backup')">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </li>
             </ul>
-            <button onclick="handleLogout()" class="logout-btn">Logout</button>
+            <button onclick="handleLogout()" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
         </nav>
 
         <main id="content-area">
