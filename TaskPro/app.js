@@ -77,15 +77,21 @@ const TaskProApp = {
         this.applyTheme();
     },
     
-    // Authentication Management
+    // Authentication Management with null checks
     showAuthScreen() {
-        document.getElementById('auth-screen').style.display = 'flex';
-        document.getElementById('main-app').style.display = 'none';
+        const authScreen = document.getElementById('auth-screen');
+        const mainApp = document.getElementById('main-app');
+        
+        if (authScreen) authScreen.style.display = 'flex';
+        if (mainApp) mainApp.style.display = 'none';
     },
     
     hideAuthScreen() {
-        document.getElementById('auth-screen').style.display = 'none';
-        document.getElementById('main-app').style.display = 'flex';
+        const authScreen = document.getElementById('auth-screen');
+        const mainApp = document.getElementById('main-app');
+        
+        if (authScreen) authScreen.style.display = 'none';
+        if (mainApp) mainApp.style.display = 'flex';
     },
     
     // Enhanced Section Navigation with responsive handling

@@ -79,7 +79,7 @@ async function loadFocusStats() {
                 .from('timer_stats')
                 .select('*')
                 .eq('user_id', TaskProApp.currentUser.id)
-                .single()
+                .maybeSingle()
         );
         
         return result.data || {

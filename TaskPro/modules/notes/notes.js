@@ -1,23 +1,34 @@
 // ===== ENHANCED NOTES MODULE =====
 // Advanced note management with search, editing, and better UI
 
-// UI Elements
-const notesList = document.getElementById('notes-list');
-const noteForm = document.getElementById('note-form');
-const noteModal = document.getElementById('note-modal');
-const noteInput = document.getElementById('note-input');
+// Wrap in IIFE to avoid global scope pollution
+(() => {
+    // UI Elements
+    const notesList = document.getElementById('notes-list');
+    const noteForm = document.getElementById('note-form');
+    const noteModal = document.getElementById('note-modal');
+    const noteInput = document.getElementById('note-input');
 
-// State
-let currentNotes = [];
-let searchQuery = '';
-let sortBy = 'created_at';
-let sortOrder = 'desc';
-let editingNoteId = null;
+    // State
+    let currentNotes = [];
+    let searchQuery = '';
+    let sortBy = 'created_at';
+    let sortOrder = 'desc';
+    let editingNoteId = null;
 
-// Initialize notes module
-async function loadNotes() {
-    if (!TaskProApp.currentUser) return;
-    
+    // Initialize notes module
+    async function loadNotes() {
+        if (!TaskProApp.currentUser) return;
+        
+        try {
+            const notes = await TaskProApp.loadNotes();
+            currentNotes = notes;
+            renderNotes(notes);
+            setupNotesEventListeners();
+        } catch (error) {
+            console.error('Error loading notes:', error);
+            TaskProApp.showNotification('Failed to load notes', 'error');
+        }
     try {
         const notes = await TaskProApp.loadNotes();
         currentNotes = notes;
@@ -536,3 +547,5 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+})();

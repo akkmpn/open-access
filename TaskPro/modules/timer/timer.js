@@ -1,40 +1,43 @@
 // ===== ENHANCED TIMER MODULE =====
 // Advanced stopwatch and custom timer with laps, session tracking, and statistics
 
-// UI Elements
-const stopwatchDisplay = document.getElementById('sw-display');
-const timerDisplay2 = document.getElementById('timer-display2');
-const startStopwatchBtn = document.getElementById('sw-start-btn');
-const lapStopwatchBtn = document.getElementById('sw-lap-btn');
-const resetStopwatchBtn = document.getElementById('sw-reset-btn');
-const timerInput = document.getElementById('timer-input');
-const startTimerBtn = document.getElementById('btn-start-timer');
-const resetTimerBtn = document.getElementById('btn-reset-timer');
-const lapsList = document.getElementById('laps-list');
+// Wrap in IIFE to avoid global scope pollution
+(() => {
+    // UI Elements
+    const stopwatchDisplay = document.getElementById('sw-display');
+    const timerDisplay2 = document.getElementById('timer-display2');
+    const startStopwatchBtn = document.getElementById('sw-start-btn');
+    const lapStopwatchBtn = document.getElementById('sw-lap-btn');
+    const resetStopwatchBtn = document.getElementById('sw-reset-btn');
+    const timerInput = document.getElementById('timer-input');
+    const startTimerBtn = document.getElementById('btn-start-timer');
+    const resetTimerBtn = document.getElementById('btn-reset-timer');
+    const lapsList = document.getElementById('laps-list');
 
-// State
-let stopwatchState = {
-    isRunning: false,
-    isPaused: false,
-    elapsed: 0,
-    laps: [],
-    startTime: null,
-    totalTime: 0,
-    interval: null
-};
+    // State
+    let stopwatchState = {
+        isRunning: false,
+        isPaused: false,
+        elapsed: 0,
+        laps: [],
+        startTime: null,
+        totalTime: 0,
+        interval: null
+    };
 
-let timerState = {
-    isRunning: false,
-    timeLeft: 0,
-    totalTime: 0,
-    startTime: null,
-    interval: null
-};
+    let timerState = {
+        isRunning: false,
+        timeLeft: 0,
+        totalTime: 0,
+        startTime: null,
+        interval: null
+    };
 
-// Initialize timer module
-function initStopwatch() {
-    setupTimerEventListeners();
-    updateStopwatchUI();
+    // Initialize timer module
+    function initStopwatch() {
+        setupTimerEventListeners();
+        updateStopwatchUI();
+        loadTimerStats();
     loadTimerStats();
 }
 
@@ -581,3 +584,13 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Export functions for global access
+window.initStopwatch = initStopwatch;
+window.toggleStopwatch = toggleStopwatch;
+window.addLap = addLap;
+window.resetStopwatch = resetStopwatch;
+window.startCustomTimer = startCustomTimer;
+window.resetTimer = resetTimer;
+
+})();

@@ -1,24 +1,37 @@
 // ===== ENHANCED HABITS MODULE =====
 // Advanced habit tracking with streak management, statistics, and calendar view
 
-// UI Elements
-const habitsList = document.getElementById('habits-list');
-const habitForm = document.getElementById('habit-form');
-const habitModal = document.getElementById('habit-modal');
+// Wrap in IIFE to avoid global scope pollution
+(() => {
+    // UI Elements
+    const habitsList = document.getElementById('habits-list');
+    const habitForm = document.getElementById('habit-form');
+    const habitModal = document.getElementById('habit-modal');
 
-// State
-let currentHabits = [];
-let habitStats = {
-    totalHabits: 0,
-    activeStreaks: 0,
-    bestStreak: 0,
-    completedToday: 0
-};
+    // State
+    let currentHabits = [];
+    let habitStats = {
+        totalHabits: 0,
+        activeStreaks: 0,
+        bestStreak: 0,
+        completedToday: 0
+    };
 
-// Initialize habits module
-async function loadHabits() {
-    if (!TaskProApp.currentUser) return;
-    
+    // Initialize habits module
+    async function loadHabits() {
+        if (!TaskProApp.currentUser) return;
+        
+        try {
+            const habits = await TaskProApp.loadHabits();
+            currentHabits = habits;
+            renderHabits(habits);
+            updateHabitStats();
+            setupHabitsEventListeners();
+            checkDailyReset();
+        } catch (error) {
+            console.error('Error loading habits:', error);
+            TaskProApp.showNotification('Failed to load habits', 'error');
+        }
     try {
         const habits = await TaskProApp.loadHabits();
         currentHabits = habits;
@@ -583,3 +596,13 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Export functions for global access
+window.loadHabits = loadHabits;
+window.openHabitModal = openHabitModal;
+window.closeHabitModal = closeHabitModal;
+window.editHabit = openHabitModal;
+window.deleteHabit = deleteHabit;
+window.toggleHabit = toggleHabit;
+
+})();
