@@ -166,16 +166,21 @@ async function loadDashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     const { data: tasks } = await supabase.from('tasks').select('is_completed');
     const { data: habits } = await supabase.from('habits').select('streak, name');
+    const { data: focusSessions } = await supabase
+        .from('pomodoro_sessions')
+        .select('focus_time_minutes');
 
     const totalTasks = tasks?.length || 0;
     const completedTasks = tasks?.filter(t => t.is_completed).length || 0;
     const taskPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
     const topHabit = habits?.sort((a, b) => b.streak - a.streak)[0] || { name: 'None', streak: 0 };
+    const totalMinutes = focusSessions?.reduce((acc, s) => acc + s.focus_time_minutes, 0) || 0;
+    const displayHours = (totalMinutes / 60).toFixed(1);
 
     document.getElementById('stat-tasks').innerText = `${completedTasks}/${totalTasks}`;
     document.getElementById('stat-habit-streak').innerText = `${topHabit.streak} days`;
     document.getElementById('stat-habit-name').innerText = topHabit.name;
-    document.getElementById('stat-focus-time').innerText = `${Math.floor(Math.random() * 4)} hrs`;
+    document.getElementById('stat-focus-time').innerText = `${displayHours} hrs`;
     document.getElementById('task-progress').style.width = `${taskPercent}%`;
     document.getElementById('completion-rate').innerText = `${taskPercent}%`;
 }
@@ -187,9 +192,19 @@ async function loadDashboard() {
 async function loadTasks() {
     contentArea.innerHTML = `
         <h1>📝 Tasks</h1>
-        <div class="task-input-group">
-            <input type="text" id="task-input" placeholder="Add a new task...">
-            <button class="btn-primary" id="add-task-btn">Add</button>
+        <div class="task-input-container card">
+            <div class="task-input-group">
+                <input type="text" id="task-input" placeholder="What needs to be done?">
+            </div>
+            <div class="task-meta-group" style="display: flex; gap: 10px; margin-top: 10px;">
+                <input type="date" id="task-date" class="btn-outline">
+                <select id="task-priority" class="btn-outline">
+                    <option value="low">Low Priority</option>
+                    <option value="medium" selected>Medium Priority</option>
+                    <option value="high">High Priority</option>
+                </select>
+                <button class="btn-primary" id="add-task-btn">Add Task</button>
+            </div>
         </div>
         <div id="task-list"></div>
     `;
@@ -199,14 +214,16 @@ async function loadTasks() {
 
     const taskList = document.getElementById('task-list');
     const taskInput = document.getElementById('task-input');
+    const taskDate = document.getElementById('task-date');
+    const taskPriority = document.getElementById('task-priority');
     const addBtn = document.getElementById('add-task-btn');
 
-    const renderTasks = async () => {
-        const { data: tasks } = await supabase
-            .from('tasks')
-            .select('id, title, user_id, created_at, is_completed:completed')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
+const renderTasks = async () => {
+    const { data: tasks } = await supabase
+        .from('tasks')
+        .select('id, title, user_id, created_at, is_completed') // Removed the :completed alias
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
         if (!taskList || !tasks) return;
 
@@ -227,12 +244,17 @@ async function loadTasks() {
 
     addBtn.addEventListener('click', async () => {
         if (!taskInput.value.trim()) return;
+        
         await supabase.from('tasks').insert({
             title: taskInput.value,
             user_id: user.id,
-            completed: false
+            is_completed: false,
+            due_date: taskDate.value || null, // Saves the date for the calendar
+            priority: taskPriority.value      // Saves the priority
         });
+
         taskInput.value = '';
+        taskDate.value = '';
         renderTasks();
     });
 
@@ -375,9 +397,10 @@ async function renderCalendarFunc() {
     const year = currentDate.getFullYear();
     monthYearLabel.innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentDate);
 
+    // FIXED: Changed 'date' to 'due_date' to match your Supabase schema
     const { data: tasks } = await supabase
         .from('tasks')
-        .select('title, date, priority');
+        .select('title, due_date, priority');
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const startDayIndex = new Date(year, month, 1).getDay();
@@ -389,14 +412,17 @@ async function renderCalendarFunc() {
     }
 
     for (let i = 1; i <= daysInMonth; i++) {
+        // Formats as YYYY-MM-DD to match Supabase DATE format
         const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-        const dayTasks = tasks?.filter(t => t.date === dateString) || [];
+        
+        // FIXED: Filtering by 'due_date' instead of 'date'
+        const dayTasks = tasks?.filter(t => t.due_date === dateString) || [];
         const today = new Date().toDateString() === new Date(year, month, i).toDateString();
 
         grid.innerHTML += `
             <div class="day ${today ? 'today' : ''}">
                 ${i}
-                ${dayTasks.length > 0 ? '<div class="task-dot"></div>' : ''}
+                ${dayTasks.length > 0 ? '<div class="task-dot" title="' + dayTasks.map(t => t.title).join(', ') + '"></div>' : ''}
             </div>
         `;
     }

@@ -64,6 +64,10 @@ CREATE POLICY "Users can access their own sessions" ON pomodoro_sessions
 CREATE POLICY "Users can access their own stats" ON timerstats
   FOR ALL USING (auth.uid() = user_id);
 
+ALTER TABLE tasks ADD COLUMN priority TEXT DEFAULT 'medium';
+-- 'due_date' already exists, so update the JS to use 'due_date' instead of 'date'.
 
-
+-- Rename the column in the tasks table to match your JS code
+ALTER TABLE tasks 
+RENAME COLUMN completed TO is_completed;
 
