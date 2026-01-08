@@ -1,12 +1,16 @@
-// Initialize the Supabase Client
-const supabaseUrl = 'https://rvxcabyylfpzvxpisemb.supabase.co'
-const supabaseKey = 'sb_publishable_JzMPR2gsxWRrKnTrS7NtCA_eagXTGwx'
+// 1. Use unique internal names for credentials to avoid any global overlap
+const _supabaseUrl = 'https://rvxcabyylfpzvxpisemb.supabase.co';
+const _supabaseKey = 'sb_publishable_JzMPR2gsxWRrKnTrS7NtCA_eagXTGwx';
 
-// CORRECTED LINE:
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey)
+// 2. Initialize the client using window.supabase (the library) 
+// and assign it to the global 'supabase' variable.
+// Using 'var' or simply 'window.supabase' ensures we don't trigger a 
+// "const redeclaration" error if the name is already taken.
+window.supabase = window.supabase.createClient(_supabaseUrl, _supabaseKey);
 
-// Global helper to get current user easily
+// 3. Global helper to get current user easily
 const getCurrentUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error } = await window.supabase.auth.getUser();
+    if (error) return null;
     return user;
 };
