@@ -36,7 +36,22 @@
     </div>
 
     <div id="main-app" style="display:none;">
-        <nav class="sidebar">
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <button class="mobile-menu-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="mobile-logo">
+                <i class="fas fa-bolt"></i>
+                TaskPro 9.0
+            </div>
+            <button class="mobile-menu-toggle" onclick="toggleTheme()">
+                <i id="themeIcon" class="fas fa-moon"></i>
+            </button>
+        </div>
+
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
             <div class="logo">
                 <i class="fas fa-bolt"></i>
                 TaskPro 9.0
@@ -85,7 +100,8 @@
             </button>
         </nav>
 
-        <main id="content-area">
+        <!-- Main Content Area -->
+        <main id="content-area" class="content-area">
             
             <div id="dashboard-section" class="app-section">
                 <div class="dashboard-welcome">

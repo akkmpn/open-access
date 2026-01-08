@@ -35,6 +35,8 @@
     --radius: 12px;
     --font-main: Inter, sans-serif;
     --sidebar-width: 260px;
+    --mobile-header-height: 60px;
+    --tablet-sidebar-width: 200px;
 }
 
 @media (prefers-color-scheme: light) {

@@ -88,7 +88,7 @@ const TaskProApp = {
         document.getElementById('main-app').style.display = 'flex';
     },
     
-    // Enhanced Section Navigation
+    // Enhanced Section Navigation with responsive handling
     showSection(sectionId) {
         // Hide all sections
         document.querySelectorAll('.app-section').forEach(section => {
@@ -110,8 +110,8 @@ const TaskProApp = {
         // Load section-specific data
         this.loadSectionData(sectionId);
         
-        // Close mobile sidebar
-        if (window.innerWidth <= 1023) {
+        // Close mobile sidebar on selection
+        if (window.innerWidth <= 767) {
             this.toggleSidebar(false);
         }
     },
@@ -178,7 +178,20 @@ const TaskProApp = {
         
         // Window resize handling
         window.addEventListener('resize', () => {
-            if (window.innerWidth > 1023 && this.sidebarOpen) {
+            if (window.innerWidth > 767 && this.sidebarOpen) {
+                this.toggleSidebar(false);
+            }
+        });
+        
+        // Mobile sidebar: close when clicking outside
+        document.addEventListener('click', (e) => {
+            const sidebar = document.querySelector('.sidebar');
+            const mobileToggle = e.target.closest('.mobile-menu-toggle');
+            
+            if (window.innerWidth <= 767 && 
+                sidebar.classList.contains('open') && 
+                !sidebar.contains(e.target) && 
+                !mobileToggle) {
                 this.toggleSidebar(false);
             }
         });
