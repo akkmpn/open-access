@@ -2,7 +2,7 @@
 // Enhanced configuration with error handling and retry logic
 
 const _supabaseUrl = 'https://rvxcabyylfpzvxpisemb.supabase.co';
-const _supabaseKey = 'sb_publishable_JzMPR2gsxWRrKnTrS7NtCA_eagXTGwx';
+const _supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2eGNhYnl5bGZwenZ4cGlzZW1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYzOTQ1NzMsImV4cCI6MjA1MTk3MDU3M30.3Y1w2KXqTLzJ8k8oQaL0Xo4J9Q5fK2tN8bY7c6eZdA';
 
 // Global configuration object
 window.TaskProConfig = {
