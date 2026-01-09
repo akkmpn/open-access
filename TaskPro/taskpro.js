@@ -24,30 +24,6 @@ const testConnection = async () => {
 
 testConnection();
 
-// Mobile Menu Toggle
-const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-const mobileNav = document.querySelector('nav');
-
-if (mobileMenuBtn && mobileNav) {
-  mobileMenuBtn.addEventListener('click', () => {
-    mobileNav.classList.toggle('active');
-  });
-
-  // Close menu when clicking a link
-  document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => {
-      mobileNav.classList.remove('active');
-    });
-  });
-
-  // Close menu when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!mobileNav.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
-      mobileNav.classList.remove('active');
-    }
-  });
-}
-
 /* ============================================
    MAIN APP INITIALIZATION
    ============================================ */

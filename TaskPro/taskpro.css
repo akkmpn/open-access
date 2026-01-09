@@ -842,8 +842,41 @@ body {
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 1.5rem;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: block;
+    line-height: 1;
+  }
+
+  .nav-link[data-module="dashboard"]::before { content: "🏠"; }
+  .nav-link[data-module="tasks"]::before { content: "✓"; }
+  .nav-link[data-module="habits"]::before { content: "🎯"; }
+  .nav-link[data-module="calendar"]::before { content: "📅"; }
+  .nav-link[data-module="timer"]::before { content: "⏱"; }
+  .nav-link[data-module="pomodoro"]::before { content: "🍅"; }
+  .nav-link[data-module="notes"]::before { content: "📝"; }
+  .nav-link[data-module="community"]::before { content: "👥"; }
+  .nav-link[data-module="analytics"]::before { content: "📊"; }
+  .nav-link[data-module="backup"]::before { content: "💾"; }
+  .nav-link[data-module="design"]::before { content: "🎨"; }
+
+  /* Active state */
+  .nav-link.active {
+    background: transparent;
+    color: var(--primary);
+  }
+
+  /* Hover state */
+  .nav-link:active {
+    background: rgba(99, 102, 241, 0.1);
+  }
+
+  /* Hide desktop-only cards */
+  .layout-control-card {
+    display: none !important;
+  }
+
+/* Ensure main content takes up remaining space */
+#main-content {
+    flex: 1;
 }
 
 /* ============================================
