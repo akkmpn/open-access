@@ -69,10 +69,17 @@ nav {
    MAIN CONTENT AREA
    ============================================ */
 
+/* MAIN CONTENT AREA – base (no padding) */
 #main-content {
     flex: 1;
-    padding: 2rem;
     overflow-y: auto;
+}
+
+/* Desktop padding only */
+@media (min-width: 769px) {
+    #main-content {
+        padding: 2rem;
+    }
 }
 
 /* ============================================
@@ -1046,23 +1053,61 @@ body {
     color: #dc2626;
   }
   
-  /* Main content spacing */
+  /* ===== MOBILE CONTENT SPACING (ALL MODULES) ===== */
+
+  /* Container has NO padding. Scrolling handled by body. */
   #main-content {
-    padding: 0; /* CHANGED: Remove padding, button is now in flow */
+    padding: 0;
     width: 100%;
     flex: 1;
+    overflow-y: auto;
   }
-  
-  /* Add padding to actual content, not container */
+
+  /* Each direct child (module root) gets side and bottom padding only. */
   #main-content > * {
-    padding: 0.75rem; /* CHANGED: Reduced from 1rem to 0.75rem */
+    padding: 0 1rem 1rem 1rem;
+    margin: 0;
   }
-  
-  /* First child gets minimal top padding */
+
+  /* First module on page: no extra top gap. */
   #main-content > *:first-child {
-    padding-top: 0.25rem; /* CHANGED: Minimal spacing from button */
+    padding-top: 0.25rem;   /* Very small space under hamburger */
+    margin-top: 0;
   }
-  
+
+  /* Remove top margin from any headings inside modules on mobile. */
+  #main-content h1,
+  #main-content h2,
+  #main-content h3 {
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  /* Dashboard welcome block: small, consistent spacing. */
+  .dashboard-welcome {
+    margin-top: 0.25rem;
+    margin-bottom: 1rem;
+    padding-top: 0;
+  }
+
+  /* Tasks / Habits / Notes / Community root cards – no extra top margin. */
+  .task-container,
+  .habits-grid,
+  .notes-grid,
+  .community-grid,
+  .timer-container,
+  .pomodoro-container,
+  .calendar-wrapper,
+  .backup-card,
+  .design-grid {
+    margin-top: 0.5rem;     /* small, consistent spacing */
+  }
+
+  /* Remove any big top margins from generic cards inside main-content. */
+  #main-content .card {
+    margin-top: 0.5rem;
+  }
+
   /* ========== ALL OTHER MOBILE FIXES ========== */
   
   .stats-grid {
@@ -1364,11 +1409,7 @@ body {
     grid-column: span 2 !important;
   }
   
-  #main-content {
-    padding: 0.75rem !important;
-    padding-top: 5rem !important;
-  }
-  
+    
   .stopwatch-display,
   .pomodoro-display,
   #timer-display {
