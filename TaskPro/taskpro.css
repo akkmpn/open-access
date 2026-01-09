@@ -1758,3 +1758,52 @@ body {
     margin-top: 1rem;
     font-size: 0.875rem;
 }
+
+/* ===== AUTH MODE LAYOUT FIX ===== */
+
+/* When showing the sign-in page, hide sidebar and center login box */
+body.auth-mode {
+    display: flex;
+    flex-direction: column;
+}
+
+body.auth-mode nav,
+body.auth-mode #desktop-nav {
+    display: none !important;   /* hide left sidebar */
+}
+
+body.auth-mode #main-content {
+    padding: 0;                 /* no app padding; login handles its own */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;          /* full height center */
+    width: 100%;
+}
+
+body.auth-mode .login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 100vh;
+    padding: 1.5rem;
+}
+
+body.auth-mode .login-card {
+    width: 100%;
+    max-width: 420px;           /* nice desktop width */
+    margin: 0 auto;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    body.auth-mode .login-container {
+        padding: 1rem;
+    }
+
+    body.auth-mode .login-card {
+        max-width: 100%;
+        padding: 1.5rem;
+    }
+}

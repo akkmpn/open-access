@@ -59,6 +59,9 @@ async function loadModule(moduleName) {
   try {
     console.log(`Loading module: ${moduleName}`);
     
+    // Always exit auth mode when loading main app modules
+    document.body.classList.remove('auth-mode');
+    
     // Update active nav link
     document.querySelectorAll('.nav-link').forEach(link => {
       link.classList.toggle('active', link.dataset.module === moduleName);
@@ -272,8 +275,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
         loadModule(savedModule);
     } else {
         // No session found, show login
-        contentArea.innerHTML = getLoginHTML();
-        setupLoginForm();
+        await loadAuth();
     }
 });
 
@@ -1240,6 +1242,20 @@ window.loadDesignWizard = () => {
 /* ============================================
    AUTHENTICATION UI & LOGIC
    ============================================ */
+
+async function loadAuth() {
+    // Mark auth mode on body
+    document.body.classList.add('auth-mode');
+
+    // Clear active nav link (auth is separate view)
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.classList.remove('active');
+    });
+
+    // Render login markup
+    contentArea.innerHTML = getLoginHTML();
+    setupLoginForm();
+}
 
 function getLoginHTML() {
     return `
