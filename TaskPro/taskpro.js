@@ -56,51 +56,112 @@ function showStatusMessage(text, type) {
 
 // Load module content
 async function loadModule(moduleName) {
-    try {
-        // Update active nav link
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.toggle('active', link.dataset.module === moduleName);
-        });
-        document.title = `TaskPro | ${moduleName.charAt(0).toUpperCase() + moduleName.slice(1)}`;
+  try {
+    console.log(`Loading module: ${moduleName}`);
+    
+    // Update active nav link
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.classList.toggle('active', link.dataset.module === moduleName);
+    });
 
-        // Load appropriate module
-        if (moduleName === 'dashboard') {
-            loadDashboard();
-        } else if (moduleName === 'tasks') {
-            loadTasks();
-        } else if (moduleName === 'habits') {
-            loadHabits();
-        } else if (moduleName === 'calendar') {
-            loadCalendar();
-        } else if (moduleName === 'timer') {
-            loadTimer();
-        } else if (moduleName === 'pomodoro') {
-            loadPomodoro();
-        } else if (moduleName === 'notes') {
-            loadNotes();
-        } else if (moduleName === 'community') {
-            loadCommunity();
-        } else if (moduleName === 'analytics') {
-            loadAnalytics();
-        } else if (moduleName === 'backup') {
-            loadBackup();
-        } else if (moduleName === 'design') {
-            loadDesignWizard();
-        }
+    document.title = `TaskPro | ${moduleName.charAt(0).toUpperCase() + moduleName.slice(1)}`;
 
-        localStorage.setItem('currentModule', moduleName);
-    } catch (err) {
-        contentArea.innerHTML = `<div class="error-state">Error loading ${moduleName}: ${err.message}</div>`;
+    // Load appropriate module
+    if (moduleName === 'dashboard') {
+      await loadDashboard();
+    } else if (moduleName === 'tasks') {
+      await loadTasks();
+    } else if (moduleName === 'habits') {
+      await loadHabits();
+    } else if (moduleName === 'calendar') {
+      await loadCalendar();
+    } else if (moduleName === 'timer') {
+      await loadTimer();
+    } else if (moduleName === 'pomodoro') {
+      await loadPomodoro();
+    } else if (moduleName === 'notes') {
+      await loadNotes();
+    } else if (moduleName === 'community') {
+      await loadCommunity();
+    } else if (moduleName === 'analytics') {
+      await loadAnalytics();
+    } else if (moduleName === 'backup') {
+      await loadBackup();
+    } else if (moduleName === 'design') {
+      await loadDesignWizard();
     }
+
+    localStorage.setItem('currentModule', moduleName);
+    console.log(`✅ Module loaded: ${moduleName}`);
+    
+  } catch (err) {
+    console.error(`Error loading ${moduleName}:`, err);
+    contentArea.innerHTML = `<div class="error-state">Error loading ${moduleName}: ${err.message}</div>`;
+  }
 }
 
-// Navigation setup
-document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', (e) => {
-        e.preventDefault();
-        loadModule(link.dataset.module);
-    });
+// ============================================
+// IMPROVED NAVIGATION SETUP WITH EVENT DELEGATION
+// ============================================
+
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+  setupNavigation();
 });
+
+// Also run immediately in case DOM is already loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupNavigation);
+} else {
+  setupNavigation();
+}
+
+function setupNavigation() {
+  // Use event delegation on the nav container
+  const nav = document.querySelector('nav');
+  
+  if (!nav) {
+    console.error('Navigation not found');
+    return;
+  }
+  
+  // Single click handler for all navigation links
+  nav.addEventListener('click', (e) => {
+    // Find closest .nav-link button
+    const navLink = e.target.closest('.nav-link');
+    
+    // If not a nav link, ignore
+    if (!navLink) return;
+    
+    // Prevent default and stop propagation
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Get module from data attribute
+    const module = navLink.dataset.module;
+    
+    if (!module) {
+      console.warn('No module specified for nav link');
+      return;
+    }
+    
+    // Prevent multiple clicks
+    if (navLink.disabled) return;
+    
+    // Temporarily disable to prevent double-clicks
+    navLink.disabled = true;
+    
+    // Load the module
+    loadModule(module).finally(() => {
+      // Re-enable after a short delay
+      setTimeout(() => {
+        navLink.disabled = false;
+      }, 300);
+    });
+  });
+  
+  console.log('✅ Navigation setup complete');
+}
 
 // Logout
 document.getElementById('logout-btn').addEventListener('click', async () => {
