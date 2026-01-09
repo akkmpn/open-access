@@ -1,4 +1,5 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/+esm';
+(function() {
+const { createClient } = window.supabase;
 
 const finishSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
 
@@ -140,39 +141,7 @@ async function loadModule(moduleName) {
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     setupNavigation();
-    
-    // Mobile menu functionality
-    const mobileBtn = document.getElementById('mobile-menu-btn');
-    if (mobileBtn) {
-        mobileBtn.addEventListener('click', () => {
-            document.body.classList.toggle('menu-open');
-        });
-    }
-    
-    // --- MOBILE MENU HANDLER ---
-    const menuBtn = document.getElementById('mobile-menu-btn');
-    const body = document.body;
-
-    if (menuBtn) {
-        menuBtn.addEventListener('click', () => {
-            document.body.classList.toggle('menu-open');
-        });
-    }
-
-    // Auto-close menu when a user clicks a navigation link (Navigation UX)
-    document.querySelectorAll('.nav-link, .menu-item').forEach(link => {
-        link.addEventListener('click', () => {
-            document.body.classList.remove('menu-open');
-        });
-    });
 });
-
-// Also run immediately in case DOM is already loaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupNavigation);
-} else {
-    setupNavigation();
-}
 
 function setupNavigation() {
   // Desktop navigation
@@ -209,17 +178,28 @@ function setupNavigation() {
   
   // Open menu
   if (hamburgerBtn) {
-    hamburgerBtn.addEventListener('click', () => {
-      menuOverlay.classList.add('active');
-      hamburgerBtn.classList.add('active');
-      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    // Remove any existing listeners to prevent duplicates if setupNavigation is called multiple times
+    const newBtn = hamburgerBtn.cloneNode(true);
+    hamburgerBtn.parentNode.replaceChild(newBtn, hamburgerBtn);
+    
+    newBtn.addEventListener('click', () => {
+      if (menuOverlay) {
+          menuOverlay.classList.add('active');
+          newBtn.classList.add('active');
+          document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      } else {
+          // Fallback for simple menu toggle if overlay doesn't exist
+          document.body.classList.toggle('menu-open');
+      }
     });
   }
   
   // Close menu function
   function closeMenu() {
-    menuOverlay.classList.remove('active');
-    hamburgerBtn.classList.remove('active');
+    if (menuOverlay) menuOverlay.classList.remove('active');
+    const currentBtn = document.getElementById('mobile-menu-btn');
+    if (currentBtn) currentBtn.classList.remove('active');
+    document.body.classList.remove('menu-open');
     document.body.style.overflow = ''; // Restore scrolling
   }
   
@@ -275,45 +255,8 @@ function setupNavigation() {
     });
   }
   
-  // --- MOBILE MENU HANDLER ---
-  const menuBtn = document.getElementById('mobile-menu-btn');
-  const mobileLinks = document.querySelectorAll('.menu-item, .nav-link');
-
-  if (menuBtn) {
-    menuBtn.addEventListener('click', () => {
-      document.body.classList.toggle('menu-open');
-    });
-  }
-
-  // Auto-close menu when a user clicks a navigation link
-  mobileLinks.forEach(link => {
-    link.addEventListener('click', () => {
-      document.body.classList.remove('menu-open');
-    });
-  });
-  
   console.log('✅ Navigation setup complete');
 }
-
-// --- MOBILE MENU INTERACTION LOGIC ---
-document.addEventListener('DOMContentLoaded', () => {
-    const menuBtn = document.getElementById('mobile-menu-btn');
-    const body = document.body;
-
-    if (menuBtn) {
-        // Toggle menu when hamburger is clicked
-        menuBtn.addEventListener('click', () => {
-            body.classList.toggle('menu-open');
-        });
-    }
-
-    // Auto-close menu when a navigation link is clicked (Navigation UX)
-    document.querySelectorAll('.nav-link, .menu-item').forEach(link => {
-        link.addEventListener('click', () => {
-            body.classList.remove('menu-open');
-        });
-    });
-  });
 
 // Logout
 
@@ -525,23 +468,30 @@ const renderTasks = async () => {
         renderTasks();
     });
 
-    window.toggleTask = async (id, isChecked) => {
-        // FIX: Use 'is_completed' to match your database
-        await supabase.from('tasks').update({ is_completed: isChecked }).eq('id', id);
-        renderTasks();
-    };
-
-    window.deleteTask = async (id) => {
-        if (confirm("Are you sure you want to delete this task?")) {
-            await supabase.from('tasks').delete().eq('id', id);
-            renderTasks();
-        }
-    };
-
     document.getElementById('hide-completed').addEventListener('change', renderTasks);
 
     renderTasks();
 }
+
+// Global Task Functions
+window.toggleTask = async (id, isChecked) => {
+    await supabase.from('tasks').update({ is_completed: isChecked }).eq('id', id);
+    // Re-load tasks to update UI - we need to access the current module's render function
+    // Ideally we would refactor to not rely on global reload, but for now we can re-trigger the module load
+    // or dispatch a custom event. A simple way is to reload the module if it's active.
+    if (document.body.getAttribute('data-current-module') === 'tasks') {
+        loadTasks(); 
+    }
+};
+
+window.deleteTask = async (id) => {
+    if (confirm("Are you sure you want to delete this task?")) {
+        await supabase.from('tasks').delete().eq('id', id);
+        if (document.body.getAttribute('data-current-module') === 'tasks') {
+            loadTasks();
+        }
+    }
+};
 
 /* ============================================
    HABITS MODULE
@@ -606,28 +556,34 @@ async function loadHabits() {
         renderHabits();
     });
 
-    window.completeHabit = async (id) => {
-        const { data: habit } = await supabase.from('habits').select('*').eq('id', id).single();
-        const today = new Date().toDateString();
-        const lastDate = habit.last_completed ? new Date(habit.last_completed).toDateString() : null;
-        const newStreak = lastDate === today ? habit.streak : habit.streak + 1;
-
-        await supabase.from('habits').update({
-            streak: newStreak,
-            last_completed: new Date().toISOString()
-        }).eq('id', id);
-        renderHabits();
-    };
-
-    window.deleteHabit = async (id) => {
-        if (confirm("Are you sure you want to delete this habit?")) {
-            await supabase.from('habits').delete().eq('id', id);
-            renderHabits();
-        }
-    };
-
     renderHabits();
 }
+
+// Global Habit Functions
+window.completeHabit = async (id) => {
+    const { data: habit } = await supabase.from('habits').select('*').eq('id', id).single();
+    const today = new Date().toDateString();
+    const lastDate = habit.last_completed ? new Date(habit.last_completed).toDateString() : null;
+    const newStreak = lastDate === today ? habit.streak : habit.streak + 1;
+
+    await supabase.from('habits').update({
+        streak: newStreak,
+        last_completed: new Date().toISOString()
+    }).eq('id', id);
+    
+    if (document.body.getAttribute('data-current-module') === 'habits') {
+        loadHabits();
+    }
+};
+
+window.deleteHabit = async (id) => {
+    if (confirm("Are you sure you want to delete this habit?")) {
+        await supabase.from('habits').delete().eq('id', id);
+        if (document.body.getAttribute('data-current-module') === 'habits') {
+            loadHabits();
+        }
+    }
+};
 
 /* ============================================
    CALENDAR MODULE
@@ -914,7 +870,7 @@ function togglePomodoroFunc() {
                 finishSound.play(); // PLAY SOUND HERE
                 pomodoroSessionCount++;
                 pomodoroTotalFocusTime += 25;
-                alert('🎉 Focus session complete! Take a 5-minute break.');
+                showStatusMessage('🎉 Focus session complete! Take a 5-minute break.', 'success');
                 resetPomodoroFunc();
                 updatePomodoroDisplay();
             }
@@ -1455,3 +1411,4 @@ function setupLoginForm() {
         }
     });
 }
+})();

@@ -1137,7 +1137,7 @@ body {
   }
   
   /* ========== ALL OTHER MOBILE FIXES ========== */
-  
+  @media (max-width: 768px) {
   .stats-grid {
     grid-template-columns: 1fr !important;
     gap: 12px !important;
@@ -1424,6 +1424,7 @@ body {
   
   .layout-control-card {
     display: none !important;
+  }
   }
 
 /* Extra small mobile - 2 columns instead of 3 */
