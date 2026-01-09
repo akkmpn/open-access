@@ -94,6 +94,56 @@ async function loadModule(moduleName) {
     }
 }
 
+// Mobile Navigation Drawer
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+const mobileNav = document.getElementById('mobile-nav');
+
+function toggleMobileMenu() {
+  if (!mobileNav || !mobileMenuBtn) return;
+  
+  mobileNav.classList.toggle('active');
+  
+  if (mobileNav.classList.contains('active')) {
+    mobileMenuBtn.textContent = '✕';
+  } else {
+    mobileMenuBtn.textContent = '☰';
+  }
+}
+
+if (mobileMenuBtn) {
+  mobileMenuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMobileMenu();
+  });
+}
+
+document.querySelectorAll('.nav-link').forEach(link => {
+  link.addEventListener('click', () => {
+    mobileNav.classList.remove('active');
+    mobileMenuBtn.textContent = '☰';
+  });
+});
+
+document.addEventListener('click', (e) => {
+  if (mobileNav && mobileMenuBtn) {
+    if (!mobileNav.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+      if (mobileNav.classList.contains('active')) {
+        mobileNav.classList.remove('active');
+        mobileMenuBtn.textContent = '☰';
+      }
+    }
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && mobileNav && mobileMenuBtn) {
+    if (mobileNav.classList.contains('active')) {
+      mobileNav.classList.remove('active');
+      mobileMenuBtn.textContent = '☰';
+    }
+  }
+});
+
 // Navigation setup
 document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', (e) => {
@@ -1162,43 +1212,6 @@ window.sendDailyBriefing = async () => {
 
 // Check every hour for daily briefing
 setInterval(window.sendDailyBriefing, 3600000);
-
-// Mobile Menu Toggle
-window.toggleMobileMenu = function() {
-    const nav = document.getElementById('sidebar-nav');
-    const btn = document.getElementById('mobile-menu-btn');
-    
-    // Toggle the class that CSS uses to slide the menu in
-    nav.classList.toggle('active');
-    
-    // Change button icon based on state
-    if (nav.classList.contains('active')) {
-        btn.innerHTML = "✕"; // Close icon
-    } else {
-        btn.innerHTML = "☰"; // Hamburger icon
-    }
-};
-
-// Auto-close menu when a link is clicked
-document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => {
-        const nav = document.getElementById('sidebar-nav');
-        if (window.innerWidth <= 768) {
-            nav.classList.remove('active');
-            document.getElementById('mobile-menu-btn').innerHTML = "☰";
-        }
-    });
-});
-
-// Close mobile menu when clicking outside
-document.addEventListener('click', (e) => {
-    const nav = document.getElementById('sidebar-nav');
-    const menuBtn = document.getElementById('mobile-menu-btn');
-    if (!nav.contains(e.target) && e.target !== menuBtn) {
-        nav.classList.remove('active');
-        document.getElementById('mobile-menu-btn').innerHTML = "☰";
-    }
-});
 
 function setupLoginForm() {
     const loginForm = document.getElementById('login-form');
