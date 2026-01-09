@@ -1073,11 +1073,14 @@ window.loadDesignWizard = () => {
                     <button class="btn-primary" onclick="updateTheme('light')">Light</button>
                     <button class="btn-primary" onclick="updateTheme('glass')">Glass</button>
                 </div>
-                <div class="card">
+                
+                <div class="card layout-control-card">
                     <h3>Sidebar Position</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-dim);">Desktop Only</p>
                     <button class="btn-primary" onclick="updateLayout('left')">Left</button>
                     <button class="btn-primary" onclick="updateLayout('right')">Right</button>
                 </div>
+
                 <div class="card">
                     <h3>Card Style</h3>
                     <button class="btn-primary" onclick="updateCardStyle('sharp')">Sharp</button>
@@ -1159,6 +1162,38 @@ window.sendDailyBriefing = async () => {
 
 // Check every hour for daily briefing
 setInterval(window.sendDailyBriefing, 3600000);
+
+// Mobile Menu Toggle
+window.toggleMobileMenu = () => {
+    const nav = document.getElementById('sidebar-nav');
+    nav.classList.toggle('nav-open');
+    
+    // Toggle button icon
+    const btn = document.getElementById('mobile-menu-btn');
+    const isOpen = nav.classList.contains('nav-open');
+    btn.innerHTML = isOpen ? '✕' : '☰';
+};
+
+// Auto-close menu when a link is clicked
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+        const nav = document.getElementById('sidebar-nav');
+        if (window.innerWidth <= 768) {
+            nav.classList.remove('nav-open');
+            document.getElementById('mobile-menu-btn').innerHTML = '☰';
+        }
+    });
+});
+
+// Close mobile menu when clicking outside
+document.addEventListener('click', (e) => {
+    const nav = document.getElementById('sidebar-nav');
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    if (!nav.contains(e.target) && e.target !== menuBtn) {
+        nav.classList.remove('nav-open');
+        document.getElementById('mobile-menu-btn').innerHTML = '☰';
+    }
+});
 
 function setupLoginForm() {
     const loginForm = document.getElementById('login-form');

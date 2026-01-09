@@ -825,6 +825,70 @@ body {
     transition: flex-direction 0.3s ease;
 }
 
+/* ============================================
+   HAMBURGER MENU & MOBILE FIXES
+   ============================================ */
+
+/* Default: Hide hamburger on desktop */
+#mobile-menu-btn {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1001;
+    background: var(--card-bg);
+    border: 1px solid #334155;
+    color: var(--text-main);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Mobile Styling */
+@media (max-width: 768px) {
+    /* 1. Force Column Layout (Fixes conflict with "Sidebar Position") */
+    body[style] {
+        flex-direction: column !important; /* Overrides JS inline styles */
+    }
+
+    /* 2. Show Hamburger */
+    #mobile-menu-btn {
+        display: block;
+    }
+
+    /* 3. Transform Nav into a Side Drawer */
+    nav {
+        position: fixed;
+        top: 0;
+        left: -100%; /* Hidden by default */
+        height: 100vh;
+        width: 250px;
+        z-index: 1000;
+        flex-direction: column; /* Stack links vertically */
+        padding-top: 60px; /* Space for close button/header */
+        transition: left 0.3s ease-in-out;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+        border-right: 1px solid #334155;
+        background: var(--card-bg); /* Ensure background is opaque */
+    }
+
+    nav.nav-open {
+        left: 0; /* Slide in */
+    }
+
+    /* 4. Hide "Sidebar Position" Control on Mobile */
+    .layout-control-card {
+        display: none !important;
+    }
+    
+    /* Adjust Main Content padding since nav is no longer static */
+    #main-content {
+        padding-top: 60px; 
+    }
+}
+
 /* Ensure main content takes up remaining space */
 #main-content {
     flex: 1;
