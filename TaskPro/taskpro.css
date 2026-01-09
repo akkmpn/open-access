@@ -8,6 +8,7 @@
     --card-bg: #1e293b;
     --text-main: #f8fafc;
     --text-dim: #94a3b8;
+    --sidebar-width: 250px; /* Use a variable for easier changes */
 }
 
 * {
@@ -27,9 +28,9 @@ body {
     background-color: var(--bg-dark);
     color: var(--text-main);
     display: flex;
-    flex-direction: row;        /* sidebar left, content right */
+    flex-direction: row; 
     height: 100vh;
-    transition: flex-direction 0.3s ease;
+    overflow: hidden; /* Prevent double scrollbars */
 }
 
 /* ============================================
@@ -37,7 +38,7 @@ body {
    ============================================ */
 
 nav {
-    width: 250px;
+    width: var(--sidebar-width);
     background: var(--card-bg);
     border-inline-end: 1px solid #334155;
     display: flex;
@@ -177,7 +178,7 @@ nav {
     font-weight: 600;
     opacity: 0;
     transition: opacity 0.3s;
-    z-index: 1100;
+    z-index: 2000;
 }
 
 #offline-toast.show {
@@ -1761,23 +1762,24 @@ body {
 
 /* ===== AUTH MODE LAYOUT FIX ===== */
 
-/* When showing the sign-in page, hide sidebar and center login box */
 body.auth-mode {
-    display: flex;
-    flex-direction: column;
-}
-
-body.auth-mode nav,
-body.auth-mode #desktop-nav {
-    display: none !important;   /* hide left sidebar */
-}
-
-body.auth-mode #main-content {
-    padding: 0;                 /* no app padding; login handles its own */
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;          /* full height center */
+    min-height: 100vh;
+}
+
+body.auth-mode nav,
+body.auth-mode #desktop-nav,
+body.auth-mode .mobile-header-row {
+    display: none !important;
+}
+
+body.auth-mode #main-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
     width: 100%;
 }
 
