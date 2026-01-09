@@ -1164,14 +1164,19 @@ window.sendDailyBriefing = async () => {
 setInterval(window.sendDailyBriefing, 3600000);
 
 // Mobile Menu Toggle
-window.toggleMobileMenu = () => {
+window.toggleMobileMenu = function() {
     const nav = document.getElementById('sidebar-nav');
-    nav.classList.toggle('nav-open');
-    
-    // Toggle button icon
     const btn = document.getElementById('mobile-menu-btn');
-    const isOpen = nav.classList.contains('nav-open');
-    btn.innerHTML = isOpen ? '✕' : '☰';
+    
+    // Toggle the class that CSS uses to slide the menu in
+    nav.classList.toggle('active');
+    
+    // Change button icon based on state
+    if (nav.classList.contains('active')) {
+        btn.innerHTML = "✕"; // Close icon
+    } else {
+        btn.innerHTML = "☰"; // Hamburger icon
+    }
 };
 
 // Auto-close menu when a link is clicked
@@ -1179,8 +1184,8 @@ document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', () => {
         const nav = document.getElementById('sidebar-nav');
         if (window.innerWidth <= 768) {
-            nav.classList.remove('nav-open');
-            document.getElementById('mobile-menu-btn').innerHTML = '☰';
+            nav.classList.remove('active');
+            document.getElementById('mobile-menu-btn').innerHTML = "☰";
         }
     });
 });
@@ -1190,8 +1195,8 @@ document.addEventListener('click', (e) => {
     const nav = document.getElementById('sidebar-nav');
     const menuBtn = document.getElementById('mobile-menu-btn');
     if (!nav.contains(e.target) && e.target !== menuBtn) {
-        nav.classList.remove('nav-open');
-        document.getElementById('mobile-menu-btn').innerHTML = '☰';
+        nav.classList.remove('active');
+        document.getElementById('mobile-menu-btn').innerHTML = "☰";
     }
 });
 

@@ -848,44 +848,69 @@ body {
 
 /* Mobile Styling */
 @media (max-width: 768px) {
-    /* 1. Force Column Layout (Fixes conflict with "Sidebar Position") */
-    body[style] {
-        flex-direction: column !important; /* Overrides JS inline styles */
+    /* 1. Reset Body to allow overlay */
+    body {
+        flex-direction: column;
+        overflow-x: hidden; /* Prevent horizontal scrolling */
     }
 
-    /* 2. Show Hamburger */
+    /* 2. The Hamburger Button */
     #mobile-menu-btn {
         display: block;
+        position: fixed;
+        top: 1rem;
+        right: 1rem; /* Place button top-right */
+        z-index: 2000; /* Ensure it's above everything */
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
 
-    /* 3. Transform Nav into a Side Drawer */
+    /* 3. The Sidebar (Hidden by default) */
     nav {
         position: fixed;
         top: 0;
-        left: -100%; /* Hidden by default */
+        left: -100%; /* Hide off-screen to the left */
+        width: 80%; /* Takes up 80% of mobile screen width */
+        max-width: 300px;
         height: 100vh;
-        width: 250px;
-        z-index: 1000;
-        flex-direction: column; /* Stack links vertically */
-        padding-top: 60px; /* Space for close button/header */
-        transition: left 0.3s ease-in-out;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+        background: var(--card-bg); /* Use card background */
+        flex-direction: column; /* Stack items vertically */
+        padding: 2rem 1rem;
+        z-index: 1500; /* On top of content, below button */
+        transition: left 0.3s ease-in-out; /* Smooth slide animation */
         border-right: 1px solid #334155;
-        background: var(--card-bg); /* Ensure background is opaque */
+        box-shadow: 5px 0 15px rgba(0,0,0,0.5);
     }
 
-    nav.nav-open {
-        left: 0; /* Slide in */
+    /* 4. The Sidebar (When Open) */
+    nav.active {
+        left: 0; /* Slide in to view */
     }
 
-    /* 4. Hide "Sidebar Position" Control on Mobile */
+    /* 5. Adjust Links for Mobile */
+    .nav-link {
+        font-size: 1.1rem; /* Bigger text for touch targets */
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid #334155; /* Separator lines */
+        text-align: left;
+    }
+
+    /* 6. Push main content down slightly so it's not hidden by the header area */
+    #main-content {
+        padding: 1rem;
+        padding-top: 4rem; 
+    }
+
+    /* 7. Hide "Sidebar Position" Control on Mobile */
     .layout-control-card {
         display: none !important;
-    }
-    
-    /* Adjust Main Content padding since nav is no longer static */
-    #main-content {
-        padding-top: 60px; 
     }
 }
 
@@ -1187,80 +1212,4 @@ body {
     color: #f87171;
     margin-top: 1rem;
     font-size: 0.875rem;
-}
-
-/* ============================================
-   RESPONSIVE DESIGN
-   ============================================ */
-
-@media (max-width: 768px) {
-    body {
-        flex-direction: column;
-    }
-
-    nav {
-        width: 100%;
-        height: auto;
-        flex-direction: row;
-        overflow-x: auto;
-        padding: 0.5rem;
-        border-right: none;
-        border-bottom: 1px solid #334155;
-        position: sticky;
-        top: 0;
-        z-index: 100;
-    }
-
-    .nav-link {
-        margin-bottom: 0;
-        margin-right: 0.5rem;
-        white-space: nowrap;
-        font-size: 0.75rem;
-        padding: 0.5rem 0.75rem;
-    }
-
-    #main-content {
-        padding: 1rem;
-    }
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .dashboard-content {
-        grid-template-columns: 1fr;
-    }
-
-    .community-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .habits-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    }
-
-    .notes-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .stopwatch-display,
-    .pomodoro-display,
-    #timer-display {
-        font-size: 2.5rem;
-        padding: 1.5rem;
-    }
-
-    .timer-controls,
-    .pomodoro-controls {
-        flex-direction: column;
-    }
-
-    .timer-controls button,
-    .pomodoro-controls button {
-        width: 100%;
-    }
-
-    .pomodoro-stats {
-        grid-template-columns: 1fr;
-    }
 }
