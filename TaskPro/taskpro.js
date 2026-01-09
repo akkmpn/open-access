@@ -314,7 +314,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
   });
-});
 
 // Logout
 
