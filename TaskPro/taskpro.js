@@ -73,6 +73,8 @@ async function loadModule(moduleName) {
     prettyName = 'Welcome back!';
   } else if (moduleName === 'tasks') {
     prettyName = 'Tasks';
+  } else if (moduleName === 'stopwatch') {
+    prettyName = 'Stopwatch';
   } else {
     prettyName = moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
   }
@@ -106,7 +108,7 @@ async function loadModule(moduleName) {
       await loadHabits();
     } else if (moduleName === 'calendar') {
       await loadCalendar();
-    } else if (moduleName === 'timer') {
+    } else if (moduleName === 'stopwatch') {
       await loadTimer();
     } else if (moduleName === 'pomodoro') {
       await loadPomodoro();

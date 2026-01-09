@@ -27,7 +27,9 @@ body {
     background-color: var(--bg-dark);
     color: var(--text-main);
     display: flex;
+    flex-direction: row;        /* sidebar left, content right */
     height: 100vh;
+    transition: flex-direction 0.3s ease;
 }
 
 /* ============================================
@@ -68,6 +70,19 @@ nav {
 /* ============================================
    MAIN CONTENT AREA
    ============================================ */
+
+#main-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;              /* desktop/tablet default */
+    width: 100%;
+}
+
+/* Center module content with a max width on large screens */
+#main-content > * {
+    max-width: 1200px;
+    margin: 0 auto;
+}
 
 /* ============================================
    CARD & REUSABLE STYLES
@@ -913,21 +928,7 @@ body {
   
   /* ===== HEADER VISIBILITY (BASE) ===== */
   .mobile-header-row {
-    display: none;        /* hidden by default (desktop / tablet) */
-  }
-
-  /* Desktop + Tablet main content */
-  #main-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 2rem;          /* desktop+tablet padding */
-    width: 100%;
-  }
-
-  /* Make sure main-content itself is a wide container */
-  #main-content > * {
-    max-width: 1200px;      /* optional: center content at a nice width */
-    margin: 0 auto;
+    display: none;              /* hidden by default (desktop/tablet) */
   }
 
   /* ===== MOBILE (≤ 768px) ===== */
@@ -950,12 +951,20 @@ body {
       flex: 1;
     }
 
-    /* Hide desktop sidebar on mobile (existing behavior) */
+    /* Hide desktop sidebar on mobile */
     #desktop-nav {
       display: none !important;
     }
 
-    /* Reset main content padding for mobile; spacing comes from children */
+    /* Compact body layout */
+    body {
+      flex-direction: column;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Reset main content padding; spacing from children */
     #main-content {
       padding: 0;
       width: 100%;
@@ -963,26 +972,25 @@ body {
       overflow-y: auto;
     }
 
-    /* Direct children of main-content (module roots) */
     #main-content > * {
-      max-width: 100%;        /* override desktop max-width for mobile */
+      max-width: 100%;
       padding: 0 0.75rem 1rem 0.75rem;
       margin: 0;
     }
 
     #main-content > *:first-child {
-      padding-top: 0.25rem;   /* small gap under header row */
+      padding-top: 0.25rem;
       margin-top: 0;
     }
 
-    /* Remove large top gaps from headings inside modules on mobile */
+    /* Tighten headings on mobile */
     #main-content h1,
     #main-content h2 {
       margin-top: 0.25rem;
       padding-top: 0;
     }
 
-    /* Hide in-content h1 for dashboard/tasks on mobile when header title is shown */
+    /* Hide in-content h1 for dashboard/tasks when header title is used */
     body[data-current-module="dashboard"] #main-content h1:first-of-type,
     body[data-current-module="tasks"] #main-content h1:first-of-type {
       display: none;
@@ -1800,7 +1808,7 @@ body.auth-mode .login-container {
 
 body.auth-mode .login-card {
     width: 100%;
-    max-width: 420px;           /* nice desktop width */
+    max-width: 420px;
     margin: 0 auto;
 }
 
