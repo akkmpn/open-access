@@ -80,6 +80,8 @@ async function loadModule(moduleName) {
             loadNotes();
         } else if (moduleName === 'community') {
             loadCommunity();
+        } else if (moduleName === 'analytics') {
+            loadAnalytics();
         } else if (moduleName === 'backup') {
             loadBackup();
         } else if (moduleName === 'design') {
@@ -902,6 +904,70 @@ async function renderLeaderboard() {
 }
 
 /* ============================================
+   ANALYTICS MODULE
+   ============================================ */
+
+window.loadAnalytics = async () => {
+    const contentArea = document.getElementById('main-content');
+    contentArea.innerHTML = `
+        <div class="analytics-container">
+            <h1>📊 Productivity Insights</h1>
+            <div class="card" style="margin-top: 20px;">
+                <canvas id="productivityChart"></canvas>
+            </div>
+            <div id="stats-summary" class="stats-grid" style="margin-top: 20px;">
+                </div>
+        </div>
+    `;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', user.id);
+
+    if (error) return console.error(error);
+
+    // Process data for last 7 days
+    const last7Days = [...Array(7)].map((_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        return d.toISOString().split('T')[0];
+    }).reverse();
+
+    const completedCounts = last7Days.map(date => 
+        tasks.filter(t => t.is_completed && t.updated_at?.startsWith(date)).length
+    );
+
+    // Render Chart
+    const ctx = document.getElementById('productivityChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], // Simplified labels
+            datasets: [{
+                label: 'Tasks Completed',
+                data: completedCounts,
+                backgroundColor: '#10b981',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+
+    // Update Summary Cards
+    const totalCompleted = tasks.filter(t => t.is_completed).length;
+    document.getElementById('stats-summary').innerHTML = `
+        <div class="card"><h3>${totalCompleted}</h3><p>Total Completed</p></div>
+        <div class="card"><h3>${tasks.length - totalCompleted}</h3><p>Active Tasks</p></div>
+    `;
+};
+
+/* ============================================
    BACKUP MODULE
    ============================================ */
 
@@ -1056,6 +1122,42 @@ function getLoginHTML() {
         </div>
     `;
 }
+
+// Register Service Worker for PWA functionality
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log("🚀 TaskPro PWA Ready"))
+      .catch((err) => console.log("PWA Error", err));
+}
+
+// Request Notification Permission for Daily Briefing
+if ("Notification" in window) {
+    Notification.requestPermission();
+}
+
+// Daily Briefing Logic
+window.sendDailyBriefing = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return; // Only send if user is logged in
+    
+    const { data: tasks } = await supabase
+        .from('tasks')
+        .select('title')
+        .eq('is_completed', false)
+        .eq('due_date', today);
+
+    if (tasks && tasks.length > 0 && Notification.permission === "granted") {
+        new Notification("TaskPro: Your Daily Briefing", {
+            body: `You have ${tasks.length} tasks due today!`,
+            icon: "https://cdn-icons-png.flaticon.com/512/906/906334.png"
+        });
+    }
+};
+
+// Check every hour for daily briefing
+setInterval(window.sendDailyBriefing, 3600000);
 
 function setupLoginForm() {
     const loginForm = document.getElementById('login-form');
