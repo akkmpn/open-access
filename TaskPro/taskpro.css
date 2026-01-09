@@ -932,19 +932,25 @@ body {
   /* Menu header - fixed at top */
   .menu-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center; /* CHANGED: Center content */
     align-items: center;
     padding: 2rem 1.5rem 1rem 1.5rem;
-    flex-shrink: 0; /* Don't shrink */
+    flex-shrink: 0;
+    position: relative; /* ADDED: For absolute positioning of close button */
   }
   
   .menu-header h2 {
     color: var(--text-main);
     margin: 0;
     font-size: 1.5rem;
+    text-align: center; /* ADDED: Center text */
+    flex: 1; /* ADDED: Take available space */
   }
   
   .close-btn {
+    position: absolute; /* ADDED: Position absolutely */
+    top: 1.5rem; /* ADDED: Align with header padding */
+    right: 1rem; /* ADDED: Right side */
     background: transparent;
     border: none;
     color: var(--text-main);
@@ -956,6 +962,7 @@ body {
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
+    z-index: 10; /* ADDED: Above title */
   }
   
   .close-btn:active {
