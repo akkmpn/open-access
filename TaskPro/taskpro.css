@@ -859,25 +859,32 @@ body {
     overflow-x: hidden;
   }
   
-  /* Hamburger button */
+  /* Hamburger button - Glassmorphism style */
   .hamburger-btn {
-    position: fixed;
-    top: 1rem;
-    left: 1rem;
-    z-index: 1001;
-    width: 50px;
-    height: 50px;
-    background: var(--primary);
-    border: none;
-    border-radius: 10px;
+    position: relative; /* CHANGED: Static, not fixed */
+    width: 60px;
+    height: 60px;
+    margin: 1rem; /* Margin around button */
+    background: rgba(99, 102, 241, 0.15); /* CHANGED: Transparent glass */
+    backdrop-filter: blur(10px); /* ADDED: Blur effect */
+    -webkit-backdrop-filter: blur(10px); /* ADDED: Safari support */
+    border: 2px solid rgba(255, 255, 255, 0.2); /* ADDED: Glass border */
+    border-radius: 15px; /* CHANGED: More rounded */
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 5px;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-    transition: all 0.3s;
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.25), 
+                0 0 0 1px rgba(255, 255, 255, 0.1); /* ADDED: Glass shadow */
+    transition: all 0.3s ease;
+  }
+  
+  .hamburger-btn:hover {
+    background: rgba(99, 102, 241, 0.25); /* Slightly more opaque on hover */
+    transform: translateY(-2px); /* Lift effect */
+    box-shadow: 0 12px 40px rgba(99, 102, 241, 0.35);
   }
   
   .hamburger-btn:active {
@@ -886,10 +893,11 @@ body {
   
   .hamburger-btn span {
     display: block;
-    width: 24px;
+    width: 26px;
     height: 3px;
-    background: white;
-    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.95); /* CHANGED: Bright white */
+    border-radius: 3px; /* CHANGED: More rounded */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* ADDED: Shadow for visibility */
     transition: all 0.3s;
   }
   
@@ -1037,10 +1045,19 @@ body {
   
   /* Main content spacing */
   #main-content {
-    padding: 1rem;
-    padding-top: 6rem; /* INCREASED: More space (96px total) */
+    padding: 0; /* CHANGED: Remove padding, button is now in flow */
     width: 100%;
     flex: 1;
+  }
+  
+  /* Add padding to actual content, not container */
+  #main-content > * {
+    padding: 1rem;
+  }
+  
+  /* First child (usually a heading) gets top padding */
+  #main-content > *:first-child {
+    padding-top: 1rem;
   }
   
   /* ========== ALL OTHER MOBILE FIXES ========== */
