@@ -1031,7 +1031,7 @@ body {
   /* Main content spacing */
   #main-content {
     padding: 1rem;
-    padding-top: 5rem; /* Space for hamburger button */
+    padding-top: 6rem; /* INCREASED: More space (96px total) */
     width: 100%;
     flex: 1;
   }
