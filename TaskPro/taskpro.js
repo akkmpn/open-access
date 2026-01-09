@@ -64,18 +64,35 @@ async function loadModule(moduleName) {
       link.classList.toggle('active', link.dataset.module === moduleName);
     });
 
-    // Set pretty name for title
-    const prettyName =
-      moduleName === 'dashboard' ? 'Welcome back!' :
-      moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
+    // Pretty name for tab title
+  let prettyName;
+  if (moduleName === 'dashboard') {
+    prettyName = 'Welcome back!';
+  } else if (moduleName === 'tasks') {
+    prettyName = 'Tasks';
+  } else {
+    prettyName = moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
+  }
 
-    document.title = `TaskPro | ${prettyName}`;
+  // Browser tab title (always)
+  document.title = `TaskPro | ${prettyName}`;
 
-    // NEW: update mobile header title
-    const mobileTitleEl = document.getElementById('mobile-page-title');
-    if (mobileTitleEl) {
+  // MOBILE header title – only used on narrow screens
+  const mobileTitleEl = document.getElementById('mobile-page-title');
+  if (mobileTitleEl) {
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+    if (isMobile && (moduleName === 'dashboard' || moduleName === 'tasks')) {
       mobileTitleEl.textContent = prettyName;
+      mobileTitleEl.style.display = 'block';
+    } else {
+      mobileTitleEl.textContent = '';
+      mobileTitleEl.style.display = 'none';
     }
+  }
+
+  // Set current module for CSS targeting
+  document.body.setAttribute('data-current-module', moduleName);
 
     // Load appropriate module
     if (moduleName === 'dashboard') {
@@ -267,6 +284,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
 async function loadDashboard() {
     contentArea.innerHTML = `
         <div class="dashboard-welcome">
+            <h1>Welcome back!</h1>
             <p>Loading stats...</p>
         </div>
 
@@ -343,6 +361,7 @@ async function loadDashboard() {
 
 async function loadTasks() {
     contentArea.innerHTML = `
+        <h1>Tasks</h1>
         <div class="task-input-container card">
             <div class="task-input-group">
                 <input type="text" id="task-input" placeholder="What needs to be done?">

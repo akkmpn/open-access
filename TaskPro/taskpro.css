@@ -69,19 +69,6 @@ nav {
    MAIN CONTENT AREA
    ============================================ */
 
-/* MAIN CONTENT AREA – base (no padding) */
-#main-content {
-    flex: 1;
-    overflow-y: auto;
-}
-
-/* Desktop padding only */
-@media (min-width: 769px) {
-    #main-content {
-        padding: 2rem;
-    }
-}
-
 /* ============================================
    CARD & REUSABLE STYLES
    ============================================ */
@@ -924,18 +911,27 @@ body {
     transform: rotate(-45deg) translate(7px, -7px);
   }
   
-  /* ===== MOBILE HEADER ROW (HAMBURGER + TITLE) ===== */
-
+  /* ===== HEADER VISIBILITY (BASE) ===== */
   .mobile-header-row {
-    display: none; /* Hidden on desktop by default */
+    display: none;        /* hidden by default (desktop / tablet) */
   }
 
+  /* Desktop + Tablet main content */
+  #main-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;        /* desktop+tablet padding */
+  }
+
+  /* ===== MOBILE (≤ 768px) ===== */
   @media (max-width: 768px) {
+
+    /* Show mobile header row */
     .mobile-header-row {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      padding: 0.5rem 0.75rem 0.25rem 0.75rem; /* small top, small bottom */
+      padding: 0.5rem 0.75rem 0.25rem 0.75rem;
     }
 
     .mobile-page-title {
@@ -944,23 +940,74 @@ body {
       font-size: 1.4rem;
       font-weight: 700;
       color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
       flex: 1;
     }
 
-    /* Remove any top spacing from headings inside modules, since title is now in header row */
+    /* Hide desktop sidebar on mobile (existing behavior) */
+    #desktop-nav {
+      display: none !important;
+    }
+
+    /* Reset main content padding for mobile; spacing comes from children */
+    #main-content {
+      padding: 0;
+      width: 100%;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* Direct children of main-content (module roots) */
+    #main-content > * {
+      padding: 0 0.75rem 1rem 0.75rem;
+      margin: 0;
+    }
+
+    #main-content > *:first-child {
+      padding-top: 0.25rem;   /* small gap under header row */
+      margin-top: 0;
+    }
+
+    /* Remove large top gaps from headings inside modules on mobile */
     #main-content h1,
     #main-content h2 {
-      margin-top: 0;
+      margin-top: 0.25rem;
       padding-top: 0;
+    }
+
+    /* Hide in-content h1 for dashboard/tasks on mobile when header title is shown */
+    body[data-current-module="dashboard"] #main-content h1:first-of-type,
+    body[data-current-module="tasks"] #main-content h1:first-of-type {
+      display: none;
     }
   }
 
-  @media (min-width: 769px) {
+  /* ===== TABLET (769–1024px) ===== */
+  @media (min-width: 769px) and (max-width: 1024px) {
     .mobile-header-row {
-      display: none; /* Desktop uses sidebar title instead */
+      display: none;          /* no mobile header here */
+    }
+
+    #desktop-nav {
+      display: flex;          /* sidebar visible */
+    }
+
+    #main-content {
+      padding: 1.5rem;        /* slightly tighter than big desktop */
+    }
+  }
+
+  /* ===== LARGE DESKTOP (≥ 1025px) ===== */
+  @media (min-width: 1025px) {
+    .mobile-header-row {
+      display: none;          /* ensure hidden on big screens */
+    }
+
+    #desktop-nav {
+      display: flex;
+    }
+
+    #main-content {
+      padding: 2rem;
     }
   }
   
@@ -1093,61 +1140,6 @@ body {
     color: #dc2626;
   }
   
-  /* ===== MOBILE CONTENT SPACING (ALL MODULES) ===== */
-
-  /* Container has NO padding. Scrolling handled by body. */
-  #main-content {
-    padding: 0;
-    width: 100%;
-    flex: 1;
-    overflow-y: auto;
-  }
-
-  /* Each direct child (module root) gets side and bottom padding only. */
-  #main-content > * {
-    padding: 0 0.75rem 1rem 0.75rem;
-    margin: 0;
-  }
-
-  /* First module on page: no extra top gap. */
-  #main-content > *:first-child {
-    padding-top: 0.25rem;  /* small gap under header row */
-    margin-top: 0;
-  }
-
-  /* Remove top margin from any headings inside modules on mobile. */
-  #main-content h1,
-  #main-content h2,
-  #main-content h3 {
-    margin-top: 0;
-    padding-top: 0;
-  }
-
-  /* Dashboard welcome block: small, consistent spacing. */
-  .dashboard-welcome {
-    margin-top: 0.25rem;
-    margin-bottom: 1rem;
-    padding-top: 0;
-  }
-
-  /* Tasks / Habits / Notes / Community root cards – no extra top margin. */
-  .task-container,
-  .habits-grid,
-  .notes-grid,
-  .community-grid,
-  .timer-container,
-  .pomodoro-container,
-  .calendar-wrapper,
-  .backup-card,
-  .design-grid {
-    margin-top: 0.5rem;     /* small, consistent spacing */
-  }
-
-  /* Remove any big top margins from generic cards inside main-content. */
-  #main-content .card {
-    margin-top: 0.5rem;
-  }
-
   /* ========== ALL OTHER MOBILE FIXES ========== */
   
   .stats-grid {
