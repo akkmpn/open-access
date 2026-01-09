@@ -139,14 +139,39 @@ async function loadModule(moduleName) {
 
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
-  setupNavigation();
+    setupNavigation();
+    
+    // Mobile menu functionality
+    const mobileBtn = document.getElementById('mobile-menu-btn');
+    if (mobileBtn) {
+        mobileBtn.addEventListener('click', () => {
+            document.body.classList.toggle('menu-open');
+        });
+    }
+    
+    // --- MOBILE MENU HANDLER ---
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    const body = document.body;
+
+    if (menuBtn) {
+        menuBtn.addEventListener('click', () => {
+            document.body.classList.toggle('menu-open');
+        });
+    }
+
+    // Auto-close menu when a user clicks a navigation link (Navigation UX)
+    document.querySelectorAll('.nav-link, .menu-item').forEach(link => {
+        link.addEventListener('click', () => {
+            document.body.classList.remove('menu-open');
+        });
+    });
 });
 
 // Also run immediately in case DOM is already loaded
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupNavigation);
+    document.addEventListener('DOMContentLoaded', setupNavigation);
 } else {
-  setupNavigation();
+    setupNavigation();
 }
 
 function setupNavigation() {
@@ -250,8 +275,48 @@ function setupNavigation() {
     });
   }
   
+  // --- MOBILE MENU HANDLER ---
+  const menuBtn = document.getElementById('mobile-menu-btn');
+  const mobileLinks = document.querySelectorAll('.menu-item, .nav-link');
+
+  if (menuBtn) {
+    menuBtn.addEventListener('click', () => {
+      document.body.classList.toggle('menu-open');
+    });
+  }
+
+  // Auto-close menu when a user clicks a navigation link
+  mobileLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      document.body.classList.remove('menu-open');
+    });
+  });
+  
   console.log('✅ Navigation setup complete');
 }
+
+// --- MOBILE MENU INTERACTION LOGIC ---
+document.addEventListener('DOMContentLoaded', () => {
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    const body = document.body;
+
+    if (menuBtn) {
+        // Toggle menu when hamburger is clicked
+        menuBtn.addEventListener('click', () => {
+            body.classList.toggle('menu-open');
+        });
+    }
+
+    // Auto-close menu when a navigation link is clicked (Navigation UX)
+    document.querySelectorAll('.nav-link, .menu-item').forEach(link => {
+        link.addEventListener('click', () => {
+            body.classList.remove('menu-open');
+        });
+    });
+  });
+});
+
+// Logout
 
 // Logout
 document.getElementById('logout-btn').addEventListener('click', async () => {

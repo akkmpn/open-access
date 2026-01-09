@@ -45,6 +45,7 @@ nav {
     flex-direction: column;
     padding: 2rem 1rem;
     overflow-y: auto;
+    transition: transform 0.3s ease; /* For smooth mobile opening */
 }
 
 .nav-link {
@@ -75,14 +76,9 @@ nav {
 #main-content {
     flex: 1;
     overflow-y: auto;
-    padding: 2rem;              /* desktop/tablet default */
+    padding: 2rem;
     width: 100%;
-}
-
-/* Center module content with a max width on large screens */
-#main-content > * {
-    max-width: 1200px;
-    margin: 0 auto;
+    min-width: 0; /* Prevents flexbox overflow */
 }
 
 /* ============================================
@@ -1764,8 +1760,9 @@ body {
 
 body.auth-mode {
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
     min-height: 100vh;
 }
 
@@ -1807,5 +1804,110 @@ body.auth-mode .login-card {
     body.auth-mode .login-card {
         max-width: 100%;
         padding: 1.5rem;
+    }
+}
+/* --- TABLET & MOBILE RESPONSIVENESS --- */
+
+/* For Tablets (Under 1024px) */
+@media (max-width: 1024px) {
+    :root { --sidebar-width: 200px; }
+    #main-content { padding: 1.5rem; }
+}
+
+/* For Mobile (Under 768px) */
+@media (max-width: 768px) {
+    body { 
+        flex-direction: column; /* Stack header on top of content */
+        overflow-x: hidden; 
+    }
+
+    .mobile-header-row {
+        display: flex !important; /* Force visibility on mobile */
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 1rem;
+        height: 60px;
+        background: var(--card-bg);
+        border-bottom: 1px solid #334155;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    #desktop-nav {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 280px;
+        transform: translateX(-100%); /* Hide sidebar off-screen */
+        transition: transform 0.3s ease-in-out;
+        z-index: 2000;
+        box-shadow: 10px 0 20px rgba(0,0,0,0.5);
+    }
+
+    /* Reveal sidebar when button is clicked */
+    body.menu-open #desktop-nav {
+        transform: translateX(0);
+    }
+
+    #main-content {
+        width: 100%;
+        padding: 1rem;
+        height: calc(100vh - 60px); /* Fill remaining space */
+    }
+
+    /* Force all grids to a single column */
+    .stats-grid, .dashboard-content, .tasks-container {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* --- RESPONSIVE BREAKPOINTS --- */
+
+/* Tablet: Shrink sidebar slightly */
+@media (max-width: 1024px) {
+    :root { --sidebar-width: 200px; }
+}
+
+/* Mobile: Sidebar becomes an overlay drawer */
+@media (max-width: 768px) {
+    body { flex-direction: column; }
+
+    .mobile-header-row {
+        display: flex !important; /* Show header only on mobile */
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 1rem;
+        height: 60px;
+        background: var(--card-bg);
+        border-bottom: 1px solid #334155;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    #desktop-nav {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 280px;
+        transform: translateX(-100%); /* Start hidden off-screen */
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 2000;
+        box-shadow: 10px 0 20px rgba(0,0,0,0.5);
+    }
+
+    /* This class is added via JavaScript */
+    body.menu-open #desktop-nav {
+        transform: translateX(0);
+    }
+
+    #main-content {
+        width: 100%;
+        padding: 1rem;
+        padding-top: 20px; /* Ensures content doesn't touch sticky header */
+        height: calc(100vh - 60px);
     }
 }
