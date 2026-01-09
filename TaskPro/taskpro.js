@@ -94,56 +94,6 @@ async function loadModule(moduleName) {
     }
 }
 
-// Mobile Navigation Drawer
-const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-const mobileNav = document.getElementById('mobile-nav');
-
-function toggleMobileMenu() {
-  if (!mobileNav || !mobileMenuBtn) return;
-  
-  mobileNav.classList.toggle('active');
-  
-  if (mobileNav.classList.contains('active')) {
-    mobileMenuBtn.textContent = '✕';
-  } else {
-    mobileMenuBtn.textContent = '☰';
-  }
-}
-
-if (mobileMenuBtn) {
-  mobileMenuBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleMobileMenu();
-  });
-}
-
-document.querySelectorAll('.nav-link').forEach(link => {
-  link.addEventListener('click', () => {
-    mobileNav.classList.remove('active');
-    mobileMenuBtn.textContent = '☰';
-  });
-});
-
-document.addEventListener('click', (e) => {
-  if (mobileNav && mobileMenuBtn) {
-    if (!mobileNav.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
-      if (mobileNav.classList.contains('active')) {
-        mobileNav.classList.remove('active');
-        mobileMenuBtn.textContent = '☰';
-      }
-    }
-  }
-});
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && mobileNav && mobileMenuBtn) {
-    if (mobileNav.classList.contains('active')) {
-      mobileNav.classList.remove('active');
-      mobileMenuBtn.textContent = '☰';
-    }
-  }
-});
-
 // Navigation setup
 document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', (e) => {
