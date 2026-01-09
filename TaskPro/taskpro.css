@@ -810,6 +810,14 @@ body[style*="row-reverse"] nav {
     border-left: 1px solid #334155;
 }
 
+/* Chat UI Enhancement */
+.chat-msg strong {
+    color: var(--primary);
+    font-weight: 600;
+    margin-right: 5px;
+    text-transform: capitalize; /* Makes 'john.doe' look like 'John.doe' */
+}
+
 /* Update body style for sidebar layout */
 body {
     display: flex;

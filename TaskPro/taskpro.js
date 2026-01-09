@@ -843,7 +843,11 @@ async function setupChat() {
     const renderMessage = (msg) => {
         const div = document.createElement('div');
         div.className = `chat-msg ${msg.user_id === user.id ? 'own' : ''}`;
-        div.innerHTML = `<strong>${msg.user_email || 'User'}:</strong> ${msg.content}`;
+        
+        // Privacy: Use only the part before @ symbol as display name
+        const displayName = msg.user_email ? msg.user_email.split('@')[0] : 'User';
+        
+        div.innerHTML = `<strong>${displayName}:</strong> ${msg.content}`;
         chatBox.appendChild(div);
         chatBox.scrollTop = chatBox.scrollHeight;
     };

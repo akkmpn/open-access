@@ -161,3 +161,43 @@ CREATE POLICY "messages_select_all" ON public.messages
 
 -- 2. Explicitly add the table to the Supabase Realtime publication
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+
+-- 1. SECURE THE TASKS TABLE
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only access their own tasks" 
+ON tasks FOR ALL 
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+
+-- 2. SECURE THE HABITS TABLE
+ALTER TABLE habits ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only access their own habits" 
+ON habits FOR ALL 
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+
+-- 3. SECURE THE NOTES TABLE
+ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only access their own notes" 
+ON notes FOR ALL 
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+
+-- 4. SECURE THE MESSAGES TABLE (Community Chat)
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+-- Allow anyone logged in to see messages
+CREATE POLICY "Everyone can read messages" 
+ON messages FOR SELECT 
+USING (true);
+
+-- Allow users to only send messages as themselves
+CREATE POLICY "Authenticated users can send messages" 
+ON messages FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
