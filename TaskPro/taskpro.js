@@ -64,7 +64,18 @@ async function loadModule(moduleName) {
       link.classList.toggle('active', link.dataset.module === moduleName);
     });
 
-    document.title = `TaskPro | ${moduleName.charAt(0).toUpperCase() + moduleName.slice(1)}`;
+    // Set pretty name for title
+    const prettyName =
+      moduleName === 'dashboard' ? 'Welcome back!' :
+      moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
+
+    document.title = `TaskPro | ${prettyName}`;
+
+    // NEW: update mobile header title
+    const mobileTitleEl = document.getElementById('mobile-page-title');
+    if (mobileTitleEl) {
+      mobileTitleEl.textContent = prettyName;
+    }
 
     // Load appropriate module
     if (moduleName === 'dashboard') {
@@ -256,7 +267,6 @@ supabase.auth.onAuthStateChange(async (event, session) => {
 async function loadDashboard() {
     contentArea.innerHTML = `
         <div class="dashboard-welcome">
-            <h1>Welcome back! 🎯</h1>
             <p>Loading stats...</p>
         </div>
 
@@ -333,7 +343,6 @@ async function loadDashboard() {
 
 async function loadTasks() {
     contentArea.innerHTML = `
-        <h1>📝 Tasks</h1>
         <div class="task-input-container card">
             <div class="task-input-group">
                 <input type="text" id="task-input" placeholder="What needs to be done?">

@@ -924,6 +924,46 @@ body {
     transform: rotate(-45deg) translate(7px, -7px);
   }
   
+  /* ===== MOBILE HEADER ROW (HAMBURGER + TITLE) ===== */
+
+  .mobile-header-row {
+    display: none; /* Hidden on desktop by default */
+  }
+
+  @media (max-width: 768px) {
+    .mobile-header-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0.75rem 0.25rem 0.75rem; /* small top, small bottom */
+    }
+
+    .mobile-page-title {
+      margin: 0;
+      padding: 0;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex: 1;
+    }
+
+    /* Remove any top spacing from headings inside modules, since title is now in header row */
+    #main-content h1,
+    #main-content h2 {
+      margin-top: 0;
+      padding-top: 0;
+    }
+  }
+
+  @media (min-width: 769px) {
+    .mobile-header-row {
+      display: none; /* Desktop uses sidebar title instead */
+    }
+  }
+  
   /* Menu overlay - full screen with scroll */
   .menu-overlay {
     position: fixed;
@@ -1065,13 +1105,13 @@ body {
 
   /* Each direct child (module root) gets side and bottom padding only. */
   #main-content > * {
-    padding: 0 1rem 1rem 1rem;
+    padding: 0 0.75rem 1rem 0.75rem;
     margin: 0;
   }
 
   /* First module on page: no extra top gap. */
   #main-content > *:first-child {
-    padding-top: 0.25rem;   /* Very small space under hamburger */
+    padding-top: 0.25rem;  /* small gap under header row */
     margin-top: 0;
   }
 
