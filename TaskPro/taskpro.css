@@ -944,7 +944,6 @@ body {
       font-size: 1.4rem;
       font-weight: 700;
       color: var(--text-main);
-      display: flex;
       align-items: center;
       gap: 0.35rem;
       flex: 1;

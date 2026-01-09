@@ -64,17 +64,31 @@ async function loadModule(moduleName) {
       link.classList.toggle('active', link.dataset.module === moduleName);
     });
 
-    // Set pretty name for title
-    const prettyName =
-      moduleName === 'dashboard' ? 'Welcome back!' :
-      moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
+    // Compute a pretty name for current module
+    let prettyName;
+    if (moduleName === 'dashboard') {
+      prettyName = 'Welcome back!';
+    } else if (moduleName === 'tasks') {
+      prettyName = 'Tasks';
+    } else {
+      prettyName = moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
+    }
 
+    // Set browser tab title
     document.title = `TaskPro | ${prettyName}`;
 
-    // NEW: update mobile header title
+    // Update MOBILE header title:
+    // - show title ONLY for dashboard and tasks
+    // - hide/clear for all other modules (to avoid double headings)
     const mobileTitleEl = document.getElementById('mobile-page-title');
     if (mobileTitleEl) {
-      mobileTitleEl.textContent = prettyName;
+      if (moduleName === 'dashboard' || moduleName === 'tasks') {
+        mobileTitleEl.textContent = prettyName;
+        mobileTitleEl.style.display = 'block';
+      } else {
+        mobileTitleEl.textContent = '';
+        mobileTitleEl.style.display = 'none';
+      }
     }
 
     // Load appropriate module
