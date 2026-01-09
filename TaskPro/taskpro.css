@@ -508,7 +508,7 @@ input[type="checkbox"] {
 
 .timer-container {
     text-align: center;
-    max-width: 500px;
+    max-width: 1200px;    /* allow full width on desktop */
     margin: 2rem auto;
 }
 
@@ -599,7 +599,7 @@ input[type="checkbox"] {
 
 .pomodoro-container {
     text-align: center;
-    max-width: 500px;
+    max-width: 1200px;    /* allow full width on desktop */
     margin: 2rem auto;
 }
 
@@ -920,7 +920,14 @@ body {
   #main-content {
     flex: 1;
     overflow-y: auto;
-    padding: 2rem;        /* desktop+tablet padding */
+    padding: 2rem;          /* desktop+tablet padding */
+    width: 100%;
+  }
+
+  /* Make sure main-content itself is a wide container */
+  #main-content > * {
+    max-width: 1200px;      /* optional: center content at a nice width */
+    margin: 0 auto;
   }
 
   /* ===== MOBILE (≤ 768px) ===== */
@@ -958,6 +965,7 @@ body {
 
     /* Direct children of main-content (module roots) */
     #main-content > * {
+      max-width: 100%;        /* override desktop max-width for mobile */
       padding: 0 0.75rem 1rem 0.75rem;
       margin: 0;
     }
