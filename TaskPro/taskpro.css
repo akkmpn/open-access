@@ -906,7 +906,7 @@ body {
     transform: rotate(-45deg) translate(7px, -7px);
   }
   
-  /* Menu overlay - full screen */
+  /* Menu overlay - full screen with scroll */
   .menu-overlay {
     position: fixed;
     top: 0;
@@ -918,10 +918,10 @@ body {
     z-index: 1000;
     display: flex;
     flex-direction: column;
-    padding: 2rem 1rem;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
+    overflow: hidden; /* Prevent body scroll */
   }
   
   .menu-overlay.active {
@@ -929,13 +929,13 @@ body {
     visibility: visible;
   }
   
-  /* Menu header */
+  /* Menu header - fixed at top */
   .menu-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
-    padding: 0 0.5rem;
+    padding: 2rem 1.5rem 1rem 1.5rem;
+    flex-shrink: 0; /* Don't shrink */
   }
   
   .menu-header h2 {
@@ -962,15 +962,18 @@ body {
     transform: scale(0.9);
   }
   
-  /* Menu grid - 3 columns */
+  /* Scrollable content wrapper */
   .menu-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
-    padding: 0 0.5rem;
+    padding: 0 1.5rem 2rem 1.5rem;
     max-width: 600px;
     margin: 0 auto;
     width: 100%;
+    overflow-y: auto; /* Enable scrolling */
+    overflow-x: hidden;
+    flex: 1; /* Take remaining space */
   }
   
   /* Menu items */
