@@ -1145,6 +1145,7 @@ window.sendDailyBriefing = async () => {
     const { data: tasks } = await supabase
         .from('tasks')
         .select('title')
+        .eq('user_id', user.id) // Privacy: Only fetch user's own tasks
         .eq('is_completed', false)
         .eq('due_date', today);
 
