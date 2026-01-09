@@ -10,21 +10,87 @@
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
-    <nav id="mobile-nav">
-        <h2 style="margin: 0 0 2rem 0; color: var(--text-main);">TaskPro</h2>
-        <button class="nav-link active" data-module="dashboard">Dashboard</button>
-        <button class="nav-link" data-module="tasks">Tasks</button>
-        <button class="nav-link" data-module="habits">Habits</button>
-        <button class="nav-link" data-module="calendar">Calendar</button>
-        <button class="nav-link" data-module="timer">Timer</button>
-        <button class="nav-link" data-module="pomodoro">Pomodoro</button>
-        <button class="nav-link" data-module="notes">Notes</button>
-        <button class="nav-link" data-module="community">Community</button>
-        <button class="nav-link" data-module="analytics">Analytics</button>
-        <button class="nav-link" data-module="design">Design</button>
-        <button class="nav-link" data-module="backup">Backup</button>
-        <button class="btn-outline" id="logout-btn" style="margin-top: auto;">Sign Out</button>
-    </nav>
+    <!-- Mobile Hamburger Button -->
+<button id="mobile-menu-btn" class="hamburger-btn">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+
+<!-- Desktop Sidebar Navigation -->
+<nav id="desktop-nav">
+  <h2 style="margin: 0 0 2rem 0; color: var(--text-main);">TaskPro</h2>
+  <button class="nav-link active" data-module="dashboard">Dashboard</button>
+  <button class="nav-link" data-module="tasks">Tasks</button>
+  <button class="nav-link" data-module="habits">Habits</button>
+  <button class="nav-link" data-module="calendar">Calendar</button>
+  <button class="nav-link" data-module="timer">Timer</button>
+  <button class="nav-link" data-module="pomodoro">Pomodoro</button>
+  <button class="nav-link" data-module="notes">Notes</button>
+  <button class="nav-link" data-module="community">Community</button>
+  <button class="nav-link" data-module="analytics">Analytics</button>
+  <button class="nav-link" data-module="design">Design</button>
+  <button class="nav-link" data-module="backup">Backup</button>
+  <button class="btn-outline" id="logout-btn" style="margin-top: auto;">Sign Out</button>
+</nav>
+
+<!-- Mobile Menu Modal Overlay -->
+<div id="mobile-menu-overlay" class="menu-overlay">
+  <div class="menu-header">
+    <h2>TaskPro</h2>
+    <button id="close-menu-btn" class="close-btn">&times;</button>
+  </div>
+  <div class="menu-grid">
+    <button class="menu-item active" data-module="dashboard">
+      <span class="menu-icon">🏠</span>
+      <span class="menu-label">Dashboard</span>
+    </button>
+    <button class="menu-item" data-module="tasks">
+      <span class="menu-icon">✓</span>
+      <span class="menu-label">Tasks</span>
+    </button>
+    <button class="menu-item" data-module="habits">
+      <span class="menu-icon">🎯</span>
+      <span class="menu-label">Habits</span>
+    </button>
+    <button class="menu-item" data-module="calendar">
+      <span class="menu-icon">📅</span>
+      <span class="menu-label">Calendar</span>
+    </button>
+    <button class="menu-item" data-module="timer">
+      <span class="menu-icon">⏱</span>
+      <span class="menu-label">Timer</span>
+    </button>
+    <button class="menu-item" data-module="pomodoro">
+      <span class="menu-icon">🍅</span>
+      <span class="menu-label">Pomodoro</span>
+    </button>
+    <button class="menu-item" data-module="notes">
+      <span class="menu-icon">📝</span>
+      <span class="menu-label">Notes</span>
+    </button>
+    <button class="menu-item" data-module="community">
+      <span class="menu-icon">👥</span>
+      <span class="menu-label">Community</span>
+    </button>
+    <button class="menu-item" data-module="analytics">
+      <span class="menu-icon">📊</span>
+      <span class="menu-label">Analytics</span>
+    </button>
+    <button class="menu-item" data-module="backup">
+      <span class="menu-icon">💾</span>
+      <span class="menu-label">Backup</span>
+    </button>
+    <button class="menu-item" data-module="design">
+      <span class="menu-icon">🎨</span>
+      <span class="menu-label">Design</span>
+    </button>
+    <button id="mobile-logout-btn" class="menu-item logout-item">
+      <span class="menu-icon">🚪</span>
+      <span class="menu-label">Sign Out</span>
+    </button>
+  </div>
+</div>
 
     <!-- Main Content Area -->
     <div id="main-content"></div>

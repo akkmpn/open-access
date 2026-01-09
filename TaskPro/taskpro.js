@@ -117,48 +117,105 @@ if (document.readyState === 'loading') {
 }
 
 function setupNavigation() {
-  // Use event delegation on the nav container
-  const nav = document.querySelector('nav');
+  // Desktop navigation
+  const desktopNav = document.querySelector('#desktop-nav');
   
-  if (!nav) {
-    console.error('Navigation not found');
-    return;
+  if (desktopNav) {
+    desktopNav.addEventListener('click', (e) => {
+      const navLink = e.target.closest('.nav-link');
+      if (!navLink) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const module = navLink.dataset.module;
+      if (!module) return;
+      
+      if (navLink.disabled) return;
+      navLink.disabled = true;
+      
+      loadModule(module).finally(() => {
+        setTimeout(() => {
+          navLink.disabled = false;
+        }, 300);
+      });
+    });
   }
   
-  // Single click handler for all navigation links
-  nav.addEventListener('click', (e) => {
-    // Find closest .nav-link button
-    const navLink = e.target.closest('.nav-link');
-    
-    // If not a nav link, ignore
-    if (!navLink) return;
-    
-    // Prevent default and stop propagation
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Get module from data attribute
-    const module = navLink.dataset.module;
-    
-    if (!module) {
-      console.warn('No module specified for nav link');
-      return;
-    }
-    
-    // Prevent multiple clicks
-    if (navLink.disabled) return;
-    
-    // Temporarily disable to prevent double-clicks
-    navLink.disabled = true;
-    
-    // Load the module
-    loadModule(module).finally(() => {
-      // Re-enable after a short delay
-      setTimeout(() => {
-        navLink.disabled = false;
-      }, 300);
+  // Mobile hamburger menu
+  const hamburgerBtn = document.getElementById('mobile-menu-btn');
+  const menuOverlay = document.getElementById('mobile-menu-overlay');
+  const closeMenuBtn = document.getElementById('close-menu-btn');
+  const menuGrid = document.querySelector('.menu-grid');
+  const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+  
+  // Open menu
+  if (hamburgerBtn) {
+    hamburgerBtn.addEventListener('click', () => {
+      menuOverlay.classList.add('active');
+      hamburgerBtn.classList.add('active');
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
     });
-  });
+  }
+  
+  // Close menu function
+  function closeMenu() {
+    menuOverlay.classList.remove('active');
+    hamburgerBtn.classList.remove('active');
+    document.body.style.overflow = ''; // Restore scrolling
+  }
+  
+  // Close button
+  if (closeMenuBtn) {
+    closeMenuBtn.addEventListener('click', closeMenu);
+  }
+  
+  // Close on overlay click (outside menu)
+  if (menuOverlay) {
+    menuOverlay.addEventListener('click', (e) => {
+      if (e.target === menuOverlay) {
+        closeMenu();
+      }
+    });
+  }
+  
+  // Menu item clicks
+  if (menuGrid) {
+    menuGrid.addEventListener('click', (e) => {
+      const menuItem = e.target.closest('.menu-item');
+      if (!menuItem) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const module = menuItem.dataset.module;
+      if (!module) return;
+      
+      if (menuItem.disabled) return;
+      menuItem.disabled = true;
+      
+      // Close menu and load module
+      closeMenu();
+      
+      loadModule(module).finally(() => {
+        setTimeout(() => {
+          menuItem.disabled = false;
+          // Update active state in mobile menu
+          document.querySelectorAll('.menu-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.module === module);
+          });
+        }, 300);
+      });
+    });
+  }
+  
+  // Mobile logout button
+  if (mobileLogoutBtn) {
+    mobileLogoutBtn.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.reload();
+    });
+  }
   
   console.log('✅ Navigation setup complete');
 }
