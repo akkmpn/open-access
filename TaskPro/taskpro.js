@@ -107,8 +107,15 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 });
 
 // Check auth on load
-supabase.auth.onAuthStateChange((event, session) => {
-    if (session) {
+supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === "PASSWORD_RECOVERY") {
+        const newPassword = prompt("Enter your new password:");
+        if (newPassword) {
+            const { error } = await supabase.auth.updateUser({ password: newPassword });
+            if (error) alert("Error updating password: " + error.message);
+            else alert("Password updated successfully!");
+        }
+    } else if (session) {
         // Apply saved design settings
         applySavedDesign();
         
@@ -971,44 +978,18 @@ window.updateCardStyle = (style) => {
     localStorage.setItem('tp-card-style', style);
 };
 
+// Fixed: Single global instance of applySavedDesign
 window.applySavedDesign = () => {
-    window.updateTheme(localStorage.getItem('tp-theme') || 'dark');
-    window.updateLayout(localStorage.getItem('tp-layout') || 'left');
-    window.updateCardStyle(localStorage.getItem('tp-card-style') || 'sharp');
+    const theme = localStorage.getItem('tp-theme') || 'dark';
+    const layout = localStorage.getItem('tp-layout') || 'left';
+    const card = localStorage.getItem('tp-card-style') || 'sharp';
+
+    window.updateTheme(theme);
+    window.updateLayout(layout);
+    window.updateCardStyle(card);
 };
 
-window.loadDesignWizard = () => {
-    const contentArea = document.getElementById('main-content');
-    contentArea.innerHTML = `
-        <div class="design-wizard-container">
-            <h1></h1>
-            <p>Customize TaskPro's appearance.</p>
-            <h1>🎨 Layout Wizard</h1>
-            <p>Customize your workspace appearance.</p>
-            
-            <div class="stats-grid">
-                <div class="card">
-                    <h3>Theme Mode</h3>
-                    <button class="btn-primary" onclick="updateTheme('dark')">Dark</button>
-                    <button class="btn-primary" onclick="updateTheme('light')">Light</button>
-                    <button class="btn-primary" onclick="updateTheme('glass')">Glass</button>
-                </div>
-                <div class="card">
-                    <h3>Sidebar Position</h3>
-                    <button class="btn-primary" onclick="updateLayout('left')">Left Sidebar</button>
-                    <button class="btn-primary" onclick="updateLayout('right')">Right Sidebar</button>
-                </div>
-                <div class="card">
-                    <h3>Card Style</h3>
-                    <button class="btn-primary" onclick="updateCardStyle('sharp')">Sharp</button>
-                    <button class="btn-primary" onclick="updateCardStyle('rounded')">Rounded</button>
-                </div>
-            </div>
-        </div>
-    `;
-};
-
-// Also add function that builds the UI
+// Fixed: Single global instance of loadDesignWizard
 window.loadDesignWizard = () => {
     const contentArea = document.getElementById('main-content');
     contentArea.innerHTML = `
@@ -1037,15 +1018,9 @@ window.loadDesignWizard = () => {
     `;
 };
 
-function applySavedDesign() {
-    const theme = localStorage.getItem('tp-theme') || 'dark';
-    const layout = localStorage.getItem('tp-layout') || 'left';
-    const card = localStorage.getItem('tp-card-style') || 'sharp';
-
-    updateTheme(theme);
-    updateLayout(layout);
-    updateCardStyle(card);
-}
+/* ============================================
+   AUTHENTICATION UI & LOGIC
+   ============================================ */
 
 function getLoginHTML() {
     return `
@@ -1062,6 +1037,9 @@ function getLoginHTML() {
                     <div class="input-group">
                         <label for="password">Password</label>
                         <input type="password" id="password" required autocomplete="current-password">
+                    </div>
+                    <div style="text-align: right; margin-top: -10px; margin-bottom: 15px;">
+                        <a href="#" id="forgot-password-link" style="color: var(--primary); font-size: 0.8rem; text-decoration: none;">Forgot Password?</a>
                     </div>
                     <button type="submit" class="btn-primary" id="login-btn" style="width: 100%; padding: 0.75rem;">Sign In</button>
                     <div id="auth-error" style="display: none; color: #ff4757; margin-top: 10px; text-align: center;"></div>
@@ -1081,10 +1059,31 @@ function setupLoginForm() {
     const toggleBtn = document.getElementById('toggle-auth');
     const submitBtn = document.getElementById('login-btn');
     const title = document.getElementById('auth-title');
+    const forgotPasswordLink = document.getElementById('forgot-password-link');
     
     let isSignUp = false;
 
-    // Toggle between Login and Sign Up
+    forgotPasswordLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        if (!email) {
+            authError.innerText = "Please enter your email address first.";
+            authError.style.display = "block";
+            return;
+        }
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.href,
+        });
+        if (error) {
+            authError.innerText = error.message;
+            authError.style.display = "block";
+        } else {
+            authError.innerText = "Password reset email sent! Check your inbox.";
+            authError.style.color = "#10b981";
+            authError.style.display = "block";
+        }
+    });
+
     toggleBtn.addEventListener('click', (e) => {
         e.preventDefault();
         isSignUp = !isSignUp;
@@ -1102,24 +1101,16 @@ function setupLoginForm() {
         submitBtn.disabled = true;
         authError.style.display = "none";
 
-        let result;
-        if (isSignUp) {
-            // New user registration
-            result = await supabase.auth.signUp({ email, password });
-        } else {
-            // Existing user login
-            result = await supabase.auth.signInWithPassword({ email, password });
-        }
+        let result = isSignUp ? 
+            await supabase.auth.signUp({ email, password }) : 
+            await supabase.auth.signInWithPassword({ email, password });
 
-        const { data, error } = result;
-
-        if (error) {
-            authError.innerText = error.message;
+        if (result.error) {
+            authError.innerText = result.error.message;
             authError.style.display = "block";
             submitBtn.innerText = isSignUp ? "Sign Up" : "Sign In";
             submitBtn.disabled = false;
-        } else if (isSignUp && !data.session) {
-            // If email confirmation is ON in Supabase
+        } else if (isSignUp && !result.data.session) {
             authError.innerText = "Check your email for the confirmation link!";
             authError.style.color = "#10b981";
             authError.style.display = "block";
