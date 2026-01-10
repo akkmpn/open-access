@@ -1879,86 +1879,103 @@
             },
 
             backupData: () => {
-                const data = { 
-                    meta: { version: "5.0", date: new Date().toISOString() }, 
-                    tasks: state.tasks, 
-                    notes: state.notes, 
-                    habits: state.habits,
-                    focusLogs: state.focusLogs,
-                    history: state.history,
+                const backup = {
+                    meta: {
+                        version: "10.0-full-dashboard",
+                        exportDate: new Date().toISOString(),
+                        deviceId: navigator.userAgent.slice(0, 20)
+                    },
+                    // Data Sections
+                    tasks: state.tasks,         // Includes #Hashtags
+                    habits: state.habits,       // Includes Streaks
+                    focusLogs: state.focusLogs, // Includes Productivity Trend/Charts
+                    notes: state.notes,
+                    history: state.history,     // Autocomplete suggestions
                     customDesign: state.customDesign,
-                    lifetimeCompleted: state.lifetimeCompleted || 0
+                    // Global Stats
+                    score: state.lifetimeCompleted || 0
                 };
-                const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+
+                const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = "TaskPro_Checkpoint_" + Date.now() + ".json";
+                a.download = `TaskPro_Full_Dashboard_${Date.now()}.json`;
                 a.click();
             },
 
-            restoreData: (input) => {
+            restoreData: async (input) => {
                 const file = input.files[0];
                 if (!file) return;
+
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
-                        if(data) {
-                            if(state.user) {
-                                alert("Restoring to cloud... please wait.");
-                                const batch = writeBatch(db);
-                                data.tasks?.forEach(t => {
-                                    const { id, ...taskData } = t;
-                                    // Use existing ID if available, otherwise create new document
-                                    const taskRef = id ? doc(db, 'tasks', id) : doc(collection(db, 'tasks'));
-                                    batch.set(taskRef, { ...taskData, uid: state.user.uid });
-                                });
-                                data.notes?.forEach(n => {
-                                    const { id, ...noteData } = n;
-                                    // Use existing ID if available, otherwise create new document
-                                    const noteRef = id ? doc(db, 'notes', id) : doc(collection(db, 'notes'));
-                                    batch.set(noteRef, { ...noteData, uid: state.user.uid });
-                                });
-                                data.habits?.forEach(h => {
-                                    const { id, ...habitData } = h;
-                                    // Use existing ID if available, otherwise create new document
-                                    const habitRef = id ? doc(db, 'habits', id) : doc(collection(db, 'habits'));
-                                    batch.set(habitRef, { ...habitData, uid: state.user.uid });
-                                });
-                                await batch.commit();
-                                alert("Cloud restore successful!");
-                            } else {
-                                // Restore all data types
-                                if(data.tasks) state.tasks = [...state.tasks, ...data.tasks];
-                                if(data.notes) state.notes = [...state.notes, ...data.notes];
-                                if(data.habits) state.habits = [...state.habits, ...data.habits]; // Restores Habits
-                                if(data.focusLogs) state.focusLogs = [...state.focusLogs, ...data.focusLogs]; // Restores Dashboard data
-                                if(data.history) state.history = data.history; // Restores Task Autocomplete
-                                if(data.customDesign) state.customDesign = data.customDesign; // Restores UI settings
-                                
-                                app.saveLifetime(true);
-                                // Sync lifetime stats to update community score
-                                // Use imported lifetime score if available, otherwise calculate from tasks
-                                const importedScore = data.lifetimeCompleted || 0;
-                                const calculatedScore = state.tasks.filter(t => t && t.completed).length;
-                                const finalScore = Math.max(importedScore, calculatedScore);
-                                
-                                // Update local state
-                                state.lifetimeCompleted = finalScore;
-                                
-                                // Sync to Firebase
-                                await app.syncLifetimeStats(finalScore);
-                                
-                                // Refresh all UI components
-                                renderTasks();
-                                app.renderNotes();
-                                if(app.renderDashboardCharts) app.renderDashboardCharts();
-                                if(app.renderHabits) app.renderHabits();
-                                alert("Restore complete! Tasks, Habits, and Dashboard data recovered.");
-                            }
+                        
+                        // Step A: Update Local State (Immediate UI change)
+                        state.tasks = data.tasks || [];
+                        state.habits = data.habits || [];
+                        state.focusLogs = data.focusLogs || [];
+                        state.notes = data.notes || [];
+                        state.lifetimeCompleted = data.score || 0;
+                        state.history = data.history || [];
+                        if(data.customDesign) state.customDesign = data.customDesign;
+
+                        // Step B: Update Browser Storage
+                        app.saveLifetime(true);
+                        localStorage.setItem('taskHistory', JSON.stringify(state.history));
+
+                        // Step C: FULL FIREBASE CLOUD SYNC
+                        if (state.user) {
+                            const batch = writeBatch(db);
+                            const uid = state.user.uid;
+
+                            // 1. Sync All Tasks & Hashtags
+                            state.tasks.forEach(t => {
+                                batch.set(doc(db, 'tasks', t.id), { ...t, uid }, { merge: true });
+                            });
+
+                            // 2. Sync Productivity Trend (Focus Logs)
+                            state.focusLogs.forEach(log => {
+                                const logId = log.id || `log_${log.timestamp}`;
+                                batch.set(doc(db, 'focus_sessions', logId), { ...log, uid }, { merge: true });
+                            });
+
+                            // 3. Sync Habits to the exact collection you linked
+                            state.habits.forEach(h => {
+                                batch.set(doc(db, 'habits', h.id), { ...h, uid }, { merge: true });
+                            });
+
+                            // 4. Sync Notes
+                            state.notes.forEach(n => {
+                                batch.set(doc(db, 'notes', n.id), { ...n, uid }, { merge: true });
+                            });
+
+                            // 5. Update the Leaderboard Collection directly
+                            batch.set(doc(db, 'leaderboard', uid), {
+                                lifetimeCompleted: state.lifetimeCompleted,
+                                username: state.user.displayName || 'User',
+                                lastSync: serverTimestamp()
+                            }, { merge: true });
+
+                            await batch.commit();
+                            alert("Dashboard Restored: Cloud Database and Local View are now identical.");
+                        } else {
+                            alert("Dashboard restored locally. Sign in to sync with cloud.");
                         }
-                    } catch(err) { alert("Invalid File Format"); console.error(err); }
+
+                        // Step D: Refresh UI Components
+                        renderTasks();
+                        app.renderNotes();
+                        if(app.renderDashboardCharts) app.renderDashboardCharts(); // Rebuilds the Productivity Trends
+                        if(app.renderHabits) app.renderHabits();          // Rebuilds Habit Streaks
+                        app.switchTab(state.activeTab);
+
+                    } catch (err) {
+                        console.error("Dashboard Recovery Failed:", err);
+                        alert("Error: Check if the JSON file is valid.");
+                    }
                 };
                 reader.readAsText(file);
             },
