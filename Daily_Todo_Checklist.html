@@ -1721,9 +1721,9 @@
             const now = new Date();
             
             // Current completions in the local list
-            const dailyCompleted = tasks.filter(t => t.completed && isToday(t.date || t.completedAt)).length;
-            const weeklyCompleted = tasks.filter(t => t.completed && isWithinLast7Days(t.date || t.completedAt)).length;
-            const monthlyCompleted = tasks.filter(t => t.completed && isWithinLast30Days(t.date || t.completedAt)).length;
+            const dailyCompleted = tasks.filter(t => t && t.completed && isToday(t.date || t.completedAt)).length;
+            const weeklyCompleted = tasks.filter(t => t && t.completed && isWithinLast7Days(t.date || t.completedAt)).length;
+            const monthlyCompleted = tasks.filter(t => t && t.completed && isWithinLast30Days(t.date || t.completedAt)).length;
             
             // For reset-proof behavior, we assume user optimizes on the 1st of the month
             // This means weekly/monthly stats are accurate until the next optimization
@@ -1995,7 +1995,7 @@
                 const currentValue = select.value;
                 
                 // Get hashtags from completed tasks only
-                const completedTasks = state.tasks.filter(t => t.completed);
+                const completedTasks = state.tasks.filter(t => t && t.completed);
                 const completedTags = [...new Set(completedTasks.flatMap(t => t.tags || []))];
                 
                 // Clear and populate select
@@ -2034,7 +2034,7 @@
 
             setTaskFilter: (filter) => {
                 // If user wants to see completed tasks and they're not loaded yet, load them first
-                if(filter === 'completed' && !state.tasks.some(t => t.completed)) {
+                if(filter === 'completed' && !state.tasks.some(t => t && t.completed)) {
                     app.loadCompletedTasks();
                     return;
                 }
@@ -2054,7 +2054,7 @@
                     const completedTasks = snapCompleted.docs.map(d => ({id: d.id, ...d.data()}));
                     
                     // Merge completed tasks with existing active tasks
-                    const activeTasks = state.tasks.filter(t => !t.completed);
+                    const activeTasks = state.tasks.filter(t => t && !t.completed);
                     state.tasks = [...activeTasks, ...completedTasks];
                     
                     localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
@@ -2146,7 +2146,7 @@
                 try {
                     // 1. Calculate current stats before deletion
                     const allTasks = state.tasks;
-                    const completedTasks = allTasks.filter(t => t.completed);
+                    const completedTasks = allTasks.filter(t => t && t.completed);
                     const totalCompleted = completedTasks.length;
                     
                     // 2. Sync lifetime stats before deletion (preserves cumulative total)
@@ -2234,7 +2234,7 @@
                     }
 
                     // 1. Sync lifetime stats before deletion (preserves cumulative total)
-                    const currentCompletedCount = state.tasks.filter(t => t.completed).length;
+                    const currentCompletedCount = state.tasks.filter(t => t && t.completed).length;
                     await app.syncLifetimeStats(currentCompletedCount);
 
                     // 2. Update "archivedTotal" in User Document with atomic increment
@@ -2257,7 +2257,7 @@
                     await batch.commit();
                     
                     // 4. Update local state
-                    state.tasks = state.tasks.filter(t => !t.completed);
+                    state.tasks = state.tasks.filter(t => t && !t.completed);
                     localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
                     
                     // 5. Refresh UI
@@ -2587,7 +2587,8 @@
             },
 
             toggleTask: async (id) => {
-                const task = state.tasks.find(t => t.id === id);
+                const task = state.tasks.find(t => t && t.id === id);
+                if(!task) return;
                 const newVal = !task.completed;
                 
                 if(state.user) {
@@ -2895,7 +2896,7 @@
             selectDate: (dateStr) => {
                 document.getElementById('calSelectedDate').textContent = new Date(dateStr).toDateString();
                 const tasks = state.tasks.filter(t => t.date === dateStr);
-                const html = tasks.length ? tasks.map(t => `<div style="padding:10px; background:var(--bg-body); margin-bottom:5px; border-radius:5px; border-left:3px solid var(--accent);">${t.text} ${t.completed?'(Done)':''}</div>`).join('') : '<div style="color:var(--text-muted)">No tasks.</div>';
+                const html = tasks.length ? tasks.map(t => t && `<div style="padding:10px; background:var(--bg-body); margin-bottom:5px; border-radius:5px; border-left:3px solid var(--accent);">${t.text} ${t.completed?'(Done)':''}</div>`).filter(Boolean).join('') : '<div style="color:var(--text-muted)">No tasks.</div>';
                 document.getElementById('calSelectedTasks').innerHTML = html;
                 document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
                 const cell = document.querySelector(`.cal-cell[data-date="${dateStr}"]`);
@@ -2904,7 +2905,7 @@
 
             syncLeaderboard: async () => {
                 if (!state.user) return;
-                const completedCount = state.tasks.filter(t => t.completed).length;
+                const completedCount = state.tasks.filter(t => t && t.completed).length;
                 const score = completedCount * 10;
                 const username = state.user.email.split('@')[0];
                 try {
@@ -3770,7 +3771,7 @@
                 if(!filterName) {
                     const todayStr = getIsoDate(today);
                     const tasksToday = state.tasks.filter(t => t.date === todayStr);
-                    if (tasksToday.length > 0 && tasksToday.every(t => t.completed)) streak++;
+                    if (tasksToday.length > 0 && tasksToday.every(t => t && t.completed)) streak++;
                     
                     let checkDate = new Date(today);
                     checkDate.setDate(checkDate.getDate() - 1);
@@ -3778,7 +3779,7 @@
                         const dateStr = getIsoDate(checkDate);
                         const tasksOnDate = state.tasks.filter(t => t.date === dateStr);
                         if (tasksOnDate.length === 0) break;
-                        if (tasksOnDate.every(t => t.completed)) {
+                        if (tasksOnDate.every(t => t && t.completed)) {
                             streak++;
                             checkDate.setDate(checkDate.getDate() - 1);
                         } else break;
@@ -3786,7 +3787,7 @@
                     return streak;
                 } else {
                     const todayStr = getIsoDate(today);
-                    const doneToday = state.tasks.some(t => t.date === todayStr && cleanText(t.text) === filterName && t.completed);
+                    const doneToday = state.tasks.some(t => t && t.date === todayStr && cleanText(t.text) === filterName && t.completed);
                     if(doneToday) streak++;
 
                     let checkDate = new Date(today);
@@ -3954,7 +3955,7 @@
                 const logs = state.focusLogs || [];
                 const taskStats = {}; // To hold accumulated time per task
                 
-                const validTaskIds = new Set(state.tasks.map(t => t.id));
+                const validTaskIds = new Set(state.tasks.map(t => t?.id).filter(id => id));
 
                 logs.forEach(log => {
                     // Check if linked task exists (if linked via ID)
@@ -4048,7 +4049,7 @@
 
                 const subSelect = document.getElementById('subStreakSelect');
                 const cleanText = (txt) => txt.replace(/#\w+/g, '').trim();
-                const allTaskNames = new Set([...state.history, ...state.tasks.map(t => cleanText(t.text))]);
+                const allTaskNames = new Set([...state.history, ...state.tasks.map(t => t ? cleanText(t.text) : '')]);
                 
                 while(subSelect.options.length > 1) { subSelect.remove(1); }
                 allTaskNames.forEach(name => {
@@ -4077,6 +4078,7 @@
                 let doneCount = 0;
                 
                 filtered.forEach(t => {
+                    if(!t) return; // Skip null/undefined tasks
                     totalCount++; // The task itself
                     if(t.completed) doneCount++;
                     
@@ -5340,8 +5342,10 @@
 
         app.init();
         renderSuggestions();
-
-        // Settings Modal Function
+    </script>
+    
+    <script>
+        // Settings Modal Function (Global Scope)
         function toggleSettingsModal() {
             const modal = document.getElementById('settingsModal');
             if (modal.style.display === 'none' || modal.style.display === '') {
