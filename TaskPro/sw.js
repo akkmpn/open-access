@@ -1,4 +1,4 @@
-const CACHE_NAME = 'taskpro-v1';
+/*const CACHE_NAME = 'taskpro-v1';
 const ASSETS = [
   '/taskpro.html',
   '/taskpro.js',
@@ -19,3 +19,4 @@ self.addEventListener('fetch', (e) => {
     caches.match(e.request).then((res) => res || fetch(e.request))
   );
 });
+*/
