@@ -122,10 +122,10 @@ self.addEventListener('sync', (event) => {
 self.addEventListener('push', (event) => {
   const options = {
     body: event.data ? event.data.text() : 'You have a new notification',
-    icon: '/data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDEyIiBmaWxsPSIjMjA0MDg0IjQ4OGY2xlIGN4PSI4IiBjeT0iOCIgcj0iOCIgZmlsbD0iIzIwYjgxNCIvPjwvc3ZnPg==',
-    badge: '/data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDEyIiBmaWxsPSIjMjA0MDg0IjQ4OGY2xlIGN4PSI4IiBjeT0iOCIgcj0iOCIgZmlsbD0iIzIwYjgxNCIvPjwvc3ZnPg==',
+    icon: 'https://cdn-icons-png.flaticon.com/512/2098/2098402.png',
+    badge: 'https://cdn-icons-png.flaticon.com/512/2098/2098402.png',
     vibrate: [100, 50, 100],
-    data: event.data.json(),
+    data: event.data ? event.data.json() : {},
     actions: [
       {
         action: 'open',
