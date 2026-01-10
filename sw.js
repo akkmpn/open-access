@@ -1,4 +1,5 @@
 const CACHE_NAME = 'taskpro-v10-cache';
+
 const ASSETS_TO_CACHE = [
   '/',
   '/Daily_Todo_Checklist.html',

@@ -1666,6 +1666,17 @@
             navigator.serviceWorker.register('./sw.js')
                 .then(() => console.log("Service Worker Registered"))
                 .catch(err => console.log("SW Registration Failed", err));
+                
+            // Clean up old subfolder service workers
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let registration of registrations) {
+                    // Unregister any worker specifically scoped to the /taskpro/ folder
+                    if (registration.scope.includes('/taskpro/')) {
+                        registration.unregister();
+                        console.log('Successfully removed subfolder sw.js');
+                    }
+                }
+            });
         }
 
         // 2. Request Notification Permission (For Alarms)
