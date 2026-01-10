@@ -1880,101 +1880,82 @@
 
             backupData: () => {
                 const backup = {
-                    meta: {
-                        version: "10.0-full-dashboard",
-                        exportDate: new Date().toISOString(),
-                        deviceId: navigator.userAgent.slice(0, 20)
-                    },
-                    // Data Sections
-                    tasks: state.tasks,         // Includes #Hashtags
-                    habits: state.habits,       // Includes Streaks
-                    focusLogs: state.focusLogs, // Includes Productivity Trend/Charts
+                    meta: { version: "10.0", date: new Date().toISOString() },
+                    tasks: state.tasks,         // Includes hashtags
+                    habits: state.habits,       // Includes streaks
+                    focusLogs: state.focusLogs, // For Productivity Trends
                     notes: state.notes,
-                    history: state.history,     // Autocomplete suggestions
-                    customDesign: state.customDesign,
-                    // Global Stats
-                    score: state.lifetimeCompleted || 0
+                    score: state.lifetimeCompleted || 0, // Direct Leaderboard Score
+                    history: state.history      // Suggestion chips
                 };
-
                 const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = `TaskPro_Full_Dashboard_${Date.now()}.json`;
+                a.href = URL.createObjectURL(blob);
+                a.download = `TaskPro_Full_Checkpoint_${Date.now()}.json`;
                 a.click();
             },
 
             restoreData: async (input) => {
                 const file = input.files[0];
                 if (!file) return;
-
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
                         
-                        // Step A: Update Local State (Immediate UI change)
+                        // 1. Update Local State
                         state.tasks = data.tasks || [];
                         state.habits = data.habits || [];
                         state.focusLogs = data.focusLogs || [];
                         state.notes = data.notes || [];
                         state.lifetimeCompleted = data.score || 0;
                         state.history = data.history || [];
-                        if(data.customDesign) state.customDesign = data.customDesign;
 
-                        // Step B: Update Browser Storage
+                        // 2. Persistent Local Storage
                         app.saveLifetime(true);
-                        localStorage.setItem('taskHistory', JSON.stringify(state.history));
 
-                        // Step C: FULL FIREBASE CLOUD SYNC
+                        // 3. SECURE FIREBASE RE-SYNC
                         if (state.user) {
                             const batch = writeBatch(db);
                             const uid = state.user.uid;
 
-                            // 1. Sync All Tasks & Hashtags
+                            // Sync Tasks & Hashtags
                             state.tasks.forEach(t => {
                                 batch.set(doc(db, 'tasks', t.id), { ...t, uid }, { merge: true });
                             });
 
-                            // 2. Sync Productivity Trend (Focus Logs)
+                            // Sync Habits
+                            state.habits.forEach(h => {
+                                batch.set(doc(db, 'habits', h.id), { ...h, uid }, { merge: true });
+                            });
+
+                            // Sync Productivity Trends (Focus Logs)
                             state.focusLogs.forEach(log => {
                                 const logId = log.id || `log_${log.timestamp}`;
                                 batch.set(doc(db, 'focus_sessions', logId), { ...log, uid }, { merge: true });
                             });
 
-                            // 3. Sync Habits to the exact collection you linked
-                            state.habits.forEach(h => {
-                                batch.set(doc(db, 'habits', h.id), { ...h, uid }, { merge: true });
-                            });
-
-                            // 4. Sync Notes
-                            state.notes.forEach(n => {
-                                batch.set(doc(db, 'notes', n.id), { ...n, uid }, { merge: true });
-                            });
-
-                            // 5. Update the Leaderboard Collection directly
+                            // Sync Leaderboard directly from 'score' field
                             batch.set(doc(db, 'leaderboard', uid), {
                                 lifetimeCompleted: state.lifetimeCompleted,
-                                username: state.user.displayName || 'User',
-                                lastSync: serverTimestamp()
+                                username: state.user.displayName || 'Anonymous',
+                                lastUpdated: serverTimestamp()
                             }, { merge: true });
 
                             await batch.commit();
-                            alert("Dashboard Restored: Cloud Database and Local View are now identical.");
-                        } else {
-                            alert("Dashboard restored locally. Sign in to sync with cloud.");
+                            alert("Cloud Sync Successful: All sections restored to Firebase.");
                         }
 
-                        // Step D: Refresh UI Components
+                        // 4. Refresh Dashboard UI
                         renderTasks();
                         app.renderNotes();
-                        if(app.renderDashboardCharts) app.renderDashboardCharts(); // Rebuilds the Productivity Trends
-                        if(app.renderHabits) app.renderHabits();          // Rebuilds Habit Streaks
+                        if (app.renderDashboardCharts) app.renderDashboardCharts();
+                        if(app.renderHabits) app.renderHabits();
                         app.switchTab(state.activeTab);
-
+                        
                     } catch (err) {
-                        console.error("Dashboard Recovery Failed:", err);
-                        alert("Error: Check if the JSON file is valid.");
+                        console.error("Restore Error:", err);
+                        alert("Restore failed. Invalid JSON.");
                     }
                 };
                 reader.readAsText(file);
