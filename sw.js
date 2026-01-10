@@ -61,8 +61,10 @@ self.addEventListener('fetch', (e) => {
         return response || fetch(request).then((fetchResponse) => {
           // Cache successful responses
           if (fetchResponse && fetchResponse.status === 200) {
+            // IMPORTANT FIX: Clone response immediately for caching
+            const responseToCache = fetchResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, fetchResponse.clone());
+              cache.put(request, responseToCache);
             });
           }
           return fetchResponse;
@@ -78,8 +80,10 @@ self.addEventListener('fetch', (e) => {
       fetch(request).then((response) => {
         // Cache successful HTML responses
         if (response && response.status === 200) {
+          // IMPORTANT FIX: Clone response immediately for caching
+          const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, response.clone());
+            cache.put(request, responseToCache);
           });
         }
         return response;
@@ -99,8 +103,10 @@ self.addEventListener('fetch', (e) => {
       .then((response) => {
         // Cache successful responses
         if (response && response.status === 200) {
+          // IMPORTANT FIX: Clone response immediately for caching
+          const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, response.clone());
+            cache.put(request, responseToCache);
           });
         }
         return response;
