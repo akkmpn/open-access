@@ -707,6 +707,11 @@
             .cal-cell { min-height: 50px; }
             .cal-task-dot { display: none; }
             .cal-mobile-list { display: block; }
+            .header-actions .btn span { display: none !important; }
+        }
+        
+        @media (min-width: 1024px) {
+            .header-actions .btn span { display: inline !important; }
         }
         
         .chat-msg.them { 
@@ -1091,6 +1096,10 @@
                 </div>
 
                 <div class="header-actions">
+                    <a href="https://akkmpn.github.io/open-access/TaskPro/taskpro.html" target="_blank" class="btn btn-primary" style="font-size:11px; padding: 8px 12px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;" title="Open TaskPro">
+                        <i class="fas fa-external-link-alt"></i>
+                        <span style="display:none; @media (min-width: 768px) { display:inline; }">TaskPro</span>
+                    </a>
                     <button class="btn btn-primary" style="font-size:11px; padding: 8px 12px;" onclick="app.generateRandomDesign()" title="Remix UI">
                         <i class="fas fa-magic"></i>
                     </button>
