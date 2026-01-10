@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Enterprise TaskPro - v9.0</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
@@ -1132,8 +1132,8 @@
                         <strong>✨ Smart Optimization:</strong> Converts completed tasks to permanent lifetime totals while clearing quota.<br>
                         <strong>🔄 Traditional Resets:</strong> Delete data without preserving your hard work.
                     </p>
-                    <button onclick="archiveAndResetTasks()" class="btn-optimize">
-                        🚀 Optimize & Archive Completed Tasks
+                    <button onclick="app.optimizeAndArchive()" class="btn-optimize">
+                        🚀 Optimize & Archive
                     </button>
                     <div style="margin-top: 12px; padding: 10px; background: var(--bg-body); border-radius: 8px; border-left: 3px solid var(--success);">
                         <div style="font-size: 11px; color: var(--success); font-weight: 600; margin-bottom: 5px;">
@@ -1190,10 +1190,7 @@
             <button class="nav-link" onclick="app.backupData()">
                 <i class="fas fa-download"></i> Checkpoint
             </button>
-            <button class="nav-link" onclick="app.resetAllData()" style="color:var(--danger);">
-                <i class="fas fa-trash-alt"></i> Reset All Data
-            </button>
-
+            
             <button class="nav-link" onclick="document.getElementById('importInput').click()">
                 <i class="fas fa-upload"></i> Restore
             </button>
@@ -1909,6 +1906,9 @@
                                 state.tasks = [...state.tasks, ...data.tasks];
                                 if(data.notes) state.notes = [...state.notes, ...data.notes];
                                 app.saveLifetime(true);
+                                // Sync lifetime stats to update community score
+                                const totalCompleted = state.tasks.filter(t => t && t.completed).length;
+                                await app.syncLifetimeStats(totalCompleted);
                                 renderTasks();
                                 app.renderNotes();
                             }
@@ -2216,66 +2216,99 @@
                 }
             },
 
-            // NEW: Ultimate Quota Optimization
-            archiveAndResetTasks: async () => {
-                if (!state.user) return alert("Please log in first.");
-                if (!confirm("⚡ Ultimate Optimization\n\nThis will delete ALL COMPLETED tasks to maximize app speed.\n\nYour Dashboard totals and lifetime progress will be preserved forever.\n\nThis action cannot be undone. Continue?")) return;
+            // NEW: Ultimate Quota Optimization with Reset Option
+            optimizeAndArchive: async () => {
+                // 1. First, ask if they want to do a standard optimization or a full reset
+                const choice = confirm("Do you want to PERFORM A FULL RESET? \n\nClick 'OK' to Reset All Data (Clear everything).\nClick 'Cancel' to just Optimize & Archive (Keep lifetime stats).");
 
-                try {
-                    const userRef = doc(db, 'users', state.user.uid);
-                    const tasksRef = collection(db, 'tasks');
-                    const q = query(tasksRef, where('uid', '==', state.user.uid), where('completed', '==', true));
+                if (choice) {
+                    // --- FULL RESET LOGIC ---
+                    if(!confirm("ARE YOU ABSOLUTELY SURE? This will permanently delete all tasks, habits, and notes.")) return;
                     
-                    const snapshot = await getDocs(q);
-                    
-                    if (snapshot.empty) {
-                        alert("No completed tasks found to clear.");
-                        return;
-                    }
-
-                    // 1. Sync lifetime stats before deletion (preserves cumulative total)
-                    const currentCompletedCount = state.tasks.filter(t => t && t.completed).length;
-                    await app.syncLifetimeStats(currentCompletedCount);
-
-                    // 2. Update "archivedTotal" in User Document with atomic increment
-                    await setDoc(userRef, {
-                        archivedTotal: increment(snapshot.size),
-                        lastCleanup: new Date().toISOString(),
-                        lastOptimization: {
-                            date: new Date().toISOString(),
-                            tasksDeleted: snapshot.size,
-                            type: 'ultimate_optimization'
+                    try {
+                        state.tasks = [];
+                        state.habits = [];
+                        state.notes = [];
+                        localStorage.clear(); // Clears all local data
+                        
+                        if(state.user) {
+                            const batch = writeBatch(db);
+                            // List of collections to clear
+                            const collections = ['tasks', 'habits', 'notes', 'focus_sessions'];
+                            for (const col of collections) {
+                                const q = query(collection(db, col), where('uid', '==', state.user.uid));
+                                const snap = await getDocs(q);
+                                snap.forEach(doc => batch.delete(doc.ref));
+                            }
+                            await batch.commit();
                         }
-                    }, { merge: true });
+                        alert("All data has been reset. The app will now reload.");
+                        location.reload();
+                    } catch (err) {
+                        console.error(err);
+                        alert("Reset failed. Check connection.");
+                    }
+                } else {
+                    // --- STANDARD OPTIMIZE & ARCHIVE LOGIC ---
+                    if (!state.user) return alert("Please log in first.");
+                    if (!confirm("⚡ Ultimate Optimization\n\nThis will delete ALL COMPLETED tasks to maximize app speed.\n\nYour Dashboard totals and lifetime progress will be preserved forever.\n\nThis action cannot be undone. Continue?")) return;
 
-                    // 3. Delete actual task documents in a batch
-                    const batch = writeBatch(db);
-                    snapshot.forEach((doc) => {
-                        batch.delete(doc.ref);
-                    });
+                    try {
+                        const userRef = doc(db, 'users', state.user.uid);
+                        const tasksRef = collection(db, 'tasks');
+                        const q = query(tasksRef, where('uid', '==', state.user.uid), where('completed', '==', true));
+                        
+                        const snapshot = await getDocs(q);
+                        
+                        if (snapshot.empty) {
+                            alert("No completed tasks found to clear.");
+                            return;
+                        }
 
-                    await batch.commit();
-                    
-                    // 4. Update local state
-                    state.tasks = state.tasks.filter(t => t && !t.completed);
-                    localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
-                    
-                    // 5. Refresh UI
-                    renderTasks();
-                    app.renderDashboardCharts();
-                    app.loadHashtagSelect();
-                    
-                    alert(
-                        `🚀 Ultimate Optimization Complete!\n\n` +
-                        `• Successfully archived ${snapshot.size} completed tasks\n` +
-                        `• Your app is now maximally optimized\n` +
-                        `• Dashboard totals preserved forever\n` +
-                        `• Loading speed increased by ${Math.round((snapshot.size / (snapshot.size + state.tasks.length)) * 100)}%`
-                    );
-                    
-                } catch (error) {
-                    console.error("Error during ultimate optimization:", error);
-                    alert("Optimization failed. Check console for details.");
+                        // 1. Sync lifetime stats before deletion (preserves cumulative total)
+                        const currentCompletedCount = state.tasks.filter(t => t && t.completed).length;
+                        await app.syncLifetimeStats(currentCompletedCount);
+
+                        // 2. Update "archivedTotal" in User Document with atomic increment
+                        await setDoc(userRef, {
+                            archivedTotal: increment(snapshot.size),
+                            lastCleanup: new Date().toISOString(),
+                            lastOptimization: {
+                                date: new Date().toISOString(),
+                                tasksDeleted: snapshot.size,
+                                type: 'ultimate_optimization'
+                            }
+                        }, { merge: true });
+
+                        // 3. Delete actual task documents in a batch
+                        const batch = writeBatch(db);
+                        snapshot.forEach((doc) => {
+                            batch.delete(doc.ref);
+                        });
+
+                        await batch.commit();
+                        
+                        // 4. Update local state
+                        state.tasks = state.tasks.filter(t => t && !t.completed);
+                        localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+                        
+                        // 5. Refresh UI
+                        renderTasks();
+                        app.renderDashboardCharts();
+                        app.loadHashtagSelect();
+                        
+                        alert(
+                            `🚀 Ultimate Optimization Complete!\n\n` +
+                            `• Successfully archived ${snapshot.size} completed tasks\n` +
+                            `• Your app is now maximally optimized\n` +
+                            `• Dashboard totals preserved forever\n` +
+                            `• Loading speed increased by ${Math.round((snapshot.size / (snapshot.size + state.tasks.length)) * 100)}%`
+                        );
+                        
+                    } catch (error) {
+                        console.error("Error during ultimate optimization:", error);
+                        alert("Optimization failed. Check console for details.");
+                    }
                 }
             },
 
@@ -4848,7 +4881,12 @@
                         }).then(() => console.log("Session Synced")).catch(e => console.error("Sync Fail", e));
                     }
                     
-                    if(taskId) app.toggleTask(taskId);
+                    if(taskId) {
+                        const task = state.tasks.find(t => t.id === taskId);
+                        if(task && !task.completed) {
+                            app.toggleTask(taskId);
+                        }
+                    }
                 }
 
                 focusMode.status = 'idle';
@@ -5298,61 +5336,6 @@
             document.getElementById('suggestionsBox').innerHTML = state.history.map(h => `<div class="suggestion-chip" onclick="app.addTask('${h}')">${h} <span onclick="event.stopPropagation();app.removeSuggestion('${h}')">×</span></div>`).join('');
         }
         window.app.removeSuggestion = (t) => { state.history = state.history.filter(h => h !== t); localStorage.setItem('taskHistory', JSON.stringify(state.history)); renderSuggestions(); };
-
-        // NEW: Ultimate Quota Cleanup Function - Verified Version
-        async function archiveAndResetTasks() {
-            if (!state.user) return alert("Please log in first.");
-            
-            // 1. Target only completed tasks to clear the quota
-            const tasksRef = collection(db, 'tasks');
-            const q = query(tasksRef, where('uid', '==', state.user.uid), where('completed', '==', true));
-            
-            try {
-                const snapshot = await getDocs(q);
-                if (snapshot.empty) {
-                    alert("No completed tasks found to archive.");
-                    return;
-                }
-
-                const count = snapshot.size;
-                if (!confirm(`Found ${count} completed tasks. Archive them to reset your quota? \n\n(Your Dashboard totals will remain unchanged).`)) return;
-
-                const batch = writeBatch(db);
-                const userRef = doc(db, 'users', state.user.uid);
-
-                // 2. Add the count to your permanent profile record
-                batch.set(userRef, { 
-                    archivedTotal: increment(count),
-                    lastCleanup: serverTimestamp() 
-                }, { merge: true });
-
-                // 3. Delete the individual documents
-                snapshot.forEach(doc => batch.delete(doc.ref));
-
-                await batch.commit();
-
-                // 4. Update local state so UI updates immediately without a full refresh
-                if (!state.userProfile) state.userProfile = {};
-                state.userProfile.archivedTotal = (state.userProfile.archivedTotal || 0) + count;
-                
-                // Remove them from the local task list so they disappear from the UI
-                state.tasks = state.tasks.filter(t => !t.completed);
-
-                alert(`Successfully archived ${count} tasks. Your app is now optimized!`);
-                
-                // Re-run your dashboard rendering to show the combined totals
-                if (typeof app.renderDashboardCharts === 'function') app.renderDashboardCharts();
-                if (typeof renderTasks === 'function') renderTasks();
-                
-                // Close modal if open
-                const modal = document.getElementById('settingsModal');
-                if (modal) modal.style.display = 'none';
-
-            } catch (error) {
-                console.error("Archive Error:", error);
-                alert("An error occurred during optimization. Please check your connection.");
-            }
-        }
 
         app.init();
         renderSuggestions();
