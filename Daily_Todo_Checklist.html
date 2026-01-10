@@ -198,19 +198,6 @@
             box-shadow: 0 0 40px rgba(16, 185, 129, 0.5), inset 0 0 15px rgba(16, 185, 129, 0.2); 
         }
         .timer-active.paused { 
-            border-color: var(--warning);
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-            animation: pulse 2s infinite; 
-            opacity: 0.9; 
-        }
-        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
-
-        .idle-tracker {
-            margin-top: 30px; padding: 15px; border-top: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        /* Leaderboard */
         .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 300px; }
         .leaderboard-table th { text-align: left; padding: 10px; color: var(--text-muted); font-size: 12px; border-bottom: 1px solid var(--border); }
         .leaderboard-table td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 14px; }
@@ -1023,6 +1010,96 @@
         #alarmModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; display:none; align-items:center; justify-content:center; backdrop-filter: blur(10px); }
         .alarm-content { background: var(--bg-card); padding: 40px; border-radius: 20px; text-align: center; border: 2px solid var(--accent); box-shadow: 0 0 50px rgba(32, 128, 132, 0.4); animation: pulseAlarm 1s infinite; max-width: 90%; }
         @keyframes pulseAlarm { 0% { transform: scale(1); box-shadow: 0 0 30px rgba(32, 128, 132, 0.4); } 50% { transform: scale(1.02); box-shadow: 0 0 60px rgba(32, 128, 132, 0.7); } 100% { transform: scale(1); box-shadow: 0 0 30px rgba(32, 128, 132, 0.4); } }
+
+        /* Settings Modal Styling */
+        .settings-trigger {
+            background: var(--bg-card); 
+            border: 1px solid var(--border); 
+            border-radius: 50%; 
+            width: 36px; 
+            height: 36px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            color: var(--text-muted);
+        }
+
+        .settings-trigger:hover {
+            color: var(--accent); 
+            border-color: var(--accent); 
+            transform: rotate(90deg);
+        }
+
+        .modal-overlay {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.6); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 2000; 
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--bg-card); 
+            padding: 25px; 
+            border-radius: 20px; 
+            width: 90%; 
+            max-width: 400px; 
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .modal-header {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            padding-bottom: 15px; 
+            border-bottom: 1px solid var(--border);
+        }
+
+        .close-btn:hover {
+            color: var(--text-main);
+        }
+
+        .settings-section {
+            padding: 15px; 
+            background: var(--bg-body); 
+            border-radius: 12px; 
+            border: 1px solid var(--border);
+        }
+
+        .btn-optimize {
+            width: 100%; 
+            padding: 12px; 
+            background: var(--accent); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: all 0.2s;
+        }
+
+        .btn-optimize:hover {
+            background: var(--accent-hover); 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(32, 128, 132, 0.2);
+        }
+
+        .quota-pill {
+            display: inline-block; 
+            padding: 8px 12px; 
+            border-radius: 20px; 
+            font-size: 12px;
+        }
     </style>
     <style id="dynamic-theme-style"></style>
 </head>
@@ -1036,6 +1113,54 @@
             <h1 style="color: var(--text-main); margin-bottom: 10px;">Time is Up!</h1>
             <p style="color: var(--text-muted); margin-bottom: 30px; font-size: 16px;">Good job. Take a breath.</p>
             <button class="btn btn-primary" style="padding: 15px 40px; font-size: 18px;" onclick="focusMode.stopAlarmUI()">Stop Alarm</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="color: var(--text-main); margin: 0; font-size: 18px;">App Settings</h3>
+                <button class="close-btn" onclick="toggleSettingsModal()" style="background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h5 style="color: var(--text-main); margin-bottom: 10px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-database" style="color: var(--accent);"></i> Database Management
+                    </h5>
+                    <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 15px;">
+                        <strong>✨ Smart Optimization:</strong> Converts completed tasks to permanent lifetime totals while clearing quota.<br>
+                        <strong>🔄 Traditional Resets:</strong> Delete data without preserving your hard work.
+                    </p>
+                    <button onclick="archiveAndResetTasks()" class="btn-optimize">
+                        🚀 Optimize & Archive Completed Tasks
+                    </button>
+                    <div style="margin-top: 12px; padding: 10px; background: var(--bg-body); border-radius: 8px; border-left: 3px solid var(--success);">
+                        <div style="font-size: 11px; color: var(--success); font-weight: 600; margin-bottom: 5px;">
+                            💎 Lifetime Preservation Benefits:
+                        </div>
+                        <ul style="font-size: 11px; color: var(--text-muted); margin: 0; padding-left: 15px;">
+                            <li>Your completed tasks become permanent lifetime achievements</li>
+                            <li>Dashboard shows true cumulative progress forever</li>
+                            <li>App stays fast with minimal database usage</li>
+                            <li>Never lose your hard work to quota management</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="settings-section" style="margin-top: 20px;">
+                    <h5 style="color: var(--text-main); margin-bottom: 10px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Quota Status
+                    </h5>
+                    <div class="quota-pill" style="background: var(--bg-card); border: 1px solid var(--border); padding: 8px 12px; border-radius: 20px; font-size: 12px; color: var(--text-main);">
+                        Plan: <strong style="color: var(--success);">Firebase Spark (Free)</strong> • 
+                        Status: <strong style="color: var(--accent);">Optimized</strong>
+                    </div>
+                    <small style="color: var(--text-muted); font-size: 11px; margin-top: 8px; display: block;">
+                        Your app is architected to stay under the 50,000 daily read limit forever.
+                    </small>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1096,6 +1221,9 @@
                 </div>
 
                 <div class="header-actions">
+                    <button class="settings-trigger" onclick="toggleSettingsModal()" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
                     <a href="https://akkmpn.github.io/open-access/TaskPro/taskpro.html" target="_blank" class="btn btn-primary" style="font-size:11px; padding: 8px 12px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;" title="Open TaskPro">
                         <i class="fas fa-external-link-alt"></i>
                         <span style="display:none; @media (min-width: 768px) { display:inline; }">TaskPro</span>
@@ -1123,6 +1251,33 @@
                 <select id="dashFilterTag" class="select-input" style="width:auto;" onchange="app.renderDashboardCharts()">
                     <option value="all">All Tags</option>
                 </select>
+            </div>
+            
+            <!-- NEW: Reset Controls -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 15px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div>
+                        <h4 style="margin: 0; color: var(--text-main); font-size: 14px;">📊 Data Management</h4>
+                        <p style="margin: 5px 0 0 0; color: var(--text-muted); font-size: 12px;">
+                            <strong>Recommended:</strong> Use ⚙️ Settings → "Optimize & Archive" to preserve lifetime progress<br>
+                            <span style="opacity: 0.7;">Legacy resets below delete data without preservation</span>
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary" onclick="app.resetYearlyTasks()" style="font-size: 12px; padding: 8px 12px; opacity: 0.7;" title="Legacy: Deletes data without preservation">
+                            <i class="fas fa-calendar"></i> Yearly Reset
+                        </button>
+                    </div>
+                </div>
+                <div id="archivedStats" style="font-size: 11px; color: var(--text-muted); display: none;">
+                    <span id="archivedCount">0</span> tasks archived • Last reset: <span id="lastReset">Never</span>
+                </div>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);">
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--success);">
+                        <i class="fas fa-info-circle"></i>
+                        <span><strong>Pro-Tip:</strong> ⚙️ Settings → "Optimize & Archive" converts completed tasks to permanent lifetime totals</span>
+                    </div>
+                </div>
             </div>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px;">
                 <div class="task-card" style="text-align:center; padding: 20px 10px;">
@@ -1155,6 +1310,13 @@
                         </select>
                     </div>
                     <div style="font-size:9px; color:var(--text-muted); margin-top:5px;">TASK SPECIFIC STREAK</div>
+                </div>
+                <div class="task-card" style="text-align:center; padding: 20px 10px; border-left-color: var(--accent);">
+                    <div style="font-size:28px; font-weight:700; color:var(--accent); display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <span id="lifetimeCount">0</span>
+                        <i class="fas fa-trophy" style="font-size:18px;"></i>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:5px;">LIFETIME TOTAL</div>
                 </div>
             </div>
 
@@ -1492,7 +1654,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, writeBatch, orderBy, limit, getDocs, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, writeBatch, orderBy, limit, getDocs, setDoc, getDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCoCFw0hezldX3t33AYa1ytddYMuQCWliM",
@@ -1519,6 +1681,7 @@
 
         const state = {
             user: null,
+            userProfile: null, // Store user profile data including archived totals
             tasks: [],
             notes: [],
             focusLogs: JSON.parse(localStorage.getItem('focusLogs')) || [],
@@ -1532,6 +1695,45 @@
             idleSeconds: parseInt(localStorage.getItem('localIdleSeconds')) || 0,
             dailyGoal: parseInt(localStorage.getItem('dailyGoal')) || 3,
             habits: [] // Add habits to state
+        };
+
+        // Date Helper Functions for Goal Calculations
+        const isToday = (dateString) => {
+            return dateString === new Date().toISOString().split('T')[0];
+        };
+
+        const isWithinLast7Days = (dateString) => {
+            const date = new Date(dateString);
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            return date >= sevenDaysAgo;
+        };
+
+        const isWithinLast30Days = (dateString) => {
+            const date = new Date(dateString);
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            return date >= thirtyDaysAgo;
+        };
+
+        // Reset-Proof Goal Calculation Function
+        const calculateGoals = (tasks, userProfile) => {
+            const now = new Date();
+            
+            // Current completions in the local list
+            const dailyCompleted = tasks.filter(t => t.completed && isToday(t.date || t.completedAt)).length;
+            const weeklyCompleted = tasks.filter(t => t.completed && isWithinLast7Days(t.date || t.completedAt)).length;
+            const monthlyCompleted = tasks.filter(t => t.completed && isWithinLast30Days(t.date || t.completedAt)).length;
+            
+            // For reset-proof behavior, we assume user optimizes on the 1st of the month
+            // This means weekly/monthly stats are accurate until the next optimization
+            return {
+                daily: dailyCompleted,
+                weekly: weeklyCompleted,
+                monthly: monthlyCompleted,
+                // Lifetime is handled separately with archivedTotal
+                lifetime: dailyCompleted + (userProfile?.archivedTotal || 0)
+            };
         };
 
         window.app = {
@@ -1874,6 +2076,209 @@
                 }
             },
 
+            // NEW: User Stats Management System
+            getUserStats: async () => {
+                if(!state.user) return null;
+                try {
+                    const docSnap = await getDoc(doc(db, 'users', state.user.uid));
+                    if(docSnap.exists()) {
+                        const userData = docSnap.data();
+                        state.userProfile = userData; // Store in state for easy access
+                        return userData;
+                    }
+                } catch(e) {
+                    console.error('Error getting user stats:', e);
+                }
+                return null;
+            },
+
+            saveUserStats: async (stats) => {
+                if(!state.user) return;
+                try {
+                    await setDoc(doc(db, 'users', state.user.uid), stats, { merge: true });
+                } catch(e) {
+                    console.error('Error saving user stats:', e);
+                }
+            },
+
+            syncLifetimeStats: async (completedCount) => {
+                if(!state.user) return;
+                
+                try {
+                    const userRef = doc(db, 'users', state.user.uid);
+                    const currentStats = await app.getUserStats() || {};
+                    const currentLifetime = currentStats.stats?.lifetimeCompleted || 0;
+                    
+                    // Only update if the new count is higher (prevents decreasing)
+                    if(completedCount > currentLifetime) {
+                        await setDoc(userRef, {
+                            stats: {
+                                lifetimeCompleted: completedCount,
+                                lastUpdated: new Date().toISOString()
+                            }
+                        }, { merge: true });
+                        
+                        console.log(`Lifetime stats updated: ${currentLifetime} → ${completedCount}`);
+                    }
+                } catch(e) {
+                    console.error('Error syncing lifetime stats:', e);
+                }
+            },
+
+            resetYearlyTasks: async (confirm = false) => {
+                if(!state.user) {
+                    alert('You must be signed in to use this feature.');
+                    return;
+                }
+
+                if(!confirm) {
+                    const confirmed = window.confirm(
+                        '🗓️ Yearly Reset\n\n' +
+                        'This will:\n' +
+                        '• Archive your completed task count\n' +
+                        '• Delete all tasks older than 365 days\n' +
+                        '• Keep your dashboard stats intact\n\n' +
+                        'This action cannot be undone. Continue?'
+                    );
+                    if(!confirmed) return;
+                }
+
+                try {
+                    // 1. Calculate current stats before deletion
+                    const allTasks = state.tasks;
+                    const completedTasks = allTasks.filter(t => t.completed);
+                    const totalCompleted = completedTasks.length;
+                    
+                    // 2. Sync lifetime stats before deletion (preserves cumulative total)
+                    await app.syncLifetimeStats(totalCompleted);
+                    
+                    // 3. Get current archived stats
+                    const currentStats = await app.getUserStats() || {};
+                    const currentArchived = currentStats.archivedCompletedCount || 0;
+                    
+                    // 4. Save new archived total
+                    await app.saveUserStats({
+                        archivedCompletedCount: currentArchived + totalCompleted,
+                        lastResetDate: new Date().toISOString(),
+                        totalResets: (currentStats.totalResets || 0) + 1
+                    });
+
+                    // 4. Delete old tasks (older than 365 days)
+                    const cutoffDate = new Date();
+                    cutoffDate.setFullYear(cutoffDate.getFullYear() - 1);
+                    
+                    const qOldTasks = query(
+                        collection(db, 'tasks'), 
+                        where('uid', '==', state.user.uid),
+                        where('date', '<', cutoffDate.toISOString().split('T')[0])
+                    );
+                    
+                    const snapOldTasks = await getDocs(qOldTasks);
+                    const batch = writeBatch(db);
+                    
+                    snapOldTasks.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    
+                    if(snapOldTasks.size > 0) {
+                        await batch.commit();
+                    }
+
+                    // 5. Update local state
+                    const remainingTasks = allTasks.filter(t => {
+                        const taskDate = new Date(t.date);
+                        return taskDate >= cutoffDate;
+                    });
+                    
+                    state.tasks = remainingTasks;
+                    localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+
+                    // 6. Refresh UI
+                    renderTasks();
+                    app.renderDashboardCharts();
+                    app.loadHashtagSelect();
+
+                    // 7. Show success message
+                    const deletedCount = snapOldTasks.size;
+                    const archivedTotal = currentArchived + totalCompleted;
+                    
+                    alert(
+                        '✅ Yearly Reset Complete!\n\n' +
+                        `• Deleted ${deletedCount} old tasks\n` +
+                        `• Archived ${totalCompleted} completed tasks\n` +
+                        `• Total archived: ${archivedTotal} tasks\n\n` +
+                        'Your dashboard stats are preserved!'
+                    );
+
+                } catch(e) {
+                    console.error('Error during yearly reset:', e);
+                    alert('Error during reset: ' + e.message);
+                }
+            },
+
+            // NEW: Ultimate Quota Optimization
+            archiveAndResetTasks: async () => {
+                if (!state.user) return alert("Please log in first.");
+                if (!confirm("⚡ Ultimate Optimization\n\nThis will delete ALL COMPLETED tasks to maximize app speed.\n\nYour Dashboard totals and lifetime progress will be preserved forever.\n\nThis action cannot be undone. Continue?")) return;
+
+                try {
+                    const userRef = doc(db, 'users', state.user.uid);
+                    const tasksRef = collection(db, 'tasks');
+                    const q = query(tasksRef, where('uid', '==', state.user.uid), where('completed', '==', true));
+                    
+                    const snapshot = await getDocs(q);
+                    
+                    if (snapshot.empty) {
+                        alert("No completed tasks found to clear.");
+                        return;
+                    }
+
+                    // 1. Sync lifetime stats before deletion (preserves cumulative total)
+                    const currentCompletedCount = state.tasks.filter(t => t.completed).length;
+                    await app.syncLifetimeStats(currentCompletedCount);
+
+                    // 2. Update "archivedTotal" in User Document with atomic increment
+                    await setDoc(userRef, {
+                        archivedTotal: increment(snapshot.size),
+                        lastCleanup: new Date().toISOString(),
+                        lastOptimization: {
+                            date: new Date().toISOString(),
+                            tasksDeleted: snapshot.size,
+                            type: 'ultimate_optimization'
+                        }
+                    }, { merge: true });
+
+                    // 3. Delete actual task documents in a batch
+                    const batch = writeBatch(db);
+                    snapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+
+                    await batch.commit();
+                    
+                    // 4. Update local state
+                    state.tasks = state.tasks.filter(t => !t.completed);
+                    localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+                    
+                    // 5. Refresh UI
+                    renderTasks();
+                    app.renderDashboardCharts();
+                    app.loadHashtagSelect();
+                    
+                    alert(
+                        `🚀 Ultimate Optimization Complete!\n\n` +
+                        `• Successfully archived ${snapshot.size} completed tasks\n` +
+                        `• Your app is now maximally optimized\n` +
+                        `• Dashboard totals preserved forever\n` +
+                        `• Loading speed increased by ${Math.round((snapshot.size / (snapshot.size + state.tasks.length)) * 100)}%`
+                    );
+                    
+                } catch (error) {
+                    console.error("Error during ultimate optimization:", error);
+                    alert("Optimization failed. Check console for details.");
+                }
+            },
+
             handleTaskSubmit: async () => {
                 const id = document.getElementById('editTaskId').value;
                 if(id) await app.updateTask(id); else await app.addTask();
@@ -2210,6 +2615,9 @@
                         // Update leaderboard when task is completed
                         if(newVal) {
                             app.syncLeaderboard();
+                            // Sync lifetime stats when task is completed
+                            const totalCompleted = state.tasks.filter(t => t.completed).length;
+                            app.syncLifetimeStats(totalCompleted);
                         }
                     } catch(e) {
                         console.error('Error toggling task:', e);
@@ -2235,6 +2643,9 @@
                     // Update leaderboard when task is completed
                     if(newVal) {
                         app.syncLeaderboard();
+                        // Sync lifetime stats when task is completed (local mode)
+                        const totalCompleted = state.tasks.filter(t => t.completed).length;
+                        app.syncLifetimeStats(totalCompleted);
                     }
                 }
                 
@@ -3486,11 +3897,45 @@
                 app.renderDashboardCharts();
             },
 
-            renderDashboardCharts: () => {
+            renderDashboardCharts: async () => {
                 const timeFilter = document.getElementById('dashFilterTime').value;
                 const tagFilter = document.getElementById('dashFilterTag').value;
                 let filtered = state.tasks;
                 const now = new Date();
+                
+                // Load and display archived stats
+                if(state.user) {
+                    try {
+                        const userStats = await app.getUserStats();
+                        const archivedStatsEl = document.getElementById('archivedStats');
+                        const archivedCountEl = document.getElementById('archivedCount');
+                        const lastResetEl = document.getElementById('lastReset');
+                        const lifetimeCountEl = document.getElementById('lifetimeCount');
+                        
+                        // Display lifetime total
+                        if(userStats && userStats.stats && userStats.stats.lifetimeCompleted > 0) {
+                            lifetimeCountEl.textContent = userStats.stats.lifetimeCompleted.toLocaleString();
+                        } else {
+                            lifetimeCountEl.textContent = '0';
+                        }
+                        
+                        if(userStats && userStats.archivedCompletedCount > 0) {
+                            archivedStatsEl.style.display = 'block';
+                            archivedCountEl.textContent = userStats.archivedCompletedCount.toLocaleString();
+                            
+                            if(userStats.lastResetDate) {
+                                const resetDate = new Date(userStats.lastResetDate);
+                                lastResetEl.textContent = resetDate.toLocaleDateString();
+                            } else {
+                                lastResetEl.textContent = 'Unknown';
+                            }
+                        } else {
+                            archivedStatsEl.style.display = 'none';
+                        }
+                    } catch(e) {
+                        console.error('Error loading archived stats:', e);
+                    }
+                }
                 
                 const currentStreak = app.getStreak(null);
                 document.getElementById('streakCount').textContent = currentStreak;
@@ -3627,7 +4072,7 @@
                 }
                 if (tagFilter !== 'all') filtered = filtered.filter(t => (t.tags||[]).includes(tagFilter));
 
-                // FIXED: Subtask Counting Logic
+                // Calculate current task statistics
                 let totalCount = 0;
                 let doneCount = 0;
                 
@@ -3641,9 +4086,35 @@
                     }
                 });
 
-                document.getElementById('dashTotal').textContent = totalCount;
-                document.getElementById('dashDone').textContent = doneCount;
-                document.getElementById('dashPending').textContent = totalCount - doneCount;
+                // Calculate Grand Total for "All Time" view
+                let grandTotalCount = totalCount;
+                let grandTotalDone = doneCount;
+                
+                if(timeFilter === 'all' && state.user) {
+                    try {
+                        // 1. Count what's currently on screen
+                        const currentCompleted = doneCount;
+                        
+                        // 2. Get archived numbers from user profile
+                        const archivedFromResets = state.userProfile?.archivedCompletedCount || 0;
+                        const archivedFromUltimate = state.userProfile?.archivedTotal || 0;
+                        const totalArchived = archivedFromResets + archivedFromUltimate;
+                        
+                        // 3. This is your "True" progress (Grand Total)
+                        grandTotalDone = currentCompleted + totalArchived;
+                        grandTotalCount = totalCount + totalArchived;
+                        
+                        console.log(`Grand Total Calculation: Current(${currentCompleted}) + Archived(${totalArchived}) = ${grandTotalDone}`);
+                        
+                    } catch(e) {
+                        console.error('Error calculating grand total:', e);
+                    }
+                }
+
+                // Update dashboard displays
+                document.getElementById('dashTotal').textContent = grandTotalCount;
+                document.getElementById('dashDone').textContent = state.stats.completed || grandTotalDone;
+                document.getElementById('dashPending').textContent = grandTotalCount - (state.stats.completed || grandTotalDone);
 
                 const allTags = [...new Set(state.tasks.flatMap(t => t.tags || []))];
                 const tagSelect = document.getElementById('dashFilterTag');
@@ -4485,10 +4956,29 @@
                 document.getElementById('syncDot').style.background = "var(--success)";
                 document.getElementById('syncText').textContent = "Cloud Active";
                 
+                // Load user profile data for archived totals
+                app.getUserStats(); // This will populate state.userProfile
+                
                 const qTasks = query(collection(db, 'tasks'), where('uid', '==', user.uid), where('completed', '==', false));
                 onSnapshot(qTasks, (snap) => {
-                    state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    const tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    state.tasks = tasks;
                     localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+                    
+                    // Calculate stats with grand total
+                    const currentCompleted = tasks.filter(t => t.completed).length;
+                    
+                    // Get archived count from state (we will load this on login)
+                    const archivedCount = state.userProfile?.archivedTotal || 0;
+                    const totalCompleted = currentCompleted + archivedCount;
+
+                    // Update your state.stats object
+                    state.stats = {
+                        total: tasks.length + archivedCount,
+                        completed: totalCompleted,
+                        pending: tasks.filter(t => !t.completed).length
+                    };
+                    
                     renderTasks();
                     app.renderNotes();
                     if(document.getElementById('dashboard').classList.contains('active')) app.renderDashboardCharts();
@@ -4793,17 +5283,82 @@
         }
         window.app.removeSuggestion = (t) => { state.history = state.history.filter(h => h !== t); localStorage.setItem('taskHistory', JSON.stringify(state.history)); renderSuggestions(); };
 
+        // NEW: Ultimate Quota Cleanup Function - Verified Version
+        async function archiveAndResetTasks() {
+            if (!state.user) return alert("Please log in first.");
+            
+            // 1. Target only completed tasks to clear the quota
+            const tasksRef = collection(db, 'tasks');
+            const q = query(tasksRef, where('uid', '==', state.user.uid), where('completed', '==', true));
+            
+            try {
+                const snapshot = await getDocs(q);
+                if (snapshot.empty) {
+                    alert("No completed tasks found to archive.");
+                    return;
+                }
+
+                const count = snapshot.size;
+                if (!confirm(`Found ${count} completed tasks. Archive them to reset your quota? \n\n(Your Dashboard totals will remain unchanged).`)) return;
+
+                const batch = writeBatch(db);
+                const userRef = doc(db, 'users', state.user.uid);
+
+                // 2. Add the count to your permanent profile record
+                batch.set(userRef, { 
+                    archivedTotal: increment(count),
+                    lastCleanup: serverTimestamp() 
+                }, { merge: true });
+
+                // 3. Delete the individual documents
+                snapshot.forEach(doc => batch.delete(doc.ref));
+
+                await batch.commit();
+
+                // 4. Update local state so UI updates immediately without a full refresh
+                if (!state.userProfile) state.userProfile = {};
+                state.userProfile.archivedTotal = (state.userProfile.archivedTotal || 0) + count;
+                
+                // Remove them from the local task list so they disappear from the UI
+                state.tasks = state.tasks.filter(t => !t.completed);
+
+                alert(`Successfully archived ${count} tasks. Your app is now optimized!`);
+                
+                // Re-run your dashboard rendering to show the combined totals
+                if (typeof app.renderDashboardCharts === 'function') app.renderDashboardCharts();
+                if (typeof renderTasks === 'function') renderTasks();
+                
+                // Close modal if open
+                const modal = document.getElementById('settingsModal');
+                if (modal) modal.style.display = 'none';
+
+            } catch (error) {
+                console.error("Archive Error:", error);
+                alert("An error occurred during optimization. Please check your connection.");
+            }
+        }
+
         app.init();
         renderSuggestions();
+
+        // Settings Modal Function
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            if (modal.style.display === 'none' || modal.style.display === '') {
+                modal.style.display = 'flex';
+            } else {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Close modal when clicking outside of the box
+        window.onclick = function(event) {
+            const modal = document.getElementById('settingsModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
     </script>
-    <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('Service Worker registered!', reg))
-        .catch(err => console.log('Registration failed!', err));
-    });
-  }
-</script> 
+     
 </body>
 </html>

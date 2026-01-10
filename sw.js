@@ -1,7 +1,6 @@
-const CACHE_NAME = 'taskpro-v9-cache';
+const CACHE_NAME = 'taskpro-v10-cache';
 const ASSETS_TO_CACHE = [
   '/',
-  '/TaskPro_v9.html',
   '/Daily_Todo_Checklist.html',
   '/manifest.json',
   '/sw.js',
