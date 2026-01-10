@@ -1007,9 +1007,11 @@
         }
 
         /* ALARM MODAL */
-        #alarmModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; display:none; align-items:center; justify-content:center; backdrop-filter: blur(10px); }
-        .alarm-content { background: var(--bg-card); padding: 40px; border-radius: 20px; text-align: center; border: 2px solid var(--accent); box-shadow: 0 0 50px rgba(32, 128, 132, 0.4); animation: pulseAlarm 1s infinite; max-width: 90%; }
-        @keyframes pulseAlarm { 0% { transform: scale(1); box-shadow: 0 0 30px rgba(32, 128, 132, 0.4); } 50% { transform: scale(1.02); box-shadow: 0 0 60px rgba(32, 128, 132, 0.7); } 100% { transform: scale(1); box-shadow: 0 0 30px rgba(32, 128, 132, 0.4); } }
+        #alarmModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; display:none; align-items:center; justify-content:center; backdrop-filter: blur(15px); }
+        .alarm-content { background: var(--bg-card); padding: 50px; border-radius: 20px; text-align: center; border: 3px solid var(--accent); box-shadow: 0 0 50px rgba(32, 128, 132, 0.6); animation: pulseAlarm 1.5s infinite; max-width: 400px; position: relative; }
+        .alarm-content::before { content: ''; position: absolute; top: -10px; left: -10px; right: -10px; bottom: -10px; background: linear-gradient(45deg, var(--accent), transparent); border-radius: 25px; z-index: -1; opacity: 0.3; }
+        @keyframes pulseAlarm { 0% { transform: scale(1); box-shadow: 0 0 30px rgba(32, 128, 132, 0.6); } 50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(32, 128, 132, 0.8); } 100% { transform: scale(1); box-shadow: 0 0 30px rgba(32, 128, 132, 0.6); } }
+        @keyframes ring { 0%, 100% { transform: rotate(0deg); } 10%, 30%, 50%, 70%, 90% { transform: rotate(-10deg); } 20%, 40%, 60%, 80% { transform: rotate(10deg); } }
 
         /* Settings Modal Styling */
         .settings-trigger {
@@ -1109,10 +1111,14 @@
 
     <div id="alarmModal">
         <div class="alarm-content">
-            <i class="fas fa-bell" style="font-size: 60px; color: var(--accent); margin-bottom: 20px;"></i>
-            <h1 style="color: var(--text-main); margin-bottom: 10px;">Time is Up!</h1>
-            <p style="color: var(--text-muted); margin-bottom: 30px; font-size: 16px;">Good job. Take a breath.</p>
-            <button class="btn btn-primary" style="padding: 15px 40px; font-size: 18px;" onclick="focusMode.stopAlarmUI()">Stop Alarm</button>
+            <div style="position: relative; z-index: 1;">
+                <i class="fas fa-bell" style="font-size: 64px; color: var(--accent); margin-bottom: 20px; animation: ring 2s infinite;"></i>
+                <h1 style="color: var(--text-main); margin-bottom: 15px; font-weight: 700;">🎉 Focus Session Complete!</h1>
+                <p style="color: var(--text-muted); margin-bottom: 35px; font-size: 16px; line-height: 1.5;">Great work! You've completed your focus session.</p>
+                <button class="btn btn-primary" style="padding: 18px 45px; font-size: 18px; font-weight: 600; border-radius: 50px; box-shadow: 0 8px 25px rgba(32, 128, 132, 0.3); transition: all 0.3s ease;" onclick="focusMode.stopAlarmUI()" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <i class="fas fa-stop" style="margin-right: 8px;"></i> Stop Alarm
+                </button>
+            </div>
         </div>
     </div>
 
