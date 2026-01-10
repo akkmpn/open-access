@@ -1259,7 +1259,7 @@
             <div style="margin-bottom:15px; display:flex; gap:10px;">
                 <button class="btn btn-secondary" onclick="app.setTaskFilter('active')" id="filterActive">Active</button>
                 <button class="btn btn-secondary" onclick="app.setTaskFilter('overdue')" id="filterOverdue" style="background:var(--danger); border-color:var(--danger);">Overdue</button>
-                <button class="btn btn-secondary" onclick="app.setTaskFilter('completed')" id="filterCompleted" style="background:var(--success); border-color:var(--success);">Completed</button>
+                <button class="btn btn-secondary" onclick="app.loadCompletedTasks()" id="filterCompleted" style="background:var(--success); border-color:var(--success);">Load Completed</button>
             </div>
             <div id="taskList" class="task-list"></div>
         </div>
@@ -1831,11 +1831,47 @@
             },
 
             setTaskFilter: (filter) => {
+                // If user wants to see completed tasks and they're not loaded yet, load them first
+                if(filter === 'completed' && !state.tasks.some(t => t.completed)) {
+                    app.loadCompletedTasks();
+                    return;
+                }
+                
                 state.taskFilter = filter;
                 document.getElementById('filterActive').className = filter === 'active' ? 'btn btn-primary' : 'btn btn-secondary';
                 document.getElementById('filterOverdue').className = filter === 'overdue' ? 'btn btn-primary' : 'btn btn-secondary';
                 document.getElementById('filterCompleted').className = filter === 'completed' ? 'btn btn-primary' : 'btn btn-secondary';
                 renderTasks();
+            },
+
+            loadCompletedTasks: async () => {
+                if(!state.user) return;
+                try {
+                    const qCompleted = query(collection(db, 'tasks'), where('uid', '==', state.user.uid), where('completed', '==', true));
+                    const snapCompleted = await getDocs(qCompleted);
+                    const completedTasks = snapCompleted.docs.map(d => ({id: d.id, ...d.data()}));
+                    
+                    // Merge completed tasks with existing active tasks
+                    const activeTasks = state.tasks.filter(t => !t.completed);
+                    state.tasks = [...activeTasks, ...completedTasks];
+                    
+                    localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
+                    
+                    // Set filter to completed and update UI
+                    state.taskFilter = 'completed';
+                    document.getElementById('filterActive').className = 'btn btn-secondary';
+                    document.getElementById('filterOverdue').className = 'btn btn-secondary';
+                    document.getElementById('filterCompleted').className = 'btn btn-primary';
+                    renderTasks();
+                    
+                    // Show notification
+                    const btn = document.getElementById('filterCompleted');
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Loaded ✓';
+                    setTimeout(() => { btn.textContent = 'Load Completed'; }, 2000);
+                } catch(e) {
+                    console.error('Error loading completed tasks:', e);
+                }
             },
 
             handleTaskSubmit: async () => {
@@ -4449,7 +4485,7 @@
                 document.getElementById('syncDot').style.background = "var(--success)";
                 document.getElementById('syncText').textContent = "Cloud Active";
                 
-                const qTasks = query(collection(db, 'tasks'), where('uid', '==', user.uid));
+                const qTasks = query(collection(db, 'tasks'), where('uid', '==', user.uid), where('completed', '==', false));
                 onSnapshot(qTasks, (snap) => {
                     state.tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
                     localStorage.setItem('local_tasks', JSON.stringify(state.tasks));
