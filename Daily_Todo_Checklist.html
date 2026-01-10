@@ -1879,7 +1879,15 @@
             },
 
             backupData: () => {
-                const data = { meta: { version: "5.0", date: new Date().toISOString() }, tasks: state.tasks, notes: state.notes, history: state.history };
+                const data = { 
+                    meta: { version: "5.0", date: new Date().toISOString() }, 
+                    tasks: state.tasks, 
+                    notes: state.notes, 
+                    habits: state.habits,
+                    focusLogs: state.focusLogs,
+                    history: state.history,
+                    customDesign: state.customDesign
+                };
                 const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -1895,33 +1903,47 @@
                 reader.onload = async (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
-                        if(data.tasks && Array.isArray(data.tasks)) {
+                        if(data) {
                             if(state.user) {
                                 alert("Restoring to cloud... please wait.");
                                 const batch = writeBatch(db);
-                                data.tasks.forEach(t => {
+                                data.tasks?.forEach(t => {
                                     const { id, ...taskData } = t;
                                     const newDocRef = doc(collection(db, 'tasks'));
                                     batch.set(newDocRef, { ...taskData, uid: state.user.uid });
                                 });
-                                if(data.notes) {
-                                    data.notes.forEach(n => {
-                                        const { id, ...noteData } = n;
-                                        const newNoteRef = doc(collection(db, 'notes'));
-                                        batch.set(newNoteRef, { ...noteData, uid: state.user.uid });
-                                    });
-                                }
+                                data.notes?.forEach(n => {
+                                    const { id, ...noteData } = n;
+                                    const newNoteRef = doc(collection(db, 'notes'));
+                                    batch.set(newNoteRef, { ...noteData, uid: state.user.uid });
+                                });
+                                data.habits?.forEach(h => {
+                                    const { id, ...habitData } = h;
+                                    const newHabitRef = doc(collection(db, 'habits'));
+                                    batch.set(newHabitRef, { ...habitData, uid: state.user.uid });
+                                });
                                 await batch.commit();
                                 alert("Cloud restore successful!");
                             } else {
-                                state.tasks = [...state.tasks, ...data.tasks];
+                                // Restore all data types
+                                if(data.tasks) state.tasks = [...state.tasks, ...data.tasks];
                                 if(data.notes) state.notes = [...state.notes, ...data.notes];
+                                if(data.habits) state.habits = [...state.habits, ...data.habits]; // Restores Habits
+                                if(data.focusLogs) state.focusLogs = [...state.focusLogs, ...data.focusLogs]; // Restores Dashboard data
+                                if(data.history) state.history = data.history; // Restores Task Autocomplete
+                                if(data.customDesign) state.customDesign = data.customDesign; // Restores UI settings
+                                
                                 app.saveLifetime(true);
                                 // Sync lifetime stats to update community score
                                 const totalCompleted = state.tasks.filter(t => t && t.completed).length;
                                 await app.syncLifetimeStats(totalCompleted);
+                                
+                                // Refresh all UI components
                                 renderTasks();
                                 app.renderNotes();
+                                if(app.renderDashboardCharts) app.renderDashboardCharts();
+                                if(app.renderHabits) app.renderHabits();
+                                alert("Restore complete! Tasks, Habits, and Dashboard data recovered.");
                             }
                         }
                     } catch(err) { alert("Invalid File Format"); console.error(err); }
