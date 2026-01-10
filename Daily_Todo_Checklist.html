@@ -1886,7 +1886,8 @@
                     habits: state.habits,
                     focusLogs: state.focusLogs,
                     history: state.history,
-                    customDesign: state.customDesign
+                    customDesign: state.customDesign,
+                    lifetimeCompleted: state.lifetimeCompleted || 0
                 };
                 const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
                 const url = URL.createObjectURL(blob);
@@ -1909,18 +1910,21 @@
                                 const batch = writeBatch(db);
                                 data.tasks?.forEach(t => {
                                     const { id, ...taskData } = t;
-                                    const newDocRef = doc(collection(db, 'tasks'));
-                                    batch.set(newDocRef, { ...taskData, uid: state.user.uid });
+                                    // Use existing ID if available, otherwise create new document
+                                    const taskRef = id ? doc(db, 'tasks', id) : doc(collection(db, 'tasks'));
+                                    batch.set(taskRef, { ...taskData, uid: state.user.uid });
                                 });
                                 data.notes?.forEach(n => {
                                     const { id, ...noteData } = n;
-                                    const newNoteRef = doc(collection(db, 'notes'));
-                                    batch.set(newNoteRef, { ...noteData, uid: state.user.uid });
+                                    // Use existing ID if available, otherwise create new document
+                                    const noteRef = id ? doc(db, 'notes', id) : doc(collection(db, 'notes'));
+                                    batch.set(noteRef, { ...noteData, uid: state.user.uid });
                                 });
                                 data.habits?.forEach(h => {
                                     const { id, ...habitData } = h;
-                                    const newHabitRef = doc(collection(db, 'habits'));
-                                    batch.set(newHabitRef, { ...habitData, uid: state.user.uid });
+                                    // Use existing ID if available, otherwise create new document
+                                    const habitRef = id ? doc(db, 'habits', id) : doc(collection(db, 'habits'));
+                                    batch.set(habitRef, { ...habitData, uid: state.user.uid });
                                 });
                                 await batch.commit();
                                 alert("Cloud restore successful!");
@@ -1935,8 +1939,16 @@
                                 
                                 app.saveLifetime(true);
                                 // Sync lifetime stats to update community score
-                                const totalCompleted = state.tasks.filter(t => t && t.completed).length;
-                                await app.syncLifetimeStats(totalCompleted);
+                                // Use imported lifetime score if available, otherwise calculate from tasks
+                                const importedScore = data.lifetimeCompleted || 0;
+                                const calculatedScore = state.tasks.filter(t => t && t.completed).length;
+                                const finalScore = Math.max(importedScore, calculatedScore);
+                                
+                                // Update local state
+                                state.lifetimeCompleted = finalScore;
+                                
+                                // Sync to Firebase
+                                await app.syncLifetimeStats(finalScore);
                                 
                                 // Refresh all UI components
                                 renderTasks();
@@ -5036,7 +5048,7 @@
         }, 1000);
 
         // SYNC LISTENER
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if(user) {
                 state.user = user;
                 document.getElementById('authBtn').textContent = "Sign Out";
@@ -5045,6 +5057,14 @@
                 
                 // Load user profile data for archived totals
                 app.getUserStats(); // This will populate state.userProfile
+                
+                // Fetch the actual lifetime score from Firebase
+                const userRef = doc(db, 'users', state.user.uid);
+                const userDoc = await getDoc(userRef);
+                if (userDoc.exists()) {
+                    state.lifetimeCompleted = userDoc.data().stats?.lifetimeCompleted || 0;
+                    console.log(`Loaded lifetime score from Firebase: ${state.lifetimeCompleted}`);
+                }
                 
                 const qTasks = query(collection(db, 'tasks'), where('uid', '==', user.uid), where('completed', '==', false));
                 onSnapshot(qTasks, (snap) => {
@@ -5127,6 +5147,20 @@
                     if(document.getElementById('habits').classList.contains('active')) app.renderHabits();
                 });
                 
+                // Load habits on initialization
+                app.loadHabits = async () => {
+                    if (!state.user) return;
+                    try {
+                        const q = query(collection(db, 'habits'), where('uid', '==', state.user.uid));
+                        const snapshot = await getDocs(q);
+                        state.habits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        localStorage.setItem('habits', JSON.stringify(state.habits));
+                        app.renderHabits();
+                    } catch (e) {
+                        console.error("Error fetching habits: ", e);
+                    }
+                };
+                
                 // Community Chat Sync
                 const qChat = query(collection(db, 'community_chat'), orderBy('timestamp', 'desc'), limit(50));
                 onSnapshot(qChat, (snap) => {
@@ -5182,6 +5216,8 @@
                 if(document.getElementById('community').classList.contains('active')) app.loadCommunity();
                 // Load hashtag select from completed tasks
                 app.loadHashtagSelect();
+                // Load habits on initialization
+                if(state.user) app.loadHabits();
             }
         });
 
