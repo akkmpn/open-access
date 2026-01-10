@@ -4133,18 +4133,32 @@
                     const d = new Date(); d.setDate(d.getDate() - i);
                     const k = d.toISOString().split('T')[0];
                     labels.push(k.slice(5));
-                    dataPoints.push(state.tasks.filter(t => t.date === k && t.completed).length);
+                    
+                    // Count regular completed tasks for this date
+                    const completedTasks = state.tasks.filter(t => t && t.date === k && t.completed).length;
+                    
+                    // Count focus sessions for this date
+                    const focusSessions = state.focusLogs.filter(log => {
+                        if(!log || !log.timestamp) return false;
+                        const logDate = new Date(log.timestamp).toISOString().split('T')[0];
+                        return logDate === k;
+                    }).length;
+                    
+                    // Total productivity = tasks + focus sessions
+                    dataPoints.push(completedTasks + focusSessions);
                 }
                 state.charts.main = new Chart(ctx1, {
                     type: 'line',
-                    data: { labels: labels, datasets: [{ label: 'Completed', data: dataPoints, borderColor: getComputedStyle(document.body).getPropertyValue('--accent'), tension: 0.4 }] },
+                    data: { labels: labels, datasets: [{ label: 'Productivity (Tasks + Focus Sessions)', data: dataPoints, borderColor: getComputedStyle(document.body).getPropertyValue('--accent'), tension: 0.4 }] },
                     options: { maintainAspectRatio: false, plugins: { legend: {display:false} } }
                 });
 
                 const ctx2 = document.getElementById('tagChart').getContext('2d');
                 if(state.charts.tags) state.charts.tags.destroy();
                 const tagCounts = {};
-                filtered.forEach(t => (t.tags||[]).forEach(tag => tagCounts[tag] = (tagCounts[tag]||0)+1));
+                // Only count hashtags from completed tasks
+                const completedFiltered = filtered.filter(t => t && t.completed);
+                completedFiltered.forEach(t => (t.tags||[]).forEach(tag => tagCounts[tag] = (tagCounts[tag]||0)+1));
                 state.charts.tags = new Chart(ctx2, {
                     type: 'doughnut',
                     data: { labels: Object.keys(tagCounts), datasets: [{ data: Object.values(tagCounts), backgroundColor: ['#208084', '#10b981', '#f59e0b', '#ef4444', '#6366f1'] }] },
