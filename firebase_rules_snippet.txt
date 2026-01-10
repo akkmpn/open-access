@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Users, Timers, and Stats are identified by the User's ID
+    match /users/{userId} { allow read, write: if isOwner(userId); }
+    match /timers/{userId} { allow read, write: if isOwner(userId); }
+    match /stopwatch_timer_stats/{userId} { allow read, write: if isOwner(userId); }
+    match /user_status/{userId} { 
+       allow read: if request.auth != null;
+       allow write: if isOwner(userId); 
+    }
+    match /user_typing/{userId} {
+       allow read: if request.auth != null;
+       allow write: if isOwner(userId); // ✅ FIXED: Only owner can set their own typing status
+    }
+
+    // Collections that store the UID inside the document data
+    match /tasks/{taskId} {
+      allow read, update, delete: if isOwner(resource.data.uid);
+      allow create: if isOwner(request.resource.data.uid);
+    }
+    match /notes/{noteId} {
+      allow read, update, delete: if isOwner(resource.data.uid);
+      allow create: if isOwner(request.resource.data.uid);
+    }
+    match /focus_sessions/{sessionId} {
+      allow read, update, delete: if isOwner(resource.data.uid);
+      allow create: if isOwner(request.resource.data.uid);
+    }
+    match /habits/{habitId} {
+      allow read, update, delete: if isOwner(resource.data.uid);
+      allow create: if isOwner(request.resource.data.uid);
+    }
+    match /stopwatch_timer_sessions/{sessionId} {
+      allow read, update, delete: if isOwner(resource.data.uid);
+      allow create: if isOwner(request.resource.data.uid);
+    }
+
+    // Community Features
+    match /community_chat/{messageId} {
+      allow read: if request.auth != null;
+      // ✅ FIXED: Prevent Spoofing. User must be themselves.
+      allow create: if isOwner(request.resource.data.uid); 
+      allow update, delete: if isOwner(resource.data.uid);
+    }
+
+    match /leaderboard/{userId} {
+      allow read: if request.auth != null;
+      allow write: if isOwner(userId);
+    }
+
+    // Global Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

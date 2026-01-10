@@ -1898,64 +1898,69 @@
             restoreData: async (input) => {
                 const file = input.files[0];
                 if (!file) return;
+
+                // 1. Quota Guard: File Size Limit
+                if (file.size > 2 * 1024 * 1024) { 
+                    alert("Quota Protection: File is too large (>2MB).");
+                    return;
+                }
+
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
                         
-                        // 1. Update Local State
+                        // 2. Load Dashboard & Hashtag State Locally
                         state.tasks = data.tasks || [];
                         state.habits = data.habits || [];
-                        state.focusLogs = data.focusLogs || [];
+                        state.focusLogs = data.focusLogs || []; // Restores Productivity Trends
                         state.notes = data.notes || [];
-                        state.lifetimeCompleted = data.score || 0;
+                        state.lifetimeCompleted = data.score || 0; // Restores Leaderboard Total
                         state.history = data.history || [];
-
-                        // 2. Persistent Local Storage
+                        
                         app.saveLifetime(true);
 
-                        // 3. SECURE FIREBASE RE-SYNC
+                        // 3. Partitioned Cloud Sync (Quota Friendly)
                         if (state.user) {
-                            const batch = writeBatch(db);
                             const uid = state.user.uid;
+                            
+                            const syncInChunks = async (collectionName, items) => {
+                                for (let i = 0; i < items.length; i += 100) {
+                                    const chunk = items.slice(i, i + 100);
+                                    const batch = writeBatch(db);
+                                    chunk.forEach(item => {
+                                        const ref = doc(db, collectionName, item.id || doc(collection(db, collectionName)).id);
+                                        batch.set(ref, { ...item, uid }, { merge: true });
+                                    });
+                                    await batch.commit();
+                                    console.log(`Synced ${chunk.length} items to ${collectionName}`);
+                                }
+                            };
 
-                            // Sync Tasks & Hashtags
-                            state.tasks.forEach(t => {
-                                batch.set(doc(db, 'tasks', t.id), { ...t, uid }, { merge: true });
-                            });
+                            // Sync all Dashboard sections
+                            await syncInChunks('tasks', state.tasks);
+                            await syncInChunks('habits', state.habits);
+                            await syncInChunks('focus_sessions', state.focusLogs);
 
-                            // Sync Habits
-                            state.habits.forEach(h => {
-                                batch.set(doc(db, 'habits', h.id), { ...h, uid }, { merge: true });
-                            });
-
-                            // Sync Productivity Trends (Focus Logs)
-                            state.focusLogs.forEach(log => {
-                                const logId = log.id || `log_${log.timestamp}`;
-                                batch.set(doc(db, 'focus_sessions', logId), { ...log, uid }, { merge: true });
-                            });
-
-                            // Sync Leaderboard directly from 'score' field
-                            batch.set(doc(db, 'leaderboard', uid), {
+                            // Final Leaderboard Sync
+                            await setDoc(doc(db, 'leaderboard', uid), {
                                 lifetimeCompleted: state.lifetimeCompleted,
-                                username: state.user.displayName || 'Anonymous',
-                                lastUpdated: serverTimestamp()
+                                username: state.user.displayName || 'Anonymous'
                             }, { merge: true });
 
-                            await batch.commit();
-                            alert("Cloud Sync Successful: All sections restored to Firebase.");
+                            alert("Full Dashboard Recovery Successful.");
                         }
 
-                        // 4. Refresh Dashboard UI
+                        // 4. UI Refresh
                         renderTasks();
                         app.renderNotes();
                         if (app.renderDashboardCharts) app.renderDashboardCharts();
                         if(app.renderHabits) app.renderHabits();
                         app.switchTab(state.activeTab);
-                        
+
                     } catch (err) {
-                        console.error("Restore Error:", err);
-                        alert("Restore failed. Invalid JSON.");
+                        console.error("Sync Error:", err);
+                        alert("Restore failed. Check console for quota details.");
                     }
                 };
                 reader.readAsText(file);
