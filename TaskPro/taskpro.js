@@ -255,6 +255,17 @@ function setupNavigation() {
     });
   }
   
+  // Add inside setupNavigation() in taskpro.js
+  const navLinks = document.querySelectorAll('.nav-link');
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+            desktopNav.classList.remove('active');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+    });
+  });
+  
   console.log('✅ Navigation setup complete');
 }
 
@@ -1411,4 +1422,24 @@ function setupLoginForm() {
         }
     });
 }
+
+// Mobile Menu Toggle Logic
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+const desktopNav = document.getElementById('desktop-nav');
+
+if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', () => {
+        desktopNav.classList.toggle('active');
+    });
+}
+
+// Close sidebar when a link is clicked (Mobile improvement)
+const navLinks = document.querySelectorAll('.nav-link, .menu-item');
+navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+            desktopNav.classList.remove('active');
+        }
+    });
+});
 })();

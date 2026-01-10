@@ -239,7 +239,7 @@ nav {
 
 .dashboard-content {
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Better than 1fr 2fr */
     gap: 20px;
 }
 
@@ -1873,19 +1873,9 @@ body.auth-mode .login-card {
 
 /* Mobile: Sidebar becomes an overlay drawer */
 @media (max-width: 768px) {
-    body { flex-direction: column; }
-
-    .mobile-header-row {
-        display: flex !important; /* Show header only on mobile */
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 1rem;
-        height: 60px;
-        background: var(--card-bg);
-        border-bottom: 1px solid #334155;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
+    body { 
+        flex-direction: column; 
+        overflow-x: hidden; /* Prevent side-scrolling when menu is hidden */
     }
 
     #desktop-nav {
@@ -1894,21 +1884,35 @@ body.auth-mode .login-card {
         top: 0;
         bottom: 0;
         width: 280px;
-        transform: translateX(-100%); /* Start hidden off-screen */
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 2000;
-        box-shadow: 10px 0 20px rgba(0,0,0,0.5);
+        z-index: 2000; /* Ensure it's above everything */
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        background: var(--card-bg);
+        box-shadow: 10px 0 15px rgba(0,0,0,0.3);
     }
 
-    /* This class is added via JavaScript */
-    body.menu-open #desktop-nav {
+    /* Target the class your JS actually toggles */
+    #desktop-nav.active {
         transform: translateX(0);
     }
 
     #main-content {
-        width: 100%;
-        padding: 1rem;
-        padding-top: 20px; /* Ensures content doesn't touch sticky header */
-        height: calc(100vh - 60px);
+        padding: 1rem; /* Reduce padding on mobile */
+        margin-top: 60px; /* Make room for the sticky header */
+    }
+
+    .mobile-header-row {
+        display: flex !important;
+        z-index: 1001;
+    }
+
+    /* Fix Grid Layouts for Mobile */
+    .stats-grid {
+        grid-template-columns: 1fr !important; /* Stack stats cards */
+        gap: 1rem;
+    }
+
+    .dashboard-content {
+        grid-template-columns: 1fr !important; /* Stack dashboard columns */
     }
 }
