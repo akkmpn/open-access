@@ -1,0 +1,220 @@
+CREATE TABLE tasks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  completed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  due_date DATE
+);
+
+CREATE TABLE habits (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  streak INTEGER DEFAULT 0,
+  last_completed TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE notes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  content TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE pomodoro_sessions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  focus_time_minutes INTEGER DEFAULT 25,
+  completed_at TIMESTAMP DEFAULT NOW(),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE timerstats (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  totalstopwatchtime INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+
+-- For tasks table (users can only access their own tasks)
+CREATE POLICY "Users can access their own tasks" ON tasks
+  FOR ALL USING (auth.uid() = user_id);
+
+-- For habits table
+CREATE POLICY "Users can access their own habits" ON habits
+  FOR ALL USING (auth.uid() = user_id);
+
+-- For notes table
+CREATE POLICY "Users can access their own notes" ON notes
+  FOR ALL USING (auth.uid() = user_id);
+
+-- For pomodoro_sessions table
+CREATE POLICY "Users can access their own sessions" ON pomodoro_sessions
+  FOR ALL USING (auth.uid() = user_id);
+
+-- For timerstats table
+CREATE POLICY "Users can access their own stats" ON timerstats
+  FOR ALL USING (auth.uid() = user_id);
+
+ALTER TABLE tasks ADD COLUMN priority TEXT DEFAULT 'medium';
+-- 'due_date' already exists, so update the JS to use 'due_date' instead of 'date'.
+
+-- Rename the column in the tasks table to match your JS code
+ALTER TABLE tasks 
+RENAME COLUMN completed TO is_completed;
+
+ALTER TABLE notes ADD CONSTRAINT unique_user_note UNIQUE (user_id);
+
+create table messages (
+  id uuid default uuid_generate_v4() primary key,
+  created_at timestamp with time zone default now(),
+  content text,
+  user_id uuid references auth.users(id),
+  user_email text
+);
+-- Enable Realtime for this table in Supabase Dashboard!
+
+CREATE INDEX ON public.messages (user_id);
+CREATE INDEX ON public.messages (created_at);
+
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+
+-- Allow authenticated users to insert messages where user_id = auth.uid()
+CREATE POLICY messages_insert_authenticated ON public.messages
+  FOR INSERT
+  TO authenticated
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+-- Allow authenticated users to select messages where user_id = auth.uid()
+CREATE POLICY messages_select_owner ON public.messages
+  FOR SELECT
+  TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
+
+-- Optionally allow authenticated users to delete their own messages
+CREATE POLICY messages_delete_owner ON public.messages
+  FOR DELETE
+  TO authenticated
+  USING ((SELECT auth.uid()) = user_id);
+
+-- Optionally allow update only by owner
+CREATE POLICY messages_update_owner ON public.messages
+  FOR UPDATE
+  TO authenticated
+  USING ((SELECT auth.uid()) = user_id)
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+  CREATE OR REPLACE FUNCTION public.messages_broadcast_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+  PERFORM realtime.broadcast_changes(
+    'messages',    -- topic name, consider 'room:123:messages' for rooms
+    TG_OP,
+    TG_OP,
+    TG_TABLE_NAME,
+    TG_TABLE_SCHEMA,
+    NEW,
+    OLD
+  );
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER messages_broadcast_trigger
+  AFTER INSERT OR UPDATE OR DELETE ON public.messages
+  FOR EACH ROW EXECUTE FUNCTION public.messages_broadcast_trigger();
+
+  -- Shows all replication publications (Supabase uses a publication called 'supabase_realtime' by default)
+SELECT * FROM pg_publication;
+
+SELECT tgname, tgrelid::regclass::text AS table_name
+FROM pg_trigger
+WHERE tgname LIKE '%messages_broadcast_trigger%';
+
+-- List publications
+SELECT * FROM pg_publication;
+
+-- Check if messages is included in the 'supabase_realtime' publication
+SELECT p.pubname,
+       n.nspname AS schemaname,
+       c.relname
+FROM pg_publication p
+JOIN pg_publication_rel pr ON pr.prpubid = p.oid
+JOIN pg_class c ON pr.prrelid = c.oid
+JOIN pg_namespace n ON c.relnamespace = n.oid
+WHERE p.pubname = 'supabase_realtime'
+  AND n.nspname = 'public'
+  AND c.relname = 'messages';
+
+ -- 1. Fix the Select Policy so everyone can see all messages
+DROP POLICY IF EXISTS "messages_select_owner" ON public.messages;
+CREATE POLICY "messages_select_all" ON public.messages 
+  FOR SELECT TO authenticated USING (true);
+
+-- 2. Explicitly add the table to the Supabase Realtime publication
+ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+
+-- 1. SECURE THE TASKS TABLE
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only access their own tasks" 
+ON tasks FOR ALL 
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+
+-- 2. SECURE THE HABITS TABLE
+ALTER TABLE habits ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only access their own habits" 
+ON habits FOR ALL 
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+
+-- 3. SECURE THE NOTES TABLE
+ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only access their own notes" 
+ON notes FOR ALL 
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+
+-- 4. SECURE THE MESSAGES TABLE (Community Chat)
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+-- Allow anyone logged in to see messages
+CREATE POLICY "Everyone can read messages" 
+ON messages FOR SELECT 
+USING (true);
+
+-- Allow users to only send messages as themselves
+CREATE POLICY "Authenticated users can send messages" 
+ON messages FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
+
+ALTER TABLE pomodoro_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE timerstats ENABLE ROW LEVEL SECURITY;
+
+-- Example of the query your Analytics module can now safely run:
+SELECT 
+  date_trunc('day', completed_at) as day,
+  sum(focus_time_minutes) as total_focus
+FROM pomodoro_sessions
+WHERE user_id = auth.uid()
+GROUP BY 1;
+
+ALTER TABLE pomodoro_sessions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only access their own focus sessions" 
+ON pomodoro_sessions FOR ALL 
+USING (auth.uid() = user_id);

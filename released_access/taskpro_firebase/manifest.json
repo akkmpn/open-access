@@ -1,0 +1,20 @@
+{
+  "name": "Enterprise TaskPro",
+  "short_name": "TaskPro",
+  "description": "A professional real-time task manager with focus sessions and community features.",
+  "start_url": "https://akkmpn.github.io/open-access/released_access/taskpro_firebase/",
+  "scope": "https://akkmpn.github.io/open-access/released_access/taskpro_firebase/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#208084",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2098/2098402.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

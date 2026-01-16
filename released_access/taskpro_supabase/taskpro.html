@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TaskPro - Your Complete Productivity Suite</title>
+    <link rel="stylesheet" href="taskpro.css">
+    <link rel="icon" href="data:,">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <!-- Mobile Header Title -->
+    <h1 id="mobile-page-title">TaskPro</h1>
+
+    <!-- Desktop Sidebar Navigation -->
+    <nav id="desktop-nav">
+      <h2 style="margin: 0 0 1rem 0; color: var(--text-main); text-align: center;">TaskPro</h2>
+      <button class="nav-link active" data-module="dashboard">Dashboard</button>
+      <button class="nav-link" data-module="tasks">Tasks</button>
+      <button class="nav-link" data-module="habits">Habits</button>
+      <button class="nav-link" data-module="calendar">Calendar</button>
+      <button class="nav-link" data-module="stopwatch">Stopwatch</button>
+      <button class="nav-link" data-module="pomodoro">Pomodoro</button>
+      <button class="nav-link" data-module="notes">Notes</button>
+      <button class="nav-link" data-module="community">Community</button>
+      <button class="nav-link" data-module="analytics">Analytics</button>
+      <button class="nav-link" data-module="design">Design</button>
+      <button class="nav-link" data-module="backup">Backup</button>
+      <div class="nav-actions">
+            <button class="nav-link" id="open-settings-btn">⚙️ Settings</button>
+            <button class="btn-outline" id="logout-btn">Sign Out</button>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div id="main-content"></div>
+    
+    <!-- Timezone Information -->
+    <div id="timezone-info" style="text-align: center; color: var(--text-dim); font-size: 0.8rem; margin-top: 1rem; padding: 0 1rem;">
+        Your timezone: <span id="user-timezone"></span>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content settings-card">
+            <div class="modal-header">
+                <h3>System Settings</h3>
+                <button class="close-modal" id="close-settings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-group">
+                    <h4>🔄 Sync Diagnostics</h4>
+                    <p>Run a test to verify real-time synchronization across your devices.</p>
+                    <button id="run-sync-test" class="btn-primary">Run Test Pulse</button>
+                    <div id="sync-test-status" class="status-log"></div>
+                </div>
+                
+                <div class="settings-group danger-zone">
+                    <h4>⚠️ Danger Zone</h4>
+                    <p>Permanently delete all tasks, habits, notes, and productivity statistics.</p>
+                    <button id="reset-all-data" class="btn-danger">Reset All My Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offline Indicator Toast -->
+    <div id="offline-toast"></div>
+
+    <script src="taskpro.js"></script>
+    <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(reg => console.log('Service Worker registered'))
+    .catch(err => console.log('Service Worker registration failed:', err));
+}
+</script>
+</body>
+</html>

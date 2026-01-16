@@ -1,0 +1,28 @@
+{
+  "name": "TaskPro Productivity",
+  "short_name": "TaskPro",
+  "start_url": "./taskpro.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#10b981",
+  "description": "Complete productivity suite with tasks, habits, pomodoro timer, and analytics",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/906/906334.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/128/906/906334.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/192/906/906334.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
